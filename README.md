@@ -12,6 +12,9 @@ OpenKIM content.  The resulting environment is useful for anyone planning on
 developing content to submit to OpenKIM or who simply wants to run KIM
 verification checks to validate the integrity of their own models.
 
+A short tutorial on using the KIM Developer Platform can be found at
+[https://openkim.org/doc/evaluation/kim-developer-platform/](https://openkim.org/doc/evaluation/kim-developer-platform/).
+
 Feedback and bug reports are welcome and may be posted on the
 [matsci.org/openkim](https://matsci.org/openkim/) forum or submitted to
 [support@openkim.org](mailto:support@openkim.org).
