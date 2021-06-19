@@ -1,0 +1,264 @@
+name: Docker publish
+
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+on:
+  release:
+    types: [ published ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  REGISTRY: ghcr.io
+  # Note: github.repository corresponds to <account>/<repo>
+  IMAGE_NAME: ${{ github.repository }}
+  DOCKERFILE_NAME: Dockerfile
+  DOCKER_DIR_SYS: sys
+  IMAGE_TAG_SYS: sys
+  DOCKER_DIR_GIT: git
+  IMAGE_TAG_GIT: git
+  DOCKER_DIR_INSTALL: install
+  IMAGE_TAG_INSTALL: install
+  DOCKER_DIR_CONFIG: config
+  IMAGE_CACHE_DIR_SYS: /tmp/.buildx-cache-sys/
+  IMAGE_TAR_FILE_SYS: image-sys.tar
+  IMAGE_CACHE_DIR_GIT: /tmp/.buildx-cache-git/
+  IMAGE_TAR_FILE_GIT: image-git.tar
+  DOCKER_DIR_ADDITIONAL: additional
+
+jobs:
+
+  build-and-cache-sys:
+
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      # Buildx is necessary for exporting images, which we do in order to keep
+      # the 'build-and-cache-sys' and 'build-and-cache-git' jobs separate from
+      # the 'build-and-push' job so that they can run in parallel.
+      - name: Set up Docker buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Initialize cache for storing docker image
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.IMAGE_CACHE_DIR_SYS }}
+          key: ${{ runner.os }}-buildx-${{ github.sha }}-sys
+          restore-keys: |
+            ${{ runner.os }}-buildx-sys-
+
+      - name: Ensure cache dir exists
+        run: if [ ! -d "${{ env.IMAGE_CACHE_DIR_SYS }}" ]; then mkdir ${{ env.IMAGE_CACHE_DIR_SYS }}; fi
+
+      # Extract metadata (tags, labels) for Docker
+      # https://github.com/docker/metadata-action
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      # Build image containing system-level packages (apt-get)
+      # Note that using `outputs: type=docker` will not work if we want to
+      # publish multi-platform images in the future (see
+      # https://docs.docker.com/engine/reference/commandline/buildx_build/#output).
+      # In that case, we should either consolidate everything into a single job
+      # so we don't need to export images to the repository cache, or push the
+      # intermediate images (sys, git) to the registry.
+      #
+      # https://github.com/docker/build-push-action
+      - name: Acquire system packages
+        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+        with:
+          context: docker/${{ env.DOCKER_DIR_SYS }}
+          file: docker/${{ env.DOCKER_DIR_SYS }}/${{ env.DOCKERFILE_NAME }}
+          push: false
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_SYS }}
+          labels: ${{ steps.meta.outputs.labels }}
+          outputs: type=docker,dest=${{ env.IMAGE_CACHE_DIR_SYS }}/${{ env.IMAGE_TAR_FILE_SYS }}
+
+  build-and-cache-git:
+
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      # See note in previous step about why we use buildx
+      - name: Set up Docker buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Initialize cache for storing docker image
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.IMAGE_CACHE_DIR_GIT }}
+          key: ${{ runner.os }}-buildx-${{ github.sha }}-git
+          restore-keys: |
+            ${{ runner.os }}-buildx-git-
+
+      - name: Ensure cache dir exists
+        run: if [ ! -d "${{ env.IMAGE_CACHE_DIR_GIT }}" ]; then mkdir ${{ env.IMAGE_CACHE_DIR_GIT }}; fi
+
+      # Extract metadata (tags, labels) for Docker
+      # https://github.com/docker/metadata-action
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      # Build image that acquires (but does not build) git packages. This is
+      # done in its own image to avoid all of the system-level dependencies that
+      # get installed when git is installed from apt-get
+      # https://github.com/docker/build-push-action
+      - name: Acquire git packages
+        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+        with:
+          context: docker/${{ env.DOCKER_DIR_GIT }}
+          file: docker/${{ env.DOCKER_DIR_GIT }}/${{ env.DOCKERFILE_NAME }}
+          push: false
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_GIT }}
+          labels: ${{ steps.meta.outputs.labels }}
+          outputs: type=docker,dest=${{ env.IMAGE_CACHE_DIR_GIT }}/${{ env.IMAGE_TAR_FILE_GIT }}
+
+  build-and-push:
+
+    needs: [build-and-cache-sys, build-and-cache-git]
+
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Restore sys docker image cache
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.IMAGE_CACHE_DIR_SYS }}
+          key: ${{ runner.os }}-buildx-${{ github.sha }}-sys
+          restore-keys: |
+            ${{ runner.os }}-buildx-sys
+
+      - name: Restore git docker image cache
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.IMAGE_CACHE_DIR_GIT }}
+          key: ${{ runner.os }}-buildx-${{ github.sha }}-git
+          restore-keys: |
+            ${{ runner.os }}-buildx-git
+
+      # Load cached sys and git docker-formatted tarballs into local image
+      # repository
+      - name: Load cached sys & git docker image tarballs
+        run: |
+          docker load -i ${{ env.IMAGE_CACHE_DIR_SYS }}/${{ env.IMAGE_TAR_FILE_SYS }}
+          docker load -i ${{ env.IMAGE_CACHE_DIR_GIT }}/${{ env.IMAGE_TAR_FILE_GIT }}
+
+      # Use buildx with 'docker' driver so that it is able to access images stored in the
+      # local registry (this precludes the possibility of multi-platform images)
+      - name: Set up Docker buildx
+        uses: docker/setup-buildx-action@v1
+        with:
+          driver: docker
+
+      # List docker images in local repository to confirm exactly what tags were
+      # created
+      - name: List docker images
+        run: docker images
+
+      # Login against a Docker registry except on PR
+      # https://github.com/docker/login-action
+      - name: Log into registry ${{ env.REGISTRY }}
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@28218f9b04b4f3f62068d7b6ce6ca5b26e35336c
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Extract metadata (tags, labels) for Docker
+      # https://github.com/docker/metadata-action
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      # Build image that actually compiles and installs packages acquired via
+      # git, as well as installs pip packages.
+      # https://github.com/docker/build-push-action
+      - name: Build and install packages
+        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+        with:
+          context: docker/${{ env.DOCKER_DIR_INSTALL }}
+          file: docker/${{ env.DOCKER_DIR_INSTALL }}/${{ env.DOCKERFILE_NAME }}
+          push: false
+          build-args: |
+            "IMAGE_GIT=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_GIT }}"
+            "IMAGE_SYS=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_SYS }}"
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_INSTALL }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      # Perform final configurations and push image to registry (unless
+      # triggered by a PR):
+      # - User creation and sudo configuration
+      # - Creation of local repository directory structure for KIM items
+      # - Vim configuration
+      # - Environment and shell configuration
+      #
+      # https://github.com/docker/build-push-action
+      - name: Configure and push minimal image
+        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+        with:
+          context: docker/${{ env.DOCKER_DIR_CONFIG }}
+          file: docker/${{ env.DOCKER_DIR_CONFIG }}/${{ env.DOCKERFILE_NAME }}
+          push: ${{ github.event_name != 'pull_request' }}
+          build-args: |
+            "IMAGE_INSTALL=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_INSTALL }}"
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}-minimal
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-minimal
+          labels: ${{ steps.meta.outputs.labels }}
+
+      # List docker images in local repository to confirm exactly what tags were
+      # created
+      - name: List docker images
+        run: docker images
+
+      - name: Clean local copies of sys & git caches
+        run: |
+          rm -rf ${{ env.IMAGE_CACHE_DIR_SYS }}
+          rm -rf ${{ env.IMAGE_CACHE_DIR_GIT }}
+
+      # Finally, install additional packages to create the full image based on
+      # the minimal image
+      #
+      # https://github.com/docker/build-push-action
+      - name: Configure and push full image
+        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+        with:
+          context: docker/${{ env.DOCKER_DIR_ADDITIONAL }}
+          file: docker/${{ env.DOCKER_DIR_ADDITIONAL }}/${{ env.DOCKERFILE_NAME }}
+          push: ${{ github.event_name != 'pull_request' }}
+          build-args: |
+            "IMAGE_MINIMAL=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}-minimal"
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          labels: ${{ steps.meta.outputs.labels }}

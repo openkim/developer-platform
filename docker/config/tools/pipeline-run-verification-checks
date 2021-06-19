@@ -1,0 +1,183 @@
+#!/usr/bin/env python3
+"""
+Copyright (c) 2014-2021, Regents of the University of Minnesota. All rights
+reserved.
+
+This software may be distributed as-is, without modification.
+"""
+import os, sys
+import shutil
+import tempfile
+
+from excerpts.compute import Computation, job_id
+from excerpts.kimcodes import parse_kim_code
+from excerpts import kimobjects
+from excerpts.matching import valid_match
+from excerpts.local_search import get_items_by_type, match_on_pattern
+
+indent = 2 * " "
+subindent = indent + 2 * " "
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="""
+        Attempt to run all of the Verification Checks in ~/verification-checks
+        against the specified Model or Simulator Model.
+        """
+    )
+    parser.add_argument(
+        "kimcode",
+        type=str,
+        help="Full KIM ID of the Model or Simulator Model to run Verification Checks against",
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Print stdout and stderr from each job to the terminal while they are running",
+    )
+    parser.add_argument(
+        "-a",
+        "--all",
+        action="store_true",
+        help="Run against *all* Verification Checks, including those which are not the "
+        "highest version within their item lineage.",
+    )
+
+    args = vars(parser.parse_args())
+
+    kimcode = args["kimcode"]
+    verbose = args["verbose"]
+    _all = args["all"]
+
+    # Check if kimcode contains one or more wildcards. If so, perform matching on KIM
+    # items under LOCAL_REPOSITORY_PATH
+    glob_matches = []
+    if kimcode == "*":
+        # Retrieve all MO, SM
+        glob_matches = get_items_by_type(["mo", "sm"])
+
+        if not glob_matches:
+            print(
+                "Error: Could not find any Models or Simulator Models "
+                "matching pattern {}".format(kimcode)
+            )
+
+    elif "*" in kimcode:
+        # Glob on MO, SM that match the pattern
+        glob_matches = match_on_pattern(["mo", "sm"], kimcode)
+
+        if not glob_matches:
+            print(
+                "Error: Could not find any Models or Simulator Models "
+                "matching pattern {}".format(kimcode)
+            )
+    else:
+        glob_matches.append(kimcode)
+
+    # Eliminate duplicates (caused by SM symlinks being in 'mo' subdir)
+    glob_matches = set(glob_matches)
+
+    for kimcode in glob_matches:
+
+        print("+ Running Verification Checks for {}".format(kimcode))
+        print()
+
+        try:
+            name, leader, num, version = parse_kim_code(kimcode)
+        except:
+            print(
+                indent + "Error: '{}' is not a valid Model or Simulator "
+                "Model KIM ID".format(kimcode)
+            )
+            sys.exit(1)
+
+        if leader in ["MO", "SM"]:
+            subject = kimobjects.kim_obj(kimcode)
+
+            # Attempt to build subject
+            try:
+                subject.make()
+            except Exception as e:
+                print(indent + "Error: {}. Aborting...".format(str(e)))
+                sys.exit(1)
+
+            if _all:
+                all_vcs = kimobjects.VerificationCheck.all_on_disk()
+            else:
+                all_vcs = kimobjects.VerificationCheck.all_fresh_on_disk()
+
+            all_vcs = list(all_vcs)
+            if len(all_vcs) == 0:
+                print(
+                    indent + "No Verification Checks found in local "
+                    "repository to run against {}".format(subject.kim_code)
+                )
+            else:
+                # We still need to check matches due to KIM API version, simulator version, etc
+                matches = []
+                for runner in all_vcs:
+                    # Attempt to build VC
+                    try:
+                        runner.make()
+                    except Exception as e:
+                        print(indent + "Error: {}. Aborting...".format(str(e)))
+                        sys.exit(1)
+
+                    if leader == "MO":
+                        # Create a temporary directory to check matches just so we don't
+                        # have kim.log floating around
+                        cwd = os.getcwd()
+                        tmp_dir = tempfile.mkdtemp()
+                        os.chdir(tmp_dir)
+
+                        match, info = valid_match(runner, subject)
+
+                        if match:
+                            matches.append(runner)
+                        os.chdir(cwd)
+                        shutil.rmtree(tmp_dir)
+
+                    elif leader == "SM":
+                        # Check for a match
+                        match, info = valid_match(runner, subject)
+                        if match:
+                            matches.append(runner)
+
+                if len(matches) == 0:
+                    print(indent + "No matches found")
+                else:
+                    for match in matches:
+                        print(
+                            subindent + "- Running pair ({}, {})".format(match, subject)
+                        )
+                        print()
+                        jobid = job_id(match, subject)
+                        comp = Computation(match, subject, jobid, verbose)
+                        comp.run()
+                        result_code = comp.result_code
+                        result_type = result_code.split("-")[-1]
+                        if verbose:
+                            print()
+                        if result_type == "vr":
+                            print(
+                                subindent + "Pair produced Verification "
+                                "Result {} in {} seconds".format(
+                                    result_code, comp.runtime
+                                )
+                            )
+                        elif result_type == "er":
+                            print(
+                                subindent + "Pair produced Error {} in {} "
+                                "seconds".format(result_code, comp.runtime)
+                            )
+                        print()
+        else:
+            print(
+                indent + "Error: Invalid argument '{}'. "
+                "`pipeline-run-verification-checks` only supports Models "
+                "or Simulator Models as arguments".format(kimcode)
+            )
+            sys.exit(1)

@@ -1,0 +1,54 @@
+#!/bin/bash
+#
+# Copyright (c) 2014-2021, Regents of the University of Minnesota. All rights
+# reserved.
+#
+# This software may be distributed as-is, without modification.
+
+#==============================================
+# this file has a specific format since it is
+# also read by python.  only FOO=bar and
+# the use of $BAZ can be substituted. comments
+# start in column 0
+#==============================================
+
+# All queries will go to the production database on this VM
+PIPELINE_LOCAL_DEV=False
+PIPELINE_VM_MODE=True
+
+LOG_DIR=/pipeline/logs
+LOCAL_REPOSITORY_PATH=/home/openkim/
+USE_FULL_ITEM_NAMES_IN_REPO=True
+
+# parent directory where things are run by default
+WORKER_RUNNING_PATH=/tmp
+
+# We install MD/MO/SM to the KIM API user collection
+KIM_API_USER_COLLECTION=/home/openkim/.kim-api/
+
+# types of files that are expected at any one time, should be global
+OUTPUT_DIR=output
+TEST_EXECUTABLE=runner
+INPUT_FILE=pipeline.stdin.tpl
+TEMPLATE_FILE=results.edn.tpl
+CONFIG_FILE=kimspec.edn
+DEPENDENCY_FILE=dependencies.edn
+
+# these can be localized to the compute model almost exclusively
+TEMP_INPUT_FILE=pipeline.stdin
+TEMP_INPUT_INFO_FILE=pipeline.stdin.info
+STDOUT_FILE=pipeline.stdout
+STDERR_FILE=pipeline.stderr
+KIMLOG_FILE=kim.log
+RESULT_FILE=results.edn
+EXCEPTION_FILE=pipeline.exception
+PIPELINESPEC_FILE=pipelinespec.edn
+PIPELINESPEC_TPL_FILE=pipelinespec.edn.tpl
+
+PIPELINE_REMOTE_QUERY_ADDRESS=https://query.openkim.org/api
+
+# where KIM API libs, bins, etc are installed under
+KIM_HOME=/usr/local/
+ASE_LAMMPSRUN_COMMAND=/usr/local/bin/lammps
+
+CMAKE_BUILD_TYPE=Release

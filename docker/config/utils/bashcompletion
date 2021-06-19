@@ -1,0 +1,479 @@
+#!/bin/bash
+#
+# Copyright (c) 2014-2021, Regents of the University of Minnesota. All rights
+# reserved.
+#
+# This software may be distributed as-is, without modification.
+#
+LOCAL_REPOSITORY_PATH=/home/openkim/
+
+_queryall(){
+    local query='query={"type":{"$in":["mo", "md", "sm", "td", "te", "vc"]}}'
+    query="${query}"'&project=["kimcode"]'
+    query="${query}"'&database=obj'
+    local temp
+    temp="`wget -q -O - --post-data="${query}" https://query.openkim.org/api`"
+    temp=${temp//\[/} # Strip leading bracket
+    temp=${temp//\]/} # Strip trailing bracket
+    echo ${temp//,/} # Remove commas
+}
+
+_getall(){
+    folders=$1
+    part=$2
+
+    for folder in ${folders}; do
+
+        if [ "$folder" = "mo" ]; then
+            path=$LOCAL_REPOSITORY_PATH/models/
+        elif [ "$folder" = "md" ]; then
+            path=$LOCAL_REPOSITORY_PATH/model-drivers/
+        elif [ "$folder" = "te" ]; then
+            path=$LOCAL_REPOSITORY_PATH/tests/
+        elif [ "$folder" = "td" ]; then
+            path=$LOCAL_REPOSITORY_PATH/test-drivers/
+        elif [ "$folder" = "sm" ]; then
+            path=$LOCAL_REPOSITORY_PATH/simulator-models/
+        elif [ "$folder" = "vc" ]; then
+            path=$LOCAL_REPOSITORY_PATH/verification-checks/
+        fi
+
+        if [ ! -n "$part" ]; then
+            temp=$(find $path/* -maxdepth 0 -type d -printf "%f " 2>/dev/null)
+            echo $temp
+        else
+            temp=$(find $path/* -maxdepth 0 -type d -name "$part*" -printf "%f " 2>/dev/null)
+            echo $temp
+        fi
+    done
+}
+
+
+_complete_pipeline_database(){
+    local cur prev opts
+    COMPREPLY=()
+    allwords="${COMP_WORDS[@]}"
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    # The basic options we'll complete.
+    opts="set delete import export restore dump status"
+
+    delete_opts="-f --force"
+
+    if [[ $allwords =~ pipeline-database.*delete ]]; then
+        if [[ $cur == -* ]]; then
+            COMPREPLY=( $(compgen -W "${delete_opts}" -- ${cur}) )
+            return 0
+        fi
+
+    elif [[ $allwords =~ pipeline-database ]]; then
+        if [[ $cur == -* ]]; then
+            COMPREPLY=( $(compgen -W "-h --help" -- ${cur}) )
+            return 0
+        else
+            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+            return 0
+        fi
+    fi
+}
+
+
+_complete_kimitems(){
+    local cur prev opts
+    COMPREPLY=()
+    allwords="${COMP_WORDS[@]}"
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    # The basic options we'll complete.
+    opts="build install download search remove"
+
+    shared_opts="-i --ignore-case -t --type"
+    build_opts=${shared_opts}" -c --clean -v --verbose"
+    download_opts=${shared_opts}" -a --all -D --Driver -x --extract -z --zip"
+    install_opts=${shared_opts}" -a --all -D --Driver -f --force"
+    search_opts=${shared_opts}" -a --all -d --desc -s -species -se --species-exclusive -v --verbose -vv --veryverbose -vvv --veryveryverbose"
+    remove_opts=${shared_opts}" -c --children -D --Driver -f --force"
+
+    # Complete the arguments to some of the basic commands.
+    if [[ $prev == -t ]] || [[ $prev == --type ]]; then
+        COMPREPLY=( $(compgen -W "te td mo md sm vc" -- ${cur}) )
+        return 0
+    fi
+
+    if [[ $allwords =~ kimitems.*build ]]; then
+        if [[ $cur == -* ]]; then
+            COMPREPLY=( $(compgen -W "${build_opts}" -- ${cur}) )
+            return 0
+        else
+            local objs=$(_getall "te td mo md sm vc" "$cur")
+            COMPREPLY=( $(compgen -W "${objs}" -- ${cur}) )
+            return 0
+        fi
+    elif [[ $allwords =~ kimitems.*install ]]; then
+        if [[ $cur == -* ]]; then
+            COMPREPLY=( $(compgen -W "${install_opts}" -- ${cur}) )
+            return 0
+        else
+            local objs=$(_queryall "te td mo md sm vc" "$cur")
+            COMPREPLY=( $(compgen -W "${objs}" -- ${cur}) )
+        fi
+    elif [[ $allwords =~ kimitems.*download ]]; then
+        if [[ $cur == -* ]]; then
+            COMPREPLY=( $(compgen -W "${download_opts}" -- ${cur}) )
+            return 0
+        else
+            local objs=$(_queryall "te td mo md sm vc" "$cur")
+            COMPREPLY=( $(compgen -W "${objs}" -- ${cur}) )
+        fi
+    elif [[ $allwords =~ kimitems.*search ]]; then
+        if [[ $cur == -* ]]; then
+            COMPREPLY=( $(compgen -W "${search_opts}" -- ${cur}) )
+            return 0
+        fi
+    elif [[ $allwords =~ kimitems.*remove ]]; then
+        if [[ $cur == -* ]]; then
+            COMPREPLY=( $(compgen -W "${remove_opts}" -- ${cur}) )
+            return 0
+        else
+            local objs=$(_getall "te td mo md sm vc" "$cur")
+            COMPREPLY=( $(compgen -W "${objs}" -- ${cur}) )
+            return 0
+        fi
+    elif [[ $allwords =~ kimitems ]]; then
+        if [[ $cur == -* ]]; then
+            COMPREPLY=( $(compgen -W "-h --help" -- ${cur}) )
+            return 0
+        else
+            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+            return 0
+        fi
+    fi
+}
+
+_pipeline_complete_folders()
+{
+    local cur prev opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}" FOLDERS=$1
+
+    # Complete the arguments to some of the basic commands.
+    case "${prev}" in
+        *)
+            local objs=$(_getall "$FOLDERS" "$cur")
+            COMPREPLY=( $(compgen -W "${objs}" -- ${cur}) )
+            return 0
+            ;;
+    esac
+
+    COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
+    return 0
+}
+
+_complete_pipeline_findmatches(){
+    local cur prev
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="-h --help -a --all -m --mismatch -v --verbose"
+
+    if [[ "${#COMP_WORDS[@]}" == 2 ]]; then
+        if [[ $cur == -* ]]; then
+            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+            return 0
+        else
+            local objs=$(_getall "te mo sm vc" "$cur")
+            COMPREPLY=( $(compgen -W "${objs}" -- ${cur}) )
+            return 0
+        fi
+
+    elif [[ "${#COMP_WORDS[@]}" == 3 ]]; then
+        if [[ $cur == -* ]]; then
+            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+            return 0
+        elif [[ $prev == -* ]]; then
+            # If we already have one word present after the util name, we require
+            # that the previous option be a flag in order to do completion on KIM Items.
+            # This is to prevent KIM Items being shown as tab completion options after
+            # a KIM Item is already on the line
+            local objs=$(_getall "te mo sm vc" "$cur")
+            COMPREPLY=( $(compgen -W "${objs}" -- ${cur}) )
+            return 0
+        fi
+
+    elif [[ "${#COMP_WORDS[@]}" == 4 ]]; then
+        prevprev="${COMP_WORDS[COMP_CWORD-2]}"
+
+        if [[ $cur == -* ]]; then
+            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+            return 0
+        else
+            if [[ $prev == -* ]] && [[ $prevprev == -* ]]; then
+                # If we already have the util name and two or more additional words, we require
+                # that both the previous word and the one prior to that were both option flags.
+                # This guarantees that we don't already have a word corresponding to a KIM Item,
+                # which would mean we no longer want to complete on KIM Items
+                local objs=$(_getall "te mo sm vc" "$cur")
+                COMPREPLY=( $(compgen -W "${objs}" -- ${cur}) )
+                return 0
+            fi
+        fi
+    elif [[ "${#COMP_WORDS[@]}" == 5 ]]; then
+        prevprev="${COMP_WORDS[COMP_CWORD-2]}"
+        prevprevprev="${COMP_WORDS[COMP_CWORD-3]}"
+
+        if [[ $cur == -* ]]; then
+            if [[ $prev == -* ]] && [[ $prevprev == -* ]] && [[ $prevprevprev == -* ]]; then
+                # We have already given the maximum number of flags (ignoring --help), so
+                # don't complete on options anymore
+                :
+            else
+                COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+                return 0
+            fi
+        else
+            if [[ $prev == -* ]] && [[ $prevprev == -* ]] && [[ $prevprevprev == -* ]]; then
+                local objs=$(_getall "te mo sm vc" "$cur")
+                COMPREPLY=( $(compgen -W "${objs}" -- ${cur}) )
+                return 0
+            else
+                :
+            fi
+        fi
+
+    elif [[ "${#COMP_WORDS[@]}" -gt 5 ]]; then
+        # If we have exceeded the maximum possible number of words for having
+        # the util name, three non-help options (--all, --mismatch, --verbose),
+        # and a KIM Item name, stop doing completion altogether
+        :
+    fi
+}
+
+_complete_pipeline_runmatches(){
+    local cur prev
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="-h --help -a --all -v --verbose"
+
+    if [[ "${#COMP_WORDS[@]}" == 2 ]]; then
+        if [[ $cur == -* ]]; then
+            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+            return 0
+        else
+            local objs=$(_getall "te mo sm vc" "$cur")
+            COMPREPLY=( $(compgen -W "${objs}" -- ${cur}) )
+            return 0
+        fi
+
+    elif [[ "${#COMP_WORDS[@]}" == 3 ]]; then
+        if [[ $cur == -* ]]; then
+            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+            return 0
+        elif [[ $prev == -* ]]; then
+            # If we already have one word present after the util name, we require
+            # that the previous option be a flag in order to do completion on KIM Items.
+            # This is to prevent KIM Items being shown as tab completion options after
+            # a KIM Item is already on the line
+            local objs=$(_getall "te mo sm vc" "$cur")
+            COMPREPLY=( $(compgen -W "${objs}" -- ${cur}) )
+            return 0
+        fi
+
+    elif [[ "${#COMP_WORDS[@]}" == 4 ]]; then
+        prevprev="${COMP_WORDS[COMP_CWORD-2]}"
+
+        if [[ $cur == -* ]]; then
+            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+            return 0
+        else
+            if [[ $prev == -* ]] && [[ $prevprev == -* ]]; then
+                # If we already have the util name and two or more additional words, we require
+                # that both the previous word and the one prior to that were both option flags.
+                # This guarantees that we don't already have a word corresponding to a KIM Item,
+                # which would mean we no longer want to complete on KIM Items
+                local objs=$(_getall "te mo sm vc" "$cur")
+                COMPREPLY=( $(compgen -W "${objs}" -- ${cur}) )
+                return 0
+            fi
+        fi
+
+    elif [[ "${#COMP_WORDS[@]}" -gt 4 ]]; then
+        # If we have exceeded the maximum possible number of words for having
+        # the util name, three non-help options (--all, --verbose, ),
+        # and a KIM Item name, stop doing completion altogether
+        :
+    fi
+}
+
+_complete_pipeline_runtests(){
+    local cur prev
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="-h --help -a -all -v --verbose"
+
+    if [[ "${#COMP_WORDS[@]}" == 2 ]]; then
+        if [[ $cur == -* ]]; then
+            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+            return 0
+        else
+            local objs=$(_getall "mo sm" "$cur")
+            COMPREPLY=( $(compgen -W "${objs}" -- ${cur}) )
+            return 0
+        fi
+
+    elif [[ "${#COMP_WORDS[@]}" == 3 ]]; then
+        if [[ $cur == -* ]]; then
+            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+            return 0
+        elif [[ $prev == -* ]]; then
+            # If we already have one word present after the util name, we require
+            # that the previous option be a flag in order to do completion on KIM Items.
+            # This is to prevent KIM Items being shown as tab completion options after
+            # a KIM Item is already on the line
+            local objs=$(_getall "mo sm" "$cur")
+            COMPREPLY=( $(compgen -W "${objs}" -- ${cur}) )
+            return 0
+        fi
+
+    elif [[ "${#COMP_WORDS[@]}" == 4 ]]; then
+        prevprev="${COMP_WORDS[COMP_CWORD-2]}"
+
+        if [[ $cur == -* ]]; then
+            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+            return 0
+        else
+            if [[ $prev == -* ]] && [[ $prevprev == -* ]]; then
+                # If we already have the util name and two or more additional words, we require
+                # that both the previous word and the one prior to that were both option flags.
+                # This guarantees that we don't already have a word corresponding to a KIM Item,
+                # which would mean we no longer want to complete on KIM Items
+                local objs=$(_getall "mo sm" "$cur")
+                COMPREPLY=( $(compgen -W "${objs}" -- ${cur}) )
+                return 0
+            fi
+        fi
+
+    elif [[ "${#COMP_WORDS[@]}" -gt 4 ]]; then
+        # If we have exceeded the maximum possible number of words for having
+        # the util name, three non-help options (--all, --verbose),
+        # and a KIM Item name, stop doing completion altogether
+        :
+    fi
+}
+
+_complete_pipeline_runverificationchecks(){
+    _complete_pipeline_runtests
+}
+
+# Compspec for pipeline-run-pair
+#   pipeline-run-pair <Test> <Model>
+#   pipeline-run-pair <Test> <Simulator Model>
+#   pipeline-run-pair <Verification Check> <Model>
+#   pipeline-run-pair <Verification Check> <Simulator Model>
+# plus the two options (verbose and inplace). Note that we do
+# require that the subject come immediately after the runner
+# rather than allowing an option in between.
+_complete_pipeline_runpair(){
+    local cur prev
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="-h --help -v --verbose -i --inplace"
+
+    if [[ "${#COMP_WORDS[@]}" == 2 ]]; then
+        if [[ $cur == -* ]]; then
+            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+            return 0
+        else
+            local objs=$(_getall "te vc" "$cur")
+            COMPREPLY=( $(compgen -W "${objs}" -- ${cur}) )
+            return 0
+        fi
+
+    elif [[ "${#COMP_WORDS[@]}" == 3 ]]; then
+        if [[ $prev =~ .*__TE_.* ]] || [[ $prev =~ .*__VC_.* ]]; then
+            local objs=$(_getall "mo sm" "$cur")
+            COMPREPLY=( $(compgen -W "${objs}" -- ${cur}) )
+            return 0
+        elif [[ $cur == -* ]]; then
+            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+            return 0
+        else
+            local objs=$(_getall "te vc" "$cur")
+            COMPREPLY=( $(compgen -W "${objs}" -- ${cur}) )
+            return 0
+        fi
+
+    elif [[ "${#COMP_WORDS[@]}" == 4 ]]; then
+        prevprev="${COMP_WORDS[COMP_CWORD-2]}"
+        if [[ $prev == -* ]] && [[ $prevprev == -* ]]; then
+            local objs=$(_getall "te vc" "$cur")
+            COMPREPLY=( $(compgen -W "${objs}" -- ${cur}) )
+            return 0
+        elif [[ $prev =~ .*__TE_.* ]] || [[ $prev =~ .*__VC_.* ]]; then
+            local objs=$(_getall "mo sm" "$cur")
+            COMPREPLY=( $(compgen -W "${objs}" -- ${cur}) )
+            return 0
+        elif [[ $prevprev =~ .*__TE_.* ]] || [[ $prevprev =~ .*__VC_.* ]]; then
+            if [[ $prev =~ .*__MO_.* ]] || [[ $prev =~ .*__SM_.* ]]; then
+                if [[ $cur == -* ]]; then
+                    COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+                    return 0
+                fi
+            fi
+        else
+            :
+        fi
+
+    elif [[ "${#COMP_WORDS[@]}" == 5 ]]; then
+        prevprev="${COMP_WORDS[COMP_CWORD-2]}"
+        prevprevprev="${COMP_WORDS[COMP_CWORD-3]}"
+        if [[ $cur == -* ]]; then
+            if [[ $prev == -* ]]; then
+                if [[ $prevprev =~ .*__MO_.* ]] || [[ $prevprev =~ .*__SM_.* ]]; then
+                    if [[ $prevprevprev =~ .*__TE_.* ]] || [[ $prevprevprev =~ .*__VC_.* ]]; then
+                        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+                        return 0
+                    fi
+                fi
+            fi
+        elif [[ $prev =~ .*__TE_.* ]] || [[ $prev =~ .*__VC_.* ]]; then
+            local objs=$(_getall "mo sm" "$cur")
+            COMPREPLY=( $(compgen -W "${objs}" -- ${cur}) )
+            return 0
+        fi
+
+    fi
+}
+
+_complete_testgenie(){
+    local cur prev
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="-h --help -v --verbose --templatedir --source --generator-file
+         --global-variables --dry-run --destination --overwrite --add-random-kimnums
+         --filename-prefix --filename-extension --version --logfile"
+
+    if [[ $cur == -* ]]; then
+        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+        return 0
+    else
+        local objs=$(_getall "td" "$cur")
+        COMPREPLY=( $(compgen -W "${objs}" -- ${cur}) )
+        return 0
+    fi
+}
+
+complete -F _complete_pipeline_database pipeline-database
+complete -F _complete_kimitems kimitems
+complete -F _complete_pipeline_runpair pipeline-run-pair
+complete -F _complete_pipeline_findmatches pipeline-find-matches
+complete -F _complete_pipeline_runmatches pipeline-run-matches
+complete -F _complete_pipeline_runtests pipeline-run-tests
+complete -F _complete_pipeline_runverificationchecks pipeline-run-verification-checks
+complete -F _complete_testgenie testgenie

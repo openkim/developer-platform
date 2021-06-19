@@ -1,0 +1,470 @@
+#! /usr/bin/env python3
+"""
+testgenie - A simple templating tool for creating KIM Tests
+
+This utility takes the name of a Test Driver, the path of a directory containing
+the template files that will be created for each Test, and a file containing
+JSON-formatted dictionaries (one per line).  Each JSON dictionary is used to fill
+in the Jinja directives in each of the template files, generating a single Test.
+
+Test generation takes place in steps:
+
+  1. Grab the dictionary defined in a given line of the test_generator.json file
+  2. If a global variables file is specified, add the corresponding varibles
+  3. Process the kimspec.edn.genie file as a Jinja template using the full set of variables
+  4. Add all of the variables defined in the processed kimspec.edn to the local dictionary
+  5. Set the folder name from the 'extended-id' attribute in the processed kimspec.edn file
+  6. For each remaining file, check if a
+        {# FILENAME = desired_file_name_with_{{ variables }} #}
+     directive exists to fix the filename
+  7. Remove prefixes or extensions as necessary
+  8. Process the rest of the file as a Jinja template, excluding any calls to the query function
+  9. After all other template variables have been rendered, make any calls to query function
+     that are present and render the results
+  10. Move folders to the Tests subdir of cf.LOCAL_REPOSITORY_PATH
+
+For convenience, if the --add-random-kimnums flag is given, the current generator file will
+be overwritten with one for which random KIM IDs have been added to each dictionary under the
+key name 'kimnum'.  The resulting generator file is then used to complete the Test generation
+process.
+
+Note also that the script expects the path for the generator file and global
+variables files to be one directory up from the test template folder.  By
+default, 'TEST_DRIVER_NAME' will be the same as 'testdriver' and 'version' will be
+0, or whatever is specified with the command line argument
+
+This utility outputs a list of all generated Test folders. This is useful to catch
+in order to remove the folders later if necessary. e.g.
+
+  testgenie mytestdriver__TD_000000000000_000 > list_of_generated_tests.txt
+  cat list_of_generated_tests.txt | xargs rm -r
+
+Copyright (c) 2014-2021, Regents of the University of Minnesota. All rights
+reserved.
+
+This software may be distributed as-is, without modification.
+"""
+import logging
+import logging.handlers
+import os
+import tempfile
+import shutil
+import re
+import random
+import json
+import sys
+
+import jinja2
+import edn_format
+
+from excerpts import kimquery, kimcodes
+import excerpts.config as cf
+
+
+TDDIR = os.path.join(cf.LOCAL_REPOSITORY_PATH, cf.item_subdir_names["td"])
+TEDIR = os.path.join(cf.LOCAL_REPOSITORY_PATH, cf.item_subdir_names["te"])
+KIMSPEC_FILE = cf.CONFIG_FILE
+TEMPLATEDIR = "test_template"
+
+# The required argument 'testdriver' is required to be a valid KIM ID for a Test Driver
+RE_TESTDRIVER = r"^(?:([_a-zA-Z][_a-zA-Z0-9]*?)__)?(TD)_([0-9]{12})(?:_([0-9]{3}))$"
+
+##############################
+# Define logger
+##############################
+def createLogger(logfile, verbose):
+    if verbose:
+        # Show debug log messages and lines/timestamps
+        loglevel = logging.DEBUG
+        formatstr = "%(filename)s:%(lineno)d _ %(asctime)s - %(levelname)s - %(name)s - %(message)s"
+    else:
+        # Show info log messages and don't write lines/timestamps
+        loglevel = logging.INFO
+        formatstr = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
+
+    logging.basicConfig(filename=logfile, level=loglevel, format=formatstr)
+    logger = logging.getLogger("testgenie")
+    return logger
+
+
+################################
+# Primary Test factory function
+################################
+FILENAME_REGEX = re.compile(
+    r"""
+    FILENAME    #magic word
+    \s*         # whitespace
+    =           # equal character
+    \s*         # whitespace
+    (\S+)       # name
+    """,
+    re.VERBOSE,
+)
+
+
+def maketest(
+    folder,
+    variable_dict,
+    dest=TEDIR,
+    overwrite=False,
+    dry_run=False,
+    filename_prefix=None,
+    filename_extension=None,
+    logger=None,
+):
+    """Make a Test given the input folder"""
+
+    def query_stub(x):
+        """Render everything inside the argument to the query function, then
+        return the output inside of {{ query() }} so the actual query call can
+        be made"""
+        tmp_env = jinja2.Environment(loader=jinja2.BaseLoader).from_string(str(x))
+        tmp_env.globals.update({"stripversion": kimcodes.strip_version})
+        rendered = tmp_env.render(**variable_dict)
+        return f"{{{{ query({rendered}) }}}}"
+
+    if logger is None:
+        logger = logging.getLogger("testgenie")
+        nullhdlr = logging.NullHandler()
+        logger.addHandler(nullhdlr)
+
+    try:
+        tempdir = tempfile.mkdtemp()
+        # First parse the kimspec file
+        KIMSPEC_FILE_TEMP = KIMSPEC_FILE + ".genie"
+
+        file_newconf = os.path.join(folder, KIMSPEC_FILE_TEMP)
+        kimspec_template = template_environment.get_template(file_newconf)
+        kimspec = kimspec_template.render(**variable_dict)
+
+        with open(os.path.join(tempdir, KIMSPEC_FILE), "w", encoding="utf-8") as f:
+            f.write(kimspec)
+
+        # Extend variable_dict with everything defined in kimspec
+        kimspeckeys = edn_format.loads(kimspec, write_ply_tables=False)
+        variable_dict.update({"kimspec": kimspeckeys})
+        variable_dict.update({"query": query_stub})
+
+        # Get Test name from kimspec
+        test_name = variable_dict["kimspec"]["extended-id"]
+
+        # Create temporary directory
+        tmp_test_dir = os.path.join(tempdir, test_name)
+        shutil.copytree(folder, tmp_test_dir)
+
+        logger.info("BUILDING: {} @ {}".format(test_name, tmp_test_dir))
+        logger.debug("Variable_dict: {}".format(variable_dict))
+
+        for (basepath, _, files) in os.walk(tmp_test_dir):
+            for fl in files:
+                logger.debug("processing {}".format(fl))
+                filepath = os.path.join(basepath, fl)
+                with open(filepath, encoding="utf-8") as f:
+                    contents = f.read()
+                # copy original mode so we can chmod at end
+                original_mode = os.stat(filepath).st_mode
+                filename = fl
+                if filename_prefix:
+                    if not filename.startswith(filename_prefix):
+                        os.remove(filepath)
+                        continue
+                    else:
+                        filename = filename[len(filename_prefix) :]
+                if filename_extension:
+                    if not filename.endswith(filename_extension):
+                        os.remove(filepath)
+                        continue
+                    else:
+                        filename = filename[: -len(filename_extension) - 1]
+                filename_search = FILENAME_REGEX.search(contents)
+                if filename_search:
+                    filename_template = FILENAME_REGEX.search(contents).group(1)
+                    filename = jinja2.Template(filename_template).render(
+                        **variable_dict
+                    )
+
+                logger.debug("new file name: {}".format(filename))
+
+                # Template everything completely other than query calls, for which we only template
+                # the arguments for now
+                template_intermediate = template_environment.get_template(filepath)
+                new_contents = template_intermediate.render(**variable_dict)
+
+                # Now actually perform any queries that might be present and write the final rendered
+                # template to file
+                template_final = jinja2.Environment(
+                    loader=jinja2.BaseLoader
+                ).from_string(str(new_contents))
+                new_contents = template_final.render({"query": kimquery.query})
+
+                newfilepath = os.path.join(basepath, filename)
+                os.remove(filepath)
+
+                with open(newfilepath, "w", encoding="utf-8") as g:
+                    g.write(new_contents)
+                # Set permissions to match the corresponding template file
+                os.chmod(newfilepath, original_mode)
+
+        test_dest_name = os.path.join(dest, test_name)
+
+        if not dry_run:
+            # Now move the finished Test directory to its final home
+            if os.path.isdir(test_dest_name):
+                logger.info("Moving to {}".format(test_dest_name))
+                if overwrite:
+                    shutil.rmtree(test_dest_name)
+                    shutil.move(tmp_test_dir, test_dest_name)
+                else:
+                    shutil.rmtree(tempdir)
+                    raise OSError(
+                        "Directory {} already exists! "
+                        "Aborting...".format(test_dest_name)
+                    )
+            else:
+                shutil.move(tmp_test_dir, test_dest_name)
+
+            # Clean up
+            shutil.rmtree(tempdir)
+
+            return os.path.join(dest, test_name)
+
+        # Clean up
+        shutil.rmtree(tempdir)
+        return test_dest_name
+
+    except KeyboardInterrupt:
+        # Make sure we clean up our temporary directory if the user interrupts the process
+        shutil.rmtree(tempdir)
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="KIM Test generation genie",
+        epilog=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+
+    parser.add_argument(
+        "testdriver",
+        type=str,
+        help="Extended KIM ID of the Test Driver whose Tests you wish to generate",
+    )
+
+    parser.add_argument(
+        "--templatedir",
+        type=str,
+        default=TEMPLATEDIR,
+        help="Directory containing the template files [default: {}]".format(
+            TEMPLATEDIR
+        ),
+    )
+
+    parser.add_argument(
+        "--source",
+        type=str,
+        default=TDDIR,
+        help="Parent directory of Test Driver [default: {}]".format(TDDIR),
+    )
+
+    parser.add_argument(
+        "--generator-file",
+        type=str,
+        default="test_generator.json",
+        help="Generator file [default: test_generator.json]",
+    )
+
+    parser.add_argument(
+        "--global-variables",
+        type=str,
+        help="Additional JSON-formatted dictionary of global variables, as file or string",
+    )
+
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Don't actually create the Tests, but rather just show what would be generated",
+    )
+
+    parser.add_argument(
+        "--destination",
+        type=str,
+        default=TEDIR,
+        help="Destination folder for generated Tests [default: {}]".format(TEDIR),
+    )
+
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help=(
+            "Overwrite any existing Test directories which already exist at the locations where "
+            "the Tests being generated are trying to be written to. Use with caution!"
+        ),
+    )
+
+    parser.add_argument(
+        "--add-random-kimnums",
+        action="store_true",
+        help=(
+            "Use randomly generated kimid numbers, provided as Jinja key 'kimnum'. Using "
+            "this flag means that the generator file you provide will be OVERWRITTEN with one "
+            "in which a 'kimnum' key (with a random kimcode as its corresponding value) is "
+            "added to each dictionary contained within. Before this alteration is made, a "
+            "check is performed to determine if there is already a 'kimnum' key present "
+            "in any of the dictionaries in the generator file and, if so, the entire test "
+            "generation process is aborted and your generator file will not be overwritten."
+        ),
+    )
+
+    parser.add_argument(
+        "--filename-prefix",
+        type=str,
+        help="File name prefix; only files with the specified prefix are processed.",
+    )
+
+    parser.add_argument(
+        "--filename-extension",
+        type=str,
+        help="File name extension; only files with the specified extension are processed.",
+    )
+
+    parser.add_argument(
+        "--version",
+        type=int,
+        default=0,
+        help="Parameter to pass as 'version' to global dictionary",
+    )
+
+    parser.add_argument(
+        "--logfile",
+        type=str,
+        help=(
+            "Name of file to write logs to. If left unspecified, logs are not written "
+            "(although the list of generated Tests is still printed to the console)."
+        ),
+    )
+
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Show debugging messages and timestamps in logs",
+    )
+
+    args = vars(parser.parse_args())
+    logger = None
+
+    template_environment = jinja2.Environment(loader=jinja2.FileSystemLoader("/"))
+    template_environment.globals.update({"stripversion": kimcodes.strip_version})
+
+    # Set up logger if necessary
+    if args["logfile"]:
+        if os.path.isfile(args["logfile"]):
+            overwrite_log = input(
+                "Log file {} already exists.  Would you like to overwrite "
+                "this file (y/n)? ".format(args["logfile"])
+            )
+            overwrite_log = overwrite_log.lower()
+            if overwrite_log.lower() in ["y", "yes"]:
+                os.remove(args["logfile"])
+                logger = createLogger(args["logfile"], verbose=args["verbose"])
+            else:
+                print("Aborting Test generation")
+                exit()
+        else:
+            logger = createLogger(args["logfile"], verbose=args["verbose"])
+
+    # Before we do anything, check that the Test Driver supplied is a proper Extended ID
+    if not re.match(RE_TESTDRIVER, args["testdriver"]):
+        print(
+            "ERROR: {} is not a valid KIM ID for a Test Driver. Aborting "
+            "Test generation.\n  See https://openkim.org/about-kim-ids/ "
+            "for information about KIM IDs.".format(args["testdriver"])
+        )
+        exit(1)
+
+    # Source directory
+    source = args["source"]
+
+    # Destination directory
+    dest = args["destination"]
+    overwrite = args["overwrite"]
+    dry_run = args["dry_run"]
+    random_codes = args["add_random_kimnums"]
+    generator_file = args["generator_file"]
+    filename_prefix = args["filename_prefix"]
+    filename_extension = args["filename_extension"]
+
+    # Expand ~ to home directory in source and dest
+    source = re.sub("~", os.path.expanduser("~"), source)
+    dest = re.sub("~", os.path.expanduser("~"), dest)
+
+    # Find test_template directory
+    td_template_path = os.path.join(source, args["testdriver"], args["templatedir"])
+
+    global_vars = {"TEST_DRIVER_NAME": args["testdriver"]}
+    global_vars["version"] = "{:03d}".format(args["version"])
+
+    # Get global vars
+    if args["global_variables"]:
+        global_path = args["global_variables"]
+        try:
+            with open(
+                os.path.abspath(os.path.join(td_template_path, "..", global_path)),
+                encoding="utf-8",
+            ) as f:
+                global_vars = json.loads(f.read())
+        except Exception:
+            global_vars = json.loads(global_path)
+
+    # If user provided add-random-kimnums option, attempt to overwrite their generator file
+    if random_codes:
+        generator_file_dicts = []
+        # First, read generator file and ensure there are no 'kimnum' entries
+        with open(
+            os.path.join(td_template_path, "..", generator_file), encoding="utf-8"
+        ) as f:
+            for line in f:
+                this_dict = json.loads(line)
+                generator_file_dicts.append(this_dict)
+                if "kimnum" in this_dict:
+                    print(
+                        "Flag --add-random-kimnums was given, but there is "
+                        "a 'kimnum' key present in one or more of the "
+                        "dictionaries in generator file {}. Please remove "
+                        "all instances of 'kimnum' if you wish to use "
+                        "--add-random-kimnums. Aborting test "
+                        "generation.".format(
+                            os.path.join(source, args["testdriver"], generator_file)
+                        )
+                    )
+                    sys.exit(1)
+
+        # Now loop over the contents of the generator file and add random kimnums to each dict
+        with open(
+            os.path.join(td_template_path, "..", generator_file), "w", encoding="utf-8"
+        ) as f:
+            for this_dict in generator_file_dicts:
+                this_dict["kimnum"] = "%012d" % random.randint(0, 1e12 - 1)
+                f.write(json.dumps(this_dict) + "\n")
+
+    # Generate Tests
+    with open(
+        os.path.join(td_template_path, "..", generator_file), encoding="utf-8"
+    ) as f:
+        for line in f:
+            variable_dict = global_vars.copy()
+            variable_dict.update(json.loads(line))
+            newtestpath = maketest(
+                td_template_path,
+                variable_dict=variable_dict,
+                dest=dest,
+                overwrite=overwrite,
+                dry_run=dry_run,
+                filename_prefix=filename_prefix,
+                filename_extension=filename_extension,
+                logger=logger,
+            )
+            print(newtestpath)

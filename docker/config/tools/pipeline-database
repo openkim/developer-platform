@@ -1,0 +1,279 @@
+#!/usr/bin/env python3
+"""
+Copyright (c) 2014-2021, Regents of the University of Minnesota. All rights
+reserved.
+
+This software may be distributed as-is, without modification.
+"""
+import os
+import shutil
+import subprocess
+from json.decoder import JSONDecodeError
+
+from montydb import open_repo
+from montydb.utils import montyimport, montyexport
+from montydb.utils import montyrestore, montydump
+
+from bson.errors import InvalidBSON
+
+import excerpts.config as cf
+
+PIPELINE_LOCAL_DB_PATH = "/pipeline/db/"
+
+PIPELINE_ENV_HEADER = """#!/bin/bash
+#==============================================
+# this file has a specific format since it is
+# also read by python.  only FOO=bar and
+# the use of $BAZ can be substituted. comments
+# start in column 0
+#==============================================
+
+"""
+
+
+def action_set(args):
+    database = args["database"].lower()
+
+    if database == "remote":
+        # Set PIPELINE_LOCAL_DEV to False in pipeline-env file
+        cf.update_environment_file(
+            {"PIPELINE_LOCAL_DEV": False}, "/pipeline/pipeline-env"
+        )
+
+    elif database == "local":
+        cf.update_environment_file(
+            {"PIPELINE_LOCAL_DEV": True}, "/pipeline/pipeline-env"
+        )
+
+    else:
+        raise ValueError(
+            "Argument `database` to pipeline-database set must "
+            "be one of either 'remote' or 'local' (no quotes)"
+        )
+
+
+def action_delete(args):
+    if not os.path.exists(PIPELINE_LOCAL_DB_PATH):
+        print(
+            "Local database directory {} not found. Exiting..."
+            "".format(PIPELINE_LOCAL_DB_PATH)
+        )
+
+    else:
+        delete = False
+        if not args["force"]:
+            print("Are you sure you want to delete the local database? [y/n]")
+
+            ans = input()
+            if ans.lower() in ["y", "yes"]:
+                delete = True
+
+        else:
+            delete = True
+
+        if delete:
+            print("Permanently deleting local database...")
+            shutil.rmtree(PIPELINE_LOCAL_DB_PATH)
+
+
+def action_import(args):
+    try:
+        with open_repo(PIPELINE_LOCAL_DB_PATH):
+            montyimport("db", "data", args["database-file"])
+    except (UnicodeDecodeError, JSONDecodeError):
+        print(
+            "Database file {} is not valid JSON. Exiting...".format(
+                args["database-file"]
+            )
+        )
+
+
+def action_export(args):
+    with open_repo(PIPELINE_LOCAL_DB_PATH):
+        montyexport("db", "data", args["database-file"])
+
+
+def action_restore(args):
+    try:
+        with open_repo(PIPELINE_LOCAL_DB_PATH):
+            montyrestore("db", "data", args["database-file"])
+    except InvalidBSON:
+        print(
+            "Database file {} is not valid BSON. Exiting...".format(
+                args["database-file"]
+            )
+        )
+
+
+def action_dump(args):
+    with open_repo(PIPELINE_LOCAL_DB_PATH):
+        montydump("db", "data", args["database-file"])
+
+
+def action_status():
+    def disk_usage(path):
+        proc = subprocess.Popen(
+            ["du", "-sh", path], stdout=subprocess.PIPE, encoding="utf-8"
+        )
+        out, _ = proc.communicate()
+        out = out.split("\t")[0]
+        return out
+
+    print(
+        "Database selected: {}".format("local" if cf.PIPELINE_LOCAL_DEV else "remote")
+    )
+
+    if not os.path.exists(PIPELINE_LOCAL_DB_PATH):
+        local_db_size = "No local database found"
+    else:
+        local_db_size = disk_usage(PIPELINE_LOCAL_DB_PATH)
+        print("Local database path: {}".format(PIPELINE_LOCAL_DB_PATH))
+        print("Disk consumed by local database: {}".format(local_db_size))
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="""A utility used to manage the database that is queried by Tests in their
+pipeline.stdin.tpl files.  Select to either use the remote OpenKIM mongo
+database or a local mongo database; when a local database is used, Test Results
+generated using the pipeline-run-* utilities are automatically inserted into
+it.  This utility also allows you to:
+
+ (1) clear out the current local database
+ (2) import/export a local database using the mongdo db extended json format
+ (3) restore/dump a local database using the bson (binary json) format
+
+The local mongo database is stored at /pipeline/db/
+
+NOTE: The `kimitems` and `testgenie` utilities will always perform their queries
+      to the remote OpenKIM database, even if you are using a local database.""",
+        epilog=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    sub = parser.add_subparsers()
+
+    # Subactions that can be performed
+    parse_set = sub.add_parser(
+        name="set",
+        help=(
+            "Select whether to use the remote OpenKIM mongo database or a "
+            "local mongo database"
+        ),
+    )
+    parse_delete = sub.add_parser(
+        name="delete", help=("Delete the current local database")
+    )
+    parse_import = sub.add_parser(
+        name="import",
+        help=("Import the local mongo database from a mongodb extended json file"),
+    )
+    parse_export = sub.add_parser(
+        name="export",
+        help=("Export the local mongo database to a mongodb extended json file"),
+    )
+    parse_restore = sub.add_parser(
+        name="restore", help=("Restore the local mongo database from a bson file")
+    )
+    parse_dump = sub.add_parser(
+        name="dump", help=("Dump the local mongo database to a bson file")
+    )
+    parse_status = sub.add_parser(
+        name="status",
+        help=(
+            "Report whether remote or local database is being used.  If a "
+            "local database can be found, report its size in human-readable format."
+        ),
+    )
+
+    parse_set.set_defaults(action="set")
+    parse_delete.set_defaults(action="delete")
+    parse_import.set_defaults(action="import")
+    parse_export.set_defaults(action="export")
+    parse_restore.set_defaults(action="restore")
+    parse_dump.set_defaults(action="dump")
+    parse_status.set_defaults(action="status")
+
+    # Custom subactions for each particular action
+
+    # set
+    parse_set.add_argument(
+        "database",
+        type=str,
+        help="Which database to use.  Valid choices are 'remote' (to use the "
+        "OpenKIM mongo database hosted at query.openkim.org) or 'local' (to "
+        "use a local mongo database).",
+    )
+
+    parse_delete.add_argument(
+        "-f",
+        "--force",
+        action="store_true",
+        help="Bypass confirmation prompt when deleting local database",
+    )
+
+    # import
+    parse_import.add_argument(
+        "database-file",
+        type=str,
+        help="Mongodb extended json-formatted file containing an exported mongo "
+        "database",
+    )
+
+    # export
+    parse_export.add_argument(
+        "database-file",
+        type=str,
+        help="File location to write a copy of the current local database to "
+        "in mongodb extended json format",
+    )
+
+    # restore
+    parse_restore.add_argument(
+        "database-file",
+        type=str,
+        help="File containing a mongo database dump in bson format",
+    )
+
+    # dump
+    parse_dump.add_argument(
+        "database-file",
+        type=str,
+        help="File location to write a copy of the current local database to "
+        "in mongodb extended json format",
+    )
+
+    args = vars(parser.parse_args())
+
+    # Convert database file to absolute path for montydb
+    if args.get("database-file"):
+        args["database-file"] = os.path.abspath(args["database-file"])
+
+    # Identify which action was specified
+    action = args.get("action")
+
+    if not action:
+        # If no action was given, print help text
+        parser.print_help()
+
+    elif action == "set":
+        action_set(args)
+
+    elif action == "delete":
+        action_delete(args)
+
+    elif action == "import":
+        action_import(args)
+
+    elif action == "export":
+        action_export(args)
+
+    elif action == "restore":
+        action_restore(args)
+
+    elif action == "dump":
+        action_dump(args)
+
+    elif action == "status":
+        action_status()

@@ -1,0 +1,835 @@
+#!/usr/bin/env python3
+"""
+Copyright (c) 2014-2021, Regents of the University of Minnesota. All rights
+reserved.
+
+This software may be distributed as-is, without modification.
+"""
+import sys
+import json
+import urllib.request, urllib.parse, urllib.error
+import tarfile
+import re
+import os
+import shutil
+import uuid
+from itertools import chain
+import zipfile
+import tempfile
+from textwrap import TextWrapper
+
+from excerpts import kimquery
+from excerpts.kimcodes import parse_kim_code
+from excerpts import kimobjects
+import excerpts.config as cf
+from excerpts.local_search import local_search
+
+import logging
+
+logger = logging.getLogger("kimitems")
+
+indent = " " * 2
+description_wrap = TextWrapper(
+    initial_indent=indent, subsequent_indent=indent, width=100
+)
+
+RE_KIMID = re.compile(
+    r"^(?:([_a-zA-Z][_a-zA-Z0-9]*?)__)?([A-Z]{2})_([0-9]{12})(?:_([0-9]{3}))?$"
+)
+
+
+def unique(seq):
+    seen = set()
+    return [x for x in seq if x not in seen and not seen.add(x)]
+
+
+def build_query(args):
+    q = {}
+    q["query"] = {}
+
+    q["fields"] = {"kimcode": 1, "driver.kimcode": 1, "description": 1}
+    q["sort"] = [["kimcode", 1]]
+    q["flat"] = True
+
+    if args.get("type"):
+        q["query"].update({"type": args["type"].lower()})
+
+    if args.get("species"):
+        q["query"].update({"species": args["species"]})
+
+    if args.get("species_exclusive"):
+        q["query"].update(
+            {
+                "species": {
+                    "$all": args["species_exclusive"],
+                    "$not": {"$elemMatch": {"$nin": args["species_exclusive"]}},
+                }
+            }
+        )
+
+    if args["all"]:
+        q["history"] = True
+    else:
+        q["query"].update({"latest": True})
+
+    # Search on either description or kimcode
+    if args.get("desc"):
+        if args.get("ignore_case"):
+            q["query"].update(
+                {"description": {"$regex": args["desc"], "$options": "i"}}
+            )
+        else:
+            q["query"].update({"description": {"$regex": args["desc"]}})
+
+    else:
+        if args.get("ignore_case"):
+            q["query"].update(
+                {"kimcode": {"$regex": args["search-term"], "$options": "i"}}
+            )
+        else:
+            q["query"].update({"kimcode": {"$regex": args["search-term"]}})
+
+    if args["action"] == "search" and args.get("veryveryverbose"):
+        q.pop("fields")
+
+    return q
+
+
+def listify(a):
+    if not isinstance(a, (tuple, list)):
+        return [a]
+    return a
+
+
+def search(args, hits_threshold=30):
+    """
+    Returns a dictionary containing the key 'kimcode' and, if the item
+    is a Test or Model which has a driver, a key called 'driver.kimcode'
+    """
+    item_hits = []
+
+    q1 = build_query(args)
+
+    try:
+        item_hits = listify(kimquery.query(q1, decode=True))
+    except Exception as e:
+        print(indent + "Error: {}. Aborting...".format(str(e)))
+        sys.exit(1)
+
+    if not item_hits:
+        print(
+            "No objects matching pattern {} could be found".format(args["search-term"])
+        )
+        sys.exit(0)
+
+    if not args["force"]:
+        if len(item_hits) > hits_threshold:
+            print("Your search returned {} KIM Items".format(len(item_hits)))
+            print("Do you want to continue? [y/n]")
+            ans = input()
+            if ans.lower() not in ["y", "yes"]:
+                print("Exiting...")
+                sys.exit(0)
+
+    return item_hits
+
+
+def download(obj, tmp=False, compression="txz"):
+    print("Downloading {}...".format(obj))
+    url = "https://openkim.org/download/"
+    ext = {"zip": ".zip", "txz": ".txz"}
+
+    if compression not in ext:
+        print("Please choose one of {}".format(ext.keys()))
+        sys.exit(1)
+
+    outname = obj + ext[compression]
+    url = url + outname
+
+    if tmp:
+        outname = "tmp" + uuid.uuid1().hex + outname
+
+    urllib.request.urlretrieve(url, outname)
+
+    return os.path.abspath(outname)
+
+
+def install(item, force=False):
+    """
+    Download an archive of a KIM Item to a temporary directory,
+    uncompress it, and attempt to install it to the relevant
+    subdirectory of LOCAL_REPOSITORY_PATH.
+    """
+    _, leader, _, _ = parse_kim_code(item)
+    leader = leader.lower()
+    leader_dir = os.path.join(cf.LOCAL_REPOSITORY_PATH, cf.item_subdir_names[leader])
+    install_dir = os.path.join(leader_dir, item)
+
+    if os.path.exists(install_dir) and not force:
+        print("{} already exists, skipping...".format(install_dir))
+        return
+
+    cwd = os.getcwd()
+    tmp_dir = tempfile.mkdtemp()
+    os.chdir(tmp_dir)
+    archive = download(item, tmp=True)
+
+    # Extract tarball that we downloaded
+    with tarfile.open(archive) as t:
+        t.extractall()
+
+    if os.path.exists(install_dir):
+        print("Warning: {} already exists, replacing...".format(install_dir))
+        shutil.rmtree(install_dir)
+
+    print("Installing {} to {}...".format(item, install_dir))
+
+    shutil.move(item, leader_dir)
+
+    os.chdir(cwd)
+    shutil.rmtree(tmp_dir)
+
+
+def build_obj(item, clean=False, num_make_procs=1, verbose=False):
+    if not isinstance(item, kimobjects.KIMObject):
+        obj = kimobjects.kim_obj(item)
+    else:
+        obj = item
+
+    if clean:
+        print("Cleaning {}...".format(obj.kim_code))
+        obj.make_clean()
+
+    print("Building {}...".format(obj.kim_code))
+    try:
+        obj.make(num_make_procs=num_make_procs, verbose=verbose)
+    except Exception as e:
+        print(str(e))
+
+
+# ========================================================
+# these are the main actions that can be run
+# args are interpreted starting in these functions
+# ========================================================
+def action_build(args):
+    if args["search-term"] == "all":
+        allobjs = list(
+            chain(
+                kimobjects.TestDriver.all_on_disk(),
+                kimobjects.Test.all_on_disk(),
+                kimobjects.ModelDriver.all_on_disk(),
+                kimobjects.Model.all_on_disk(),
+                kimobjects.SimulatorModel.all_on_disk(),
+                kimobjects.VerificationCheck.all_on_disk(),
+            )
+        )
+
+        if len(allobjs) == 0:
+            print("No items found in subdirectories of ~ to build. Exiting...")
+        else:
+            for t in allobjs:
+                build_obj(
+                    item=t,
+                    clean=args["clean"],
+                    num_make_procs=args["j"],
+                    verbose=args["verbose"],
+                )
+
+    else:
+        hits = local_search(args)
+
+        if len(hits) == 0:
+            print(
+                "No objects matching pattern {} could be found".format(
+                    args["search-term"]
+                )
+            )
+        else:
+            for h in hits:
+                build_obj(
+                    item=h,
+                    clean=args["clean"],
+                    num_make_procs=args["j"],
+                    verbose=args["verbose"],
+                )
+
+
+def action_download(args):
+
+    # Primary helper function
+    def process_download(item, extract, compression):
+        """
+        Download a KIM Item archive in the specified compression format to
+        the current working directory and, if desired, uncompress it.
+        """
+        # Check if this archive already exists in the current directory
+        if compression == "zip":
+            archive = item + ".zip"
+            if extract:
+                if os.path.exists(item):
+                    print("Directory {} already exists. Skipping...".format(item))
+                    pass
+                elif os.path.exists(archive):
+                    print(
+                        "Archive {} already exists in current directory. Skipping...".format(
+                            archive
+                        )
+                    )
+                    pass
+                else:
+                    download(item, compression="zip")
+                    zip_ref = zipfile.ZipFile(archive, "r")
+                    zip_ref.extractall(item)
+                    zip_ref.close()
+                    os.remove(archive)
+            else:
+                if os.path.exists(archive):
+                    print(
+                        "Archive {} already exists in current directory. Skipping...".format(
+                            archive
+                        )
+                    )
+                    pass
+                else:
+                    download(item, compression="zip")
+
+        elif compression == "txz":
+
+            # Check if this archive already exists in the current directory
+            archive = item + ".txz"
+            if extract:
+                if os.path.exists(item):
+                    print("Directory {} already exists. Skipping...".format(item))
+                    pass
+                elif os.path.exists(archive):
+                    print(
+                        "Archive {} already exists in current directory. Skipping...".format(
+                            archive
+                        )
+                    )
+                    pass
+                else:
+                    download(item, compression="txz")
+                    # Extract tarball that we downloaded
+                    with tarfile.open(archive) as t:
+                        t.extractall()
+                    os.remove(archive)
+            else:
+                if os.path.exists(archive):
+                    print(
+                        "Archive {} already exists in current directory. Skipping...".format(
+                            archive
+                        )
+                    )
+                    pass
+                else:
+                    download(item, compression="txz")
+
+    # Query mongo. If there are more than 10 matching results, issue a confirmation prompt
+    hits = search(args, hits_threshold=10)
+
+    if args["zip"]:
+        for h in hits:
+            if h.get("driver.kimcode"):
+                if not args["Driver"]:
+                    print(
+                        "Notice: Item {} requires a driver ({}) to work. Would you "
+                        "like to download the driver? [y/n]".format(
+                            h["kimcode"], h["driver.kimcode"]
+                        )
+                    )
+                    ans = input()
+                    if ans.lower() in ["y", "yes"]:
+                        process_download(h["driver.kimcode"], args["extract"], "zip")
+                    else:
+                        pass
+                else:
+                    process_download(h["driver.kimcode"], args["extract"], "zip")
+
+                process_download(h["kimcode"], args["extract"], "zip")
+
+            else:
+                process_download(h["kimcode"], args["extract"], "zip")
+    else:
+        for h in hits:
+            if h.get("driver.kimcode"):
+                if not args["Driver"]:
+                    print(
+                        "Notice: Item {} requires a driver ({}) to work. Would you "
+                        "like to download the driver? [y/n]".format(
+                            h["kimcode"], h["driver.kimcode"]
+                        )
+                    )
+                    ans = input()
+                    if ans.lower() in ["y", "yes"]:
+                        process_download(h["driver.kimcode"], args["extract"], "txz")
+                    else:
+                        pass
+                else:
+                    process_download(h["driver.kimcode"], args["extract"], "txz")
+
+                process_download(h["kimcode"], args["extract"], "txz")
+            else:
+                process_download(h["kimcode"], args["extract"], "txz")
+
+
+def action_install(args):
+    hits = search(args, hits_threshold=10)
+    for h in hits:
+        _, leader, _, _ = parse_kim_code(h["kimcode"])
+        path = os.path.join(
+            cf.LOCAL_REPOSITORY_PATH, cf.item_subdir_names[leader.lower()], h["kimcode"]
+        )
+        if os.path.exists(path) and not args["force"]:
+            print("{} already exists, skipping...".format(path))
+            continue
+        else:
+            if h.get("driver.kimcode"):
+                # Check if the user has already installed the driver
+                _, driver_leader, _, _ = parse_kim_code(h["driver.kimcode"])
+                driver_path = os.path.join(
+                    cf.LOCAL_REPOSITORY_PATH,
+                    cf.item_subdir_names[driver_leader.lower()],
+                    h["driver.kimcode"],
+                )
+                if os.path.exists(driver_path):
+                    pass  # Maybe we could print a message here confirming that the driver was found
+                else:
+                    if not args["Driver"]:
+                        print(
+                            "Notice: Item {} requires a driver ({}) to work. Would you "
+                            "like to install the driver? [y/n]".format(
+                                h["kimcode"], h["driver.kimcode"]
+                            )
+                        )
+                        ans = input()
+                        if ans.lower() in ["y", "yes"]:
+                            install(h["driver.kimcode"])
+                    else:
+                        install(h["driver.kimcode"])
+
+                install(h["kimcode"], force=args["force"])
+                build_obj(item=h["kimcode"], num_make_procs=args["j"])
+            else:
+                install(h["kimcode"], force=args["force"])
+
+                build_obj(item=h["kimcode"], num_make_procs=args["j"])
+
+
+def action_search(args):
+    if args["veryveryverbose"]:
+        for s in search(args):
+            print(json.dumps(s, indent=4))
+    elif args["veryverbose"]:
+        for s in search(args):
+            print(s["kimcode"])
+            print()
+            if s.get("driver.kimcode"):
+                print(indent + "Driver: " + s["driver.kimcode"])
+            else:
+                print(indent + "Driver: None")
+            print()
+            if s.get("description"):
+                for par in s["description"].splitlines():
+                    print(("\n").join(description_wrap.wrap(par)))
+            else:
+                print(indent + "No description available")
+            print()
+    elif args["verbose"]:
+        for s in search(args):
+            print(s["kimcode"])
+            print()
+            if s.get("description"):
+                for par in s["description"].splitlines():
+                    print(("\n").join(description_wrap.wrap(par)))
+            else:
+                print(indent + "No description available")
+            print()
+    else:
+        for s in search(args):
+            print(s["kimcode"])
+
+
+def action_remove(args):
+    def process_remove(item, force):
+        if os.path.exists(item.path):
+            delete = False
+
+            if not force:
+                print("Are you sure you want to delete {}? [y/n]".format(item.kim_code))
+                ans = input()
+                if ans.lower() in ["y", "yes"]:
+                    delete = True
+            else:
+                delete = True
+
+            if delete:
+                print("Permanently deleting {}...".format(item.kim_code))
+                item.make_clean()
+                shutil.rmtree(item.path)
+
+    if args["search-term"] == "all":
+        allobjs = list(
+            chain(
+                kimobjects.TestDriver.all_on_disk(),
+                kimobjects.Test.all_on_disk(),
+                kimobjects.ModelDriver.all_on_disk(),
+                kimobjects.Model.all_on_disk(),
+                kimobjects.SimulatorModel.all_on_disk(),
+                kimobjects.VerificationCheck.all_on_disk(),
+            )
+        )
+
+        if len(allobjs) == 0:
+            print(
+                "No items in {} to remove. Exiting...".format(cf.LOCAL_REPOSITORY_PATH)
+            )
+        else:
+            for t in allobjs:
+                process_remove(t, args["force"])
+
+    else:
+        hits = local_search(args)
+
+        if len(hits) == 0:
+            print(
+                "No objects matching pattern {} could be found".format(
+                    args["search-term"]
+                )
+            )
+        else:
+            # If we're going to delete drivers or children, first go through and assemble
+            # a list of them. Then we can make a cumulative list of items to remove. Otherwise,
+            # a search pattern will often match for both a driver and its items, and the user
+            # will encounter deletion prompts for the same item multiple times!
+            cumulative_delete_list = []
+
+            for h in hits:
+                cumulative_delete_list.append(kimobjects.kim_obj(h))
+
+            if args["Driver"]:
+                for h in hits:
+                    # Need a KIMObject to be able to find the driver of each hit
+                    kobj = kimobjects.kim_obj(h)
+
+                    if isinstance(kobj, kimobjects.Test):
+                        driver = kobj.driver
+                        if driver:
+                            driver_path = os.path.join(
+                                cf.LOCAL_REPOSITORY_PATH,
+                                cf.item_subdir_names["td"],
+                                driver,
+                            )
+                            if os.path.exists(driver_path):
+                                cumulative_delete_list.append(driver)
+
+                    elif isinstance(kobj, kimobjects.Model):
+                        driver = kobj.driver
+                        if driver:
+                            driver_path = os.path.join(
+                                cf.LOCAL_REPOSITORY_PATH,
+                                cf.item_subdir_names["md"],
+                                driver,
+                            )
+                            if os.path.exists(driver_path):
+                                cumulative_delete_list.append(driver)
+
+            if args["children"]:
+                for h in hits:
+                    kobj = kimobjects.kim_obj(h)
+
+                    if isinstance(kobj, kimobjects.ModelDriver) or isinstance(
+                        kobj, kimobjects.TestDriver
+                    ):
+                        children = kobj.children_on_disk
+                        if children:
+                            for child in children:
+                                cumulative_delete_list.append(child)
+
+            # Uniquify our cumulative list of items to delete
+            cumulative_delete_list = set(cumulative_delete_list)
+
+            for item in cumulative_delete_list:
+                process_remove(item, args["force"])
+
+
+# ========================================================
+# main : argparse and interpreting user interaction
+# ========================================================
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="""Management tool for KIM Items. Search, download, build, and install
+Tests, Test Drivers, Models, Model Drivers, Simulator Models,
+Verification Checks, and Reference Data from openkim.org.  These are
+stored in the following locations:
+  ~
+  |-- model-drivers
+  |-- models
+  |-- simulator-models
+  |-- test-drivers
+  |-- tests
+  |-- verification-checks
+  |-- test-results
+  |-- verification-results
+  `-- errors""",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    # parser.add_argument('--version', action='version',
+    #    version="kimitems {}".format(cf.__pipeline_api_version__))
+
+    sub = parser.add_subparsers()
+
+    # Shared arguments for the subactions themselves
+    shared = argparse.ArgumentParser(add_help=False)
+    shared.add_argument(
+        "search-term",
+        type=str,
+        help="Perl-compatible regular expression used to select KIM Items",
+    )
+    shared.add_argument(
+        "-i",
+        "--ignore-case",
+        action="store_true",
+        help="Perform case-insensitive matching against the specified search term",
+    )
+    shared.add_argument(
+        "-t",
+        "--type",
+        type=str,
+        default="",
+        help="""Match only KIM Items of this type (case-insensitive): \n
+            te (Test), td (Test Driver), mo (Model),
+            md (Model Driver), sm (Simulator Model),
+            vc (Verification Check), rd (Reference Data)""",
+    )
+
+    # Subactions that can be performed
+    parse_build = sub.add_parser(
+        name="build",
+        parents=[shared],
+        help=(
+            "Attempt to build the specified KIM Item. For Models, Model "
+            "Drivers, and Simulator Models, this\nwill also install the "
+            "resulting binaries to the KIM API user collection."
+        ),
+    )
+    parse_download = sub.add_parser(
+        name="download",
+        parents=[shared],
+        help="Download an archive of the specified KIM Item from openkim.org and place it in the current directory",
+    )
+    parse_install = sub.add_parser(
+        name="install",
+        parents=[shared],
+        help="Download, install, and build the KIM items matching the search term provided",
+    )
+    parse_search = sub.add_parser(
+        name="search",
+        parents=[shared],
+        help="List all KIM Items on openkim.org that match the search term provided",
+    )
+    parse_remove = sub.add_parser(
+        name="remove",
+        parents=[shared],
+        help="Remove the KIM Items that match the search term provided from the relevant subdirectories of ~",
+    )
+
+    parse_build.set_defaults(action="build")
+    parse_install.set_defaults(action="install")
+    parse_download.set_defaults(action="download")
+    parse_search.set_defaults(action="search")
+    parse_remove.set_defaults(action="remove")
+
+    # Custom actions for each particular action
+
+    # build
+    parse_build.add_argument(
+        "-c",
+        "--clean",
+        action="store_true",
+        help="""For Models, Model Drivers, and Simulator Models, remove their
+                library binaries from the KIM API user collection and delete
+                the 'build' subdirectory in their directories before
+                rebuilding. For Tests, Test Drivers, and Verification Checks,
+                perform a `make clean` before building.""",
+    )
+    parse_build.add_argument(
+        "-j",
+        type=int,
+        default=1,
+        help="Number of `make` processes to use when building the item",
+    )
+    parse_build.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Print all cmake/make output while building",
+    )
+
+    # download
+    parse_download.add_argument(
+        "-a",
+        "--all",
+        action="store_true",
+        help="""Match stale KIM Items (those which are not the latest versions
+                in their lineage) in addition to fresh items""",
+    )
+    parse_download.add_argument(
+        "-D",
+        "--Driver",
+        action="store_true",
+        help="Also download the driver of the specified KIM Item without asking for confirmation",
+    )
+    parse_download.add_argument(
+        "-x",
+        "--extract",
+        action="store_true",
+        help="Uncompress the archive of the KIM Item and delete the archive itself",
+    )
+    parse_download.add_argument(
+        "-z",
+        "--zip",
+        action="store_true",
+        help="Download a .zip archive instead of a .txz",
+    )
+
+    # install
+    parse_install.add_argument(
+        "-a",
+        "--all",
+        action="store_true",
+        help="""Match stale KIM Items (those which are not the latest versions
+                in their lineage) in addition to fresh items""",
+    )
+    parse_install.add_argument(
+        "-D",
+        "--Driver",
+        action="store_true",
+        help="""Also download and install the driver of a Test without
+                asking for confirmation.""",
+    )
+    parse_install.add_argument(
+        "-f",
+        "--force",
+        action="store_true",
+        help="""Force an installation even if the specified KIM Item already exists in
+                the relevant subdirectory of ~. WARNING: this will overwrite any existing copy
+                of the item there!""",
+    )
+    parse_install.add_argument(
+        "-j",
+        type=int,
+        default=1,
+        help="Number of `make` processes to use when building the item",
+    )
+
+    # search
+    parse_search.add_argument(
+        "-a",
+        "--all",
+        action="store_true",
+        help="""Match stale KIM Items (those which are not the latest versions
+                in their lineage) in addition to fresh items""",
+    )
+    parse_search.add_argument(
+        "-d",
+        "--desc",
+        action="store_true",
+        help="Match on KIM Item descriptions rather than their KIM IDs",
+    )
+    parse_search.add_argument(
+        "-f",
+        "--force",
+        action="store_true",
+        help=(
+            "Print all matches for the query without prompting, regardless of "
+            "how many there are"
+        ),
+    )
+    parse_search.add_argument(
+        "-s",
+        "--species",
+        help=(
+            "Requires that the 'species' key listed for the given item, if it exists, "
+            "contains at least one instance of the specified chemical symbol."
+        ),
+    )
+    parse_search.add_argument(
+        "-se",
+        "--species-exclusive",
+        nargs="+",
+        help=(
+            "Requires that the 'species' key listed for the given item, if it exists, "
+            "contains at least one instance of each specified chemical symbol and no others. "
+            "MUST BE GIVEN AFTER PRIMARY SEARCH TERM; multiple species should be separated by "
+            'spaces, e.g. "Al Cu".'
+        ),
+    )
+    parse_search.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Show descriptions of the KIM Items found",
+    )
+    parse_search.add_argument(
+        "-vv",
+        "--veryverbose",
+        action="store_true",
+        help="Show drivers and descriptions of the KIM Items found",
+    )
+    parse_search.add_argument(
+        "-vvv",
+        "--veryveryverbose",
+        action="store_true",
+        help="Show all information about the KIM Items found (formatted in JSON)",
+    )
+
+    # remove
+    parse_remove.add_argument(
+        "-c",
+        "--children",
+        action="store_true",
+        help="""When removing a Test Driver or Model Driver, also remove all of its
+                children (Tests or Models, respectively, which list it as their driver)""",
+    )
+    parse_remove.add_argument(
+        "-D",
+        "--Driver",
+        action="store_true",
+        help="""If the specified item is a Test or Model which uses a driver, also
+                remove the driver.""",
+    )
+    parse_remove.add_argument(
+        "-f",
+        "--force",
+        action="store_true",
+        help="Remove the specified KIM Item without asking for confirmation.",
+    )
+
+    args = vars(parser.parse_args())
+
+    # Switch type to be lower case
+    if args.get("type"):
+        args["type"] = args["type"].lower()
+
+    action = args.get("action")
+    if not action:
+        # If no action was given, print help text
+        parser.print_help()
+
+    elif action == "build":
+        action_build(args)
+
+    elif action == "install":
+        action_install(args)
+
+    elif action == "download":
+        action_download(args)
+
+    elif action == "search":
+        action_search(args)
+
+    elif action == "remove":
+        action_remove(args)

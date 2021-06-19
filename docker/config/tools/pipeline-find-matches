@@ -1,0 +1,322 @@
+#!/usr/bin/env python3
+"""
+Copyright (c) 2014-2021, Regents of the University of Minnesota. All rights
+reserved.
+
+This software may be distributed as-is, without modification.
+"""
+import sys
+from itertools import chain
+from textwrap import TextWrapper
+
+from excerpts.kimcodes import parse_kim_code
+from excerpts import kimobjects
+from excerpts.matching import valid_match
+from excerpts.local_search import get_items_by_type, match_on_pattern
+
+indent = " " * 2
+match_indent = indent + " " * 2
+kim_indent = match_indent + " " * 2
+mismatch_info_wrap = TextWrapper(
+    initial_indent=match_indent, subsequent_indent=match_indent, width=100
+)
+kimlog_wrap = TextWrapper(
+    initial_indent=kim_indent + " " * 2,
+    subsequent_indent=kim_indent + " " * 2,
+    width=100,
+)
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="""
+        Determines, but does not execute, matches in the local repository for the
+        specified KIM Item and prints them to the console.  By default, only the
+        matching items are displayed. Wildcard completion is attempted against all items
+        found in ~/[tests, models, simulator-models, verification-checks].
+        """
+    )
+    parser.add_argument(
+        "kimcode",
+        type=str,
+        help="Full KIM ID of the item to find matches for.  Must be a Test, Model, "
+        "Simulator Model, or Verification Check.",
+    )
+    parser.add_argument(
+        "-a",
+        "--all",
+        action="store_true",
+        help="Attempt to find matches with *all* items, including those which are "
+        "not the highest version within their item lineage.",
+    )
+    parser.add_argument(
+        "-m",
+        "--mismatch",
+        action="store_true",
+        help="Causes both matches and mismatches of the given KIM Item to be returned.",
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="This flag has the same effect as -a (--all), but also forces additional "
+        "information to be returned which indicates the reason for each mismatch "
+        "found.  For mismatches which are Test-Model pairs, the contents of the "
+        "kim.log file created by the KIM API are also returned.",
+    )
+
+    args = vars(parser.parse_args())
+
+    kimcode = args["kimcode"]
+    _all = args["all"]
+    do_mismatch = args["mismatch"]
+    verbose = args["verbose"]
+
+    # Check if kimcode contains one or more wildcards. If so, perform matching on KIM
+    # Items under LOCAL_REPOSITORY_PATH
+    glob_matches = []
+    if kimcode == "*":
+        # Glob on all TE, MO, SM, VC
+        glob_matches = get_items_by_type(["te", "mo", "sm", "vc"])
+
+        if not glob_matches:
+            print(
+                "Error: Could not find any Tests, Models, Simulator Models, or "
+                "Verification Checks matching pattern {}".format(kimcode)
+            )
+
+    elif "*" in kimcode:
+        # Glob on TE, MO, SM, VC that match the pattern
+        glob_matches = match_on_pattern(["te", "mo", "sm", "vc"], kimcode)
+
+        if not glob_matches:
+            print(
+                "Error: Could not find any Tests, Models, Simulator Models, or "
+                "Verification Checks matching pattern {}".format(kimcode)
+            )
+    else:
+        glob_matches.append(kimcode)
+
+    # Eliminate duplicates (caused by SM symlinks being in 'mo' subdir)
+    glob_matches = set(glob_matches)
+
+    for kimcode in glob_matches:
+
+        print("+ Finding matches for {}".format(kimcode))
+        print()
+
+        try:
+            name, leader, num, version = parse_kim_code(kimcode)
+        except:
+            print(
+                indent + "Error: '{}' is not a valid Test, Model, Simulator "
+                "Model, or Verification Check KIM ID".format(kimcode)
+            )
+            sys.exit(1)
+
+        if leader in ["TE", "VC"]:
+            runner = kimobjects.kim_obj(kimcode)
+
+            if _all:
+                all_subjects = chain(
+                    kimobjects.Model.all_on_disk(),
+                    kimobjects.SimulatorModel.all_on_disk(),
+                )
+            else:
+                all_subjects = chain(
+                    kimobjects.Model.all_fresh_on_disk(),
+                    kimobjects.SimulatorModel.all_fresh_on_disk(),
+                )
+
+            all_subjects = list(all_subjects)
+            if len(all_subjects) == 0:
+                print(
+                    indent + "No Models or Simulator Models found in local "
+                    "repository which match {}".format(runner)
+                )
+            else:
+                matches = []
+                mismatches = []
+                mismatch_info = {}
+                for subject in all_subjects:
+                    _, subject_leader, _, _ = parse_kim_code(subject.kim_code)
+                    if leader == "TE" and subject_leader == "MO":
+                        # Create a temporary directory so we can intercept kim.log
+                        try:
+                            match, info = valid_match(runner, subject)
+                        except Exception as e:
+                            print(indent + "Error: {}. Aborting...".format(str(e)))
+                            sys.exit(1)
+
+                        if match:
+                            matches.append(str(subject))
+                        else:
+                            mismatches.append(str(subject))
+                            mismatch_info[str(subject)] = info
+
+                    else:
+                        try:
+                            match, info = valid_match(runner, subject)
+                        except Exception as e:
+                            print(indent + "Error: {}. Aborting...".format(str(e)))
+                            sys.exit(1)
+
+                        if match:
+                            matches.append(str(subject))
+                        else:
+                            mismatches.append(str(subject))
+                            mismatch_info[str(subject)] = info
+
+                if do_mismatch or verbose:
+                    print(indent + "MATCHES")
+                    print(indent + "-------")
+                    print()
+                    for match in matches:
+                        print(match_indent + match)
+
+                    if len(matches) > 0:
+                        print()
+
+                    print(indent + "MISMATCHES")
+                    print(indent + "----------")
+                    print()
+                    for mismatch in mismatches:
+                        print(match_indent + mismatch)
+
+                    if len(mismatches) > 0:
+                        print()
+
+                    if verbose:
+                        print(indent + "MISMATCH INFO")
+                        print(indent + "-------------")
+                        print()
+                        for mismatch in mismatches:
+                            print(indent + "- {}".format(mismatch))
+                            print()
+                            if isinstance(mismatch_info[mismatch], str):
+                                msg = mismatch_info[mismatch]
+                                print(("\n").join(mismatch_info_wrap.wrap(msg)))
+                                print()
+                            elif isinstance(mismatch_info[mismatch], list):
+                                msg, kimlog = mismatch_info[mismatch]
+                                print(("\n").join(mismatch_info_wrap.wrap(msg)))
+                                print()
+                                print(kim_indent + "kimlog:\n")
+                                for par in kimlog.splitlines():
+                                    print(("\n").join(kimlog_wrap.wrap(par)))
+                                print()
+
+                else:
+                    if len(matches) == 0:
+                        print(indent + "No matches found for {}".format(kimcode))
+                        print()
+                    else:
+                        for match in matches:
+                            print(indent + match)
+                        print()
+
+        elif leader in ["MO", "SM"]:
+            subject = kimobjects.kim_obj(kimcode)
+
+            if _all:
+                all_runners = chain(kimobjects.Test.all_on_disk())
+            else:
+                all_runners = chain(kimobjects.Test.all_fresh_on_disk())
+
+            all_runners = list(all_runners)
+            if len(all_runners) == 0:
+                print(
+                    indent
+                    + "No Tests found in local repository which match {}".format(
+                        subject
+                    )
+                )
+            else:
+                matches = []
+                mismatches = []
+                mismatch_info = {}
+                for runner in all_runners:
+                    _, runner_leader, _, _ = parse_kim_code(runner.kim_code)
+                    if leader == "MO" and runner_leader == "TE":
+                        try:
+                            match, info = valid_match(runner, subject)
+                        except Exception as e:
+                            print(indent + "Error: {}. Aborting...".format(str(e)))
+                            sys.exit(1)
+
+                        if match:
+                            matches.append(str(runner))
+                        else:
+                            mismatches.append(str(runner))
+                            mismatch_info[str(runner)] = info
+
+                    else:
+                        try:
+                            match, info = valid_match(runner, subject)
+                        except Exception as e:
+                            print(indent + "Error: {}. Aborting...".format(str(e)))
+                            sys.exit(1)
+
+                        if match:
+                            matches.append(str(runner))
+                        else:
+                            mismatches.append(str(runner))
+                            mismatch_info[str(runner)] = info
+
+                if do_mismatch or verbose:
+                    print(indent + "MATCHES")
+                    print(indent + "-------")
+                    print()
+                    for match in matches:
+                        print(match_indent + match)
+
+                    if len(matches) > 0:
+                        print()
+
+                    print(indent + "MISMATCHES")
+                    print(indent + "----------")
+                    print()
+                    for mismatch in mismatches:
+                        print(match_indent + mismatch)
+
+                    if len(mismatches) > 0:
+                        print()
+
+                    if verbose:
+                        print(indent + "MISMATCH INFO")
+                        print(indent + "-------------")
+                        print()
+                        for mismatch in mismatches:
+                            print(indent + "- {}".format(mismatch))
+                            print()
+                            if isinstance(mismatch_info[mismatch], str):
+                                msg = mismatch_info[mismatch]
+                                print(("\n").join(mismatch_info_wrap.wrap(msg)))
+                                print()
+                            elif isinstance(mismatch_info[mismatch], list):
+                                msg, kimlog = mismatch_info[mismatch]
+                                print(("\n").join(mismatch_info_wrap.wrap(msg)))
+                                print()
+                                print(kim_indent + "kimlog:\n")
+                                for par in kimlog.splitlines():
+                                    print(("\n").join(kimlog_wrap.wrap(par)))
+                                print()
+
+                else:
+                    if len(matches) == 0:
+                        print(indent + "No matches found for {}".format(kimcode))
+                        print()
+                    else:
+                        for match in matches:
+                            print(indent + match)
+                        print()
+
+        else:
+            print(
+                indent + "Error: Invalid argument '{}'. "
+                "`pipeline-find-matches` only supports Tests, Models, "
+                "Simulator Models, or Verification Checks as "
+                "arguments".format(kimcode)
+            )
+            sys.exit(1)

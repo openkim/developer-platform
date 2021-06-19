@@ -1,0 +1,15 @@
+#!/bin/bash
+#
+# Copyright (c) 2014-2021, Regents of the University of Minnesota. All rights
+# reserved.
+#
+# This software may be distributed as-is, without modification.
+#
+ROOT_LOC="/pipeline"
+PYTHON_LOC="/usr/bin/python3"
+UTIL_LOC=${ROOT_LOC}"/tools/pipeline-database"
+
+# Grab the arguments passed to this function
+args="$@"
+
+PYTHONPATH=${ROOT_LOC} ${PYTHON_LOC} ${UTIL_LOC} ${args}

@@ -1,0 +1,308 @@
+#!/usr/bin/env python3
+"""
+Copyright (c) 2014-2021, Regents of the University of Minnesota. All rights
+reserved.
+
+This software may be distributed as-is, without modification.
+"""
+import sys
+import traceback
+from textwrap import TextWrapper
+
+from excerpts.compute import Computation, job_id
+from excerpts.kimcodes import parse_kim_code
+from excerpts import kimobjects
+from excerpts import util
+from excerpts.matching import valid_match
+import excerpts.config as cf
+from excerpts.mongodb import insert_one_result
+from excerpts.local_search import match_on_pattern, get_items_by_type
+
+indent = " " * 2
+match_indent = indent + " " * 2
+kim_indent = match_indent + " " * 2
+mismatch_info_wrap = TextWrapper(
+    initial_indent=match_indent, subsequent_indent=match_indent, width=100
+)
+kimlog_wrap = TextWrapper(
+    initial_indent=kim_indent + " " * 2,
+    subsequent_indent=kim_indent + " " * 2,
+    width=100,
+)
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="""A utility to run a specific Test or Verification Check against
+           a specific Model or Simulator Model"""
+    )
+    parser.add_argument(
+        "runner",
+        type=str,
+        help="Extended KIM ID of a Test or Verification Check that exists under ~/[tests, verification-checks].",
+    )
+    parser.add_argument(
+        "subject",
+        type=str,
+        help="Extended KIM ID of a Model or Simulator Model that exists under ~/[models, simulator-models].",
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Print stdout and stderr from each job to the terminal while they are "
+        "running",
+    )
+    parser.add_argument(
+        "-i",
+        "--inplace",
+        action="store_true",
+        default=False,
+        help="""Run the given pairs in the absolute directories of the Test(s) or
+            Verification Check(s) instead of creating a temporary working directory and
+            copying the results to one of ~/[test-results, verification-results, errors].
+            If you are using a local database (see `pipeline-database` command), any Test
+            Results generated using this option will *not* be inserted into it.""",
+    )
+    args = vars(parser.parse_args())
+
+    runner_kimcode = args["runner"]
+    subject_kimcode = args["subject"]
+    verbose = args["verbose"]
+    inplace = args["inplace"]
+
+    # Check if runner_kimcode contains one or more wildcards. If so, perform matching on KIM
+    # Items under LOCAL_REPOSITORY_PATH
+    runner_glob_matches = []
+
+    if runner_kimcode == "*":
+        # Glob on all TE, VC
+        runner_glob_matches = get_items_by_type(["te", "vc"])
+
+        if not runner_glob_matches:
+            print(
+                indent + "Error: Could not find any Tests or Verification Checks "
+                "matching pattern {}".format(runner_kimcode)
+            )
+
+    elif "*" in runner_kimcode:
+        # Glob on TE, VC that match the pattern
+        runner_glob_matches = match_on_pattern(["te", "vc"], runner_kimcode)
+
+        if not runner_glob_matches:
+            print(
+                indent + "Error: Could not find any Tests or Verification Checks "
+                "matching pattern {}".format(runner_kimcode)
+            )
+    else:
+        runner_glob_matches.append(runner_kimcode)
+
+    # Check if subject_kimcode contains one or more wildcards. If so, perform matching on KIM
+    # Items under LOCAL_REPOSITORY_PATH
+    subject_glob_matches = []
+    if subject_kimcode == "*":
+        # Glob on all MO, SM
+        subject_glob_matches = get_items_by_type(["mo", "sm"])
+
+        if not subject_glob_matches:
+            print(
+                indent + "Error: Could not find any Models or Simulator Models "
+                "matching pattern {}".format(subject_kimcode)
+            )
+
+    elif "*" in subject_kimcode:
+        # Glob on MO, SM that match the pattern
+        subject_glob_matches = match_on_pattern(["mo", "sm"], subject_kimcode)
+
+        if not subject_glob_matches:
+            print(
+                indent + "Error: Could not find any Models or Simulator Models "
+                "matching pattern {}".format(subject_kimcode)
+            )
+    else:
+        subject_glob_matches.append(subject_kimcode)
+
+    # Eliminate duplicates (caused by SM symlinks being in 'mo' subdir). Might as well do it
+    # for runners too
+    runner_glob_matches = set(runner_glob_matches)
+    subject_glob_matches = set(subject_glob_matches)
+
+    for runner_kimcode in runner_glob_matches:
+
+        # Start off by doing some sanity checks on the runner. Rather than immediately printing
+        # any errors or raising exceptions encountered, we store them and reraise them below inside
+        # the loop over subjects.  The reason for doing this is that we only need to perform these
+        # once for a given runner, but we also want to wait to display anything to the user until
+        # after we've given our "Running pair (X, Y)" message.
+        runner_invalid_kimcode = None
+        runner_kimobject_error = None
+        runner_build_error = None
+
+        try:
+            runner_name, runner_leader, runner_num, runner_version = parse_kim_code(
+                runner_kimcode
+            )
+        except:
+            runner_invalid_kimcode = (
+                indent + "Error: '{}' is not a valid Test or Verification Check "
+                "KIM ID".format(runner_kimcode)
+            )
+
+        # Cast to KIMObject
+        try:
+            runner = kimobjects.kim_obj(runner_kimcode)
+        except:
+            # Grab the Exception type, value, and traceback for reraising further down
+            runner_kimobject_error = sys.exc_info()
+
+        # Attempt to build runner.
+        try:
+            runner.make()
+        except Exception as e:
+            runner_build_error = indent + "Error: {}. Aborting...".format(str(e))
+
+        for subject_kimcode in subject_glob_matches:
+
+            print("+ Running pair ({}, {})".format(runner_kimcode, subject_kimcode))
+            print()
+
+            if runner_invalid_kimcode:
+                print(runner_invalid_kimcode)
+                print()
+                sys.exit(1)
+
+            if runner_kimobject_error:
+                traceback.print_exception(
+                    *runner_kimobject_error, limit=3, file=sys.stdout
+                )
+                sys.exit(1)
+
+            if runner_build_error:
+                print(runner_build_error)
+                print()
+                sys.exit(1)
+
+            try:
+                (
+                    subject_name,
+                    subject_leader,
+                    subject_num,
+                    subject_version,
+                ) = parse_kim_code(subject_kimcode)
+            except:
+                print(
+                    indent + "Error: '{}' is not a valid Model or Simulator "
+                    "Model KIM ID".format(subject_kimcode)
+                )
+                print()
+                sys.exit(1)
+
+            # Cast to KIMObject (no need to do exception catching here since we just want to raise it anyway)
+            subject = kimobjects.kim_obj(subject_kimcode)
+
+            # Attempt to build subject
+            try:
+                subject.make()
+            except Exception as e:
+                print(indent + "Error: {}. Aborting...".format(str(e)))
+                sys.exit(1)
+
+            # Check match
+            if runner_leader == "TE" and subject_leader == "MO":
+                # Create a temporary directory to check matches just so we don't
+                # have kim.log floating around
+                try:
+                    match, mismatch_info = valid_match(runner, subject)
+                except Exception as e:
+                    print(indent + "Error: {}. Aborting...".format(str(e)))
+                    sys.exit(1)
+
+                if not match:
+                    print(
+                        indent + "Error: {} and {} are not a valid "
+                        "match\n".format(runner_kimcode, subject_kimcode)
+                    )
+                    if isinstance(mismatch_info, str):
+                        msg = mismatch_info
+                        print(("\n").join(mismatch_info_wrap.wrap(msg)))
+                        print()
+                    elif isinstance(mismatch_info, list):
+                        msg, kimlog = mismatch_info
+                        print(("\n").join(mismatch_info_wrap.wrap(msg)))
+                        print()
+                        print(kim_indent + "kimlog:\n")
+                        for par in kimlog.splitlines():
+                            print(("\n").join(kimlog_wrap.wrap(par)))
+                        print()
+                    sys.exit(1)
+
+            elif (
+                (runner_leader == "TE" and subject_leader == "SM")
+                or (runner_leader == "VC" and subject_leader == "MO")
+                or (runner_leader == "VC" and subject_leader == "SM")
+            ):
+                match, mismatch_info = valid_match(runner, subject)
+
+                if not match:
+                    print(
+                        indent + "Error: {} and {} are not a valid "
+                        "match\n".format(runner_kimcode, subject_kimcode)
+                    )
+                    msg = mismatch_info
+                    print(("\n").join(mismatch_info_wrap.wrap(msg)))
+                    print()
+                    sys.exit(1)
+
+            else:
+                print(
+                    "Error: Invalid arguments '{}' and '{}'. A Test or Verification Check "
+                    "must be given as the first argument and a Model or Simulator "
+                    "Model must be given as the second argument. "
+                    "Aborting...".format(runner_kimcode, subject_kimcode)
+                )
+                sys.exit(1)
+
+            # If we got to here, it means the pair is a valid match
+            if inplace:
+                comp = Computation(runner, subject, verbose=verbose)
+                comp.run()
+                if verbose:
+                    print()
+                # Just inform user that pair was run but don't insert result into local
+                # database
+                print(
+                    indent + "Completed running pair in {} "
+                    "seconds".format(comp.runtime)
+                )
+                print()
+
+            else:
+                jobid = job_id(runner, subject)
+                comp = Computation(runner, subject, result_code=jobid, verbose=verbose)
+                comp.run()
+                result_code = comp.result_code
+                result_type = result_code.split("-")[-1]
+                if verbose:
+                    print()
+                if result_type == "tr":
+                    print(
+                        indent + "Pair produced Test Result {} in {} "
+                        "seconds".format(comp.result_code, comp.runtime)
+                    )
+
+                    if cf.PIPELINE_LOCAL_DEV:
+                        # Insert result in local database
+                        insert_one_result("tr", result_code, comp.full_result_path)
+
+                elif result_type == "vr":
+                    print(
+                        indent + "Pair produced Verification Result {} in "
+                        "{} seconds".format(comp.result_code, comp.runtime)
+                    )
+                elif result_type == "er":
+                    print(
+                        indent + "Pair produced Error {} in {} "
+                        "seconds".format(comp.result_code, comp.runtime)
+                    )
+                print()
