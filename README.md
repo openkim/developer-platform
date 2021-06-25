@@ -58,7 +58,7 @@ a "minimal" image.  The former image contains all of the packages necessary to
 run all KIM tests and verification checks, while the latter includes a set of
 packages sufficient to run most of them but not all.  In particular, the
 biggest difference at the moment is that the full image contains an
-installation of [OVITO](ovito.org), which doubles the uncompressed size of the
+installation of [OVITO](https://www.ovito.org/), which doubles the uncompressed size of the
 image from roughly 1.04GB ➝ 2.04GB; this package is currently only used to run
 the dislocation tests, so for most users the minimal images will suffice.
 
