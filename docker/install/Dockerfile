@@ -74,7 +74,7 @@ RUN cd ${PACKAGE_DIR} \
  && cd kim-api-2.2.1 \
  && mkdir build && cd build \
  && cmake .. -DCMAKE_BUILD_TYPE=Release \
- && make -j4 && make install \
+ && make -j2 && make install \
  && cd ${PACKAGE_DIR} \
  && cp kim-api-2.2.1/build/install_manifest.txt kim_api_install_manifest.txt \
  && rm -r kim-api-2.2.1 \
@@ -127,7 +127,7 @@ RUN cd ${PACKAGE_DIR}/lammps/ \
       -D PKG_USER-MISC=yes \
       -D PKG_USER-SMTBQ=yes \
       ../cmake \
- && make -j6 \
+ && make -j2 \
  && make install \
  && ln -s /usr/local/bin/lmp /usr/local/bin/lammps \
  && rm -r /usr/local/share/lammps/potentials \
