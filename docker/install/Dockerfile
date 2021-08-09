@@ -13,11 +13,14 @@ FROM ${IMAGE_GIT} AS git
 # Import all sys-level libs/utils
 FROM ${IMAGE_SYS}
 
+# Staging point for source code and/or build artifacts between images
+ARG PACKAGE_DIR=/pipeline/packages/
+
 # Copy packages fetched via git
-COPY --from=git /pipeline/packages /pipeline/packages
+COPY --from=git ${PACKAGE_DIR} ${PACKAGE_DIR}
 
 # Copy static local packages
-COPY packages/convergence.txz /pipeline/packages/
+COPY packages/convergence.txz ${PACKAGE_DIR}
 
 # Symlinks
 RUN if [ ! -f "/usr/bin/python" ]; then \
@@ -44,8 +47,6 @@ RUN ${PIP} install matplotlib==3.3.4
 RUN ${PIP} install pymongo==3.11.3
 RUN ${PIP} install montydb==2.1.1
 RUN ${PIP} install pybind11==2.6.2
-
-ARG PACKAGE_DIR=/pipeline/packages/
 
 #########################################
 ## MD++
@@ -131,8 +132,8 @@ RUN cd ${PACKAGE_DIR}/lammps/ \
  && make install \
  && ln -s /usr/local/bin/lmp /usr/local/bin/lammps \
  && rm -r /usr/local/share/lammps/potentials \
- && cd /pipeline/packages \
- && rm -r /pipeline/packages/lammps
+ && cd ${PACKAGE_DIR} \
+ && rm -r ${PACKAGE_DIR}/lammps
 
 #########################################
 ## OpenKIM ASE fork
