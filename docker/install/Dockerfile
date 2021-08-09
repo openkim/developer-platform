@@ -19,6 +19,9 @@ ARG PACKAGE_DIR=/pipeline/packages/
 # Copy packages fetched via git
 COPY --from=git ${PACKAGE_DIR} ${PACKAGE_DIR}
 
+# Copy static local packages
+COPY packages/convergence.txz ${PACKAGE_DIR}
+
 # Symlinks
 RUN if [ ! -f "/usr/bin/python" ]; then \
   ln -fs /usr/bin/python3 /usr/bin/python; \
@@ -44,7 +47,6 @@ RUN ${PIP} install matplotlib==3.3.4
 RUN ${PIP} install pymongo==3.11.3
 RUN ${PIP} install montydb==2.1.1
 RUN ${PIP} install pybind11==2.6.2
-RUN ${PIP} install kim-convergence==0.0.2
 
 #########################################
 ## MD++
@@ -148,3 +150,11 @@ RUN cd ${PACKAGE_DIR}/ase/ \
 RUN cd ${PACKAGE_DIR}/kim-python-utils \
  && ${PIP} install .
 
+#########################################
+## convergence
+#########################################
+RUN cd ${PACKAGE_DIR} \
+ && tar xJf convergence.txz \
+ && rm convergence.txz \
+ && cd convergence \
+ && ${PIP} install .
