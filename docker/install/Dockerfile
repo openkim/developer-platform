@@ -121,12 +121,12 @@ RUN cd ${PACKAGE_DIR}/lammps/ \
       -D PKG_MOLECULE=yes \
       -D PKG_CLASS2=yes \
       -D PKG_PYTHON=yes \
-      -D PKG_SNAP=yes \
-      -D PKG_USER-MGPT=yes \
-      -D PKG_USER-MEAMC=yes \
-      -D PKG_USER-REAXC=yes \
-      -D PKG_USER-MISC=yes \
-      -D PKG_USER-SMTBQ=yes \
+      -D PKG_ML-SNAP=yes \
+      -D PKG_MGPT=yes \
+      -D PKG_MEAM=yes \
+      -D PKG_REAXFF=yes \
+      -D PKG_MISC=yes \
+      -D PKG_SMTBQ=yes \
       ../cmake \
  && make -j2 \
  && make install \

@@ -19,7 +19,7 @@ RUN git clone -q https://github.com/openkim/kimpy -b v2.0.0 ${PACKAGE_DIR}/kimpy
 RUN git clone -q https://github.com/openkim/kim-python-utils -b master ${PACKAGE_DIR}/kim-python-utils \
   && cd ${PACKAGE_DIR}/kim-python-utils \
   && git checkout 0fdeaf2c0ab4704f1789c57c4abe3026a55ff03b
-RUN git clone -q https://github.com/lammps/lammps -b patch_8Apr2021 ${PACKAGE_DIR}/lammps
+RUN git clone -q https://github.com/lammps/lammps -b patch_30Jul2021 ${PACKAGE_DIR}/lammps
 RUN git clone -q https://gitlab.com/openkim/ase -b user-species ${PACKAGE_DIR}/ase \
   && cd ${PACKAGE_DIR}/ase \
   && git checkout 94c6ad70814965408a2977f7428b62271988619c
