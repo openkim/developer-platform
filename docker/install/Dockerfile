@@ -68,17 +68,20 @@ RUN cd ${PACKAGE_DIR}/MD++ \
 #########################################
 ## KIM API
 #########################################
+ARG KIM_API_VER=2.2.1
+ARG KIM_API_PACKAGE=kim-api-${KIM_API_VER}
+ARG KIM_API_ARCHIVE_TXZ=${KIM_API_PACKAGE}.txz
 RUN cd ${PACKAGE_DIR} \
- && wget -q https://s3.openkim.org/kim-api/kim-api-2.2.1.txz \
- && tar xJf kim-api-2.2.1.txz \
- && rm kim-api-2.2.1.txz \
- && cd kim-api-2.2.1 \
+ && wget -q https://s3.openkim.org/kim-api/${KIM_API_ARCHIVE_TXZ} \
+ && tar xJf ${KIM_API_ARCHIVE_TXZ} \
+ && rm ${KIM_API_ARCHIVE_TXZ} \
+ && cd ${KIM_API_PACKAGE} \
  && mkdir build && cd build \
  && cmake .. -DCMAKE_BUILD_TYPE=Release \
  && make -j2 && make install \
  && cd ${PACKAGE_DIR} \
- && cp kim-api-2.2.1/build/install_manifest.txt kim_api_install_manifest.txt \
- && rm -r kim-api-2.2.1 \
+ && cp ${KIM_API_PACKAGE}/build/install_manifest.txt kim_api_install_manifest.txt \
+ && rm -r ${KIM_API_PACKAGE} \
  && ldconfig
 
 #########################################
