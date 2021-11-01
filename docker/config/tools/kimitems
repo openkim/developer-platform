@@ -326,7 +326,7 @@ def action_download(args):
                     download(item, compression="txz")
 
     # Query mongo. If there are more than 10 matching results, issue a confirmation prompt
-    hits = search(args, hits_threshold=10)
+    hits = search(args={**args, "force": False}, hits_threshold=10)
 
     if args["zip"]:
         for h in hits:
@@ -374,7 +374,8 @@ def action_download(args):
 
 
 def action_install(args):
-    hits = search(args, hits_threshold=10)
+    # Query mongo. If there are more than 10 matching results, issue a confirmation prompt
+    hits = search(args={**args, "force": False}, hits_threshold=10)
     for h in hits:
         _, leader, _, _ = parse_kim_code(h["kimcode"])
         path = os.path.join(
