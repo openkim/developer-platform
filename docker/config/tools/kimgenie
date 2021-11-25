@@ -75,7 +75,7 @@ TEDIR = os.path.join(cf.LOCAL_REPOSITORY_PATH, cf.item_subdir_names["te"])
 KIMSPEC_FILE = cf.CONFIG_FILE
 TEMPLATEDIR = "test_template"
 
-# The required argument 'testdriver' is required to be a valid KIM ID for a Test Driver
+# The required argument 'test_driver' is required to be a valid KIM ID for a Test Driver
 RE_TESTDRIVER = r"^(?:([_a-zA-Z][_a-zA-Z0-9]*?)__)?(TD)_([0-9]{12})(?:_([0-9]{3}))$"
 
 ##############################
@@ -199,8 +199,8 @@ def maketest(
                 template_intermediate = template_environment.get_template(filepath)
                 new_contents = template_intermediate.render(**template_variables)
 
-                # Now actually perform any queries that might be present and write the final rendered
-                # template to file
+                # Now actually perform any queries that might be present and
+                # write the final rendered template to file
                 template_final = jinja2.Environment(
                     loader=jinja2.BaseLoader
                 ).from_string(str(new_contents))
@@ -257,13 +257,13 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "testdriver",
+        "test-driver",
         type=str,
         help="Extended KIM ID of the Test Driver whose Tests you wish to generate",
     )
 
     parser.add_argument(
-        "--templatedir",
+        "--template-dir",
         type=str,
         default=TEMPLATEDIR,
         help="Directory containing the template files [default: {}]".format(
@@ -386,11 +386,11 @@ if __name__ == "__main__":
             logger = createLogger(args["logfile"], verbose=args["verbose"])
 
     # Before we do anything, check that the Test Driver supplied is a proper Extended ID
-    if not re.match(RE_TESTDRIVER, args["testdriver"]):
+    if not re.match(RE_TESTDRIVER, args["test_driver"]):
         print(
             "ERROR: {} is not a valid KIM ID for a Test Driver. Aborting "
             "Test generation.\n  See https://openkim.org/about-kim-ids/ "
-            "for information about KIM IDs.".format(args["testdriver"])
+            "for information about KIM IDs.".format(args["test_driver"])
         )
         exit(1)
 
@@ -411,9 +411,9 @@ if __name__ == "__main__":
     dest = re.sub("~", os.path.expanduser("~"), dest)
 
     # Find test_template directory
-    td_template_path = os.path.join(source, args["testdriver"], args["templatedir"])
+    td_template_path = os.path.join(source, args["test_driver"], args["template_dir"])
 
-    global_vars = {"TEST_DRIVER_NAME": args["testdriver"]}
+    global_vars = {"TEST_DRIVER_NAME": args["test_driver"]}
     global_vars["version"] = "{:03d}".format(args["version"])
 
     # Get global vars
@@ -447,7 +447,7 @@ if __name__ == "__main__":
                         "all instances of 'kimnum' if you wish to use "
                         "--add-random-kimnums. Aborting test "
                         "generation.".format(
-                            os.path.join(source, args["testdriver"], generator_file)
+                            os.path.join(source, args["test_driver"], generator_file)
                         )
                     )
                     sys.exit(1)
