@@ -1,42 +1,51 @@
 #! /usr/bin/env python3
 """
-testgenie - A simple templating tool for creating KIM Tests
+kimgenie - A simple templating tool for creating KIM Tests and Reference Data
 
-This utility takes the name of a Test Driver, the path of a directory containing
-the template files that will be created for each Test, and a file containing
-JSON-formatted dictionaries (one per line).  Each JSON dictionary is used to fill
-in the Jinja directives in each of the template files, generating a single Test.
+This tool is capable of generating Tests or Reference Data.
 
-Test generation takes place in steps:
+In both modes of operation, the inputs to the tool consist of two parts: (1) a
+directory containing a set of template files and (2) a separate "generator
+file" that contains JSON dictionaries on each line, each corresponding to a
+Test or Reference Data item to be generated, that are used to render the
+template files.  The template files should be formatted to be processed with
+the Jinja2 python package.  The generation of an item takes place in stages:
 
-  1. Grab the dictionary defined in a given line of the test_generator.json file
-  2. If a global variables file is specified, add the corresponding varibles
-  3. Process the kimspec.edn.genie file as a Jinja template using the full set of variables
-  4. Add all of the variables defined in the processed kimspec.edn to the local dictionary
-  5. Set the folder name from the 'extended-id' attribute in the processed kimspec.edn file
-  6. For each remaining file, check if a
-        {# FILENAME = desired_file_name_with_{{ variables }} #}
-     directive exists to fix the filename
-  7. Remove prefixes or extensions as necessary
-  8. Process the rest of the file as a Jinja template, excluding any calls to the query function
-  9. After all other template variables have been rendered, make any calls to query function
-     that are present and render the results
-  10. Move folders to the Tests subdir of cf.LOCAL_REPOSITORY_PATH
+  1. Grab the dictionary defined in a given line of the generator file
+  2. If a global template variables file is passed as input, add the
+     corresponding variables to the global template variable namespace used
+     during the rendering process
+  3. Render the kimspec.edn.genie file (which is required to exist) in the
+     template file directory
+  4. Add all of the variables defined in the rendered kimspec.edn to the local
+     template variable namspace being used to generate the current item
+  5. Set the directory name for the item being generated to be equal to the
+     'extended-id' attribute (required to exist) in the rendered kimspec.edn
+     file
+  6. For each remaining file in the template file directory:
+     a. Check if a
+          {# FILENAME = desired_file_name_with_{{ variables }} #}
+        directive exists anywhere in the file.  If so, this is used to
+        determine the name of the corresponding rendered file in the generated
+        item.
+     b. Process the rest of the file as a Jinja template, excluding any calls
+        to the 'query' function, which is defined in the global template
+        variable namespace
+  8. After all other template variables have been rendered, make any calls to
+     'query' function that are present and render the results
+  9. Create the item directory under the appropriate item type subdirectory of
+    ${HOME}
 
-For convenience, if the --add-random-kimnums flag is given, the current generator file will
-be overwritten with one for which random KIM IDs have been added to each dictionary under the
-key name 'kimnum'.  The resulting generator file is then used to complete the Test generation
-process.
+NOTE: For convenience, if the --add-random-kimnums flag is given, the current
+generator file will be overwritten with one for which random KIM IDs have been
+added to each dictionary under the template variable name 'kimnum'.  The
+resulting generator file is then used to carry out the item generation process.
 
-Note also that the script expects the path for the generator file and global
-variables files to be one directory up from the test template folder.  By
-default, 'TEST_DRIVER_NAME' will be the same as 'testdriver' and 'version' will be
-0, or whatever is specified with the command line argument
+NOTE: This tool prints the name of each item directory to stdout after it is
+generated.  This is useful to catch in order to remove these directories later
+if necessary, e.g.
 
-This utility outputs a list of all generated Test folders. This is useful to catch
-in order to remove the folders later if necessary. e.g.
-
-  testgenie mytestdriver__TD_000000000000_000 > list_of_generated_tests.txt
+  kimgenie --tests mytestdriver__TD_000000000000_000 > list_of_generated_tests.txt
   cat list_of_generated_tests.txt | xargs rm -r
 
 Copyright (c) 2014-2021, Regents of the University of Minnesota. All rights
