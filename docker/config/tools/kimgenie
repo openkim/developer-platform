@@ -112,8 +112,8 @@ FILENAME_REGEX = re.compile(
 
 
 def maketest(
-    folder,
-    variable_dict,
+    directory,
+    template_variables,
     dest=TEDIR,
     overwrite=False,
     dry_run=False,
@@ -121,7 +121,7 @@ def maketest(
     filename_extension=None,
     logger=None,
 ):
-    """Make a Test given the input folder"""
+    """Make a Test given the input directory"""
 
     def query_stub(x):
         """Render everything inside the argument to the query function, then
@@ -129,7 +129,7 @@ def maketest(
         be made"""
         tmp_env = jinja2.Environment(loader=jinja2.BaseLoader).from_string(str(x))
         tmp_env.globals.update({"stripversion": kimcodes.strip_version})
-        rendered = tmp_env.render(**variable_dict)
+        rendered = tmp_env.render(**template_variables)
         return f"{{{{ query({rendered}) }}}}"
 
     if logger is None:
@@ -142,27 +142,27 @@ def maketest(
         # First parse the kimspec file
         KIMSPEC_FILE_TEMP = KIMSPEC_FILE + ".genie"
 
-        file_newconf = os.path.join(folder, KIMSPEC_FILE_TEMP)
+        file_newconf = os.path.join(directory, KIMSPEC_FILE_TEMP)
         kimspec_template = template_environment.get_template(file_newconf)
-        kimspec = kimspec_template.render(**variable_dict)
+        kimspec = kimspec_template.render(**template_variables)
 
         with open(os.path.join(tempdir, KIMSPEC_FILE), "w", encoding="utf-8") as f:
             f.write(kimspec)
 
-        # Extend variable_dict with everything defined in kimspec
+        # Extend template_variables with everything defined in kimspec
         kimspeckeys = edn_format.loads(kimspec, write_ply_tables=False)
-        variable_dict.update({"kimspec": kimspeckeys})
-        variable_dict.update({"query": query_stub})
+        template_variables.update({"kimspec": kimspeckeys})
+        template_variables.update({"query": query_stub})
 
         # Get Test name from kimspec
-        test_name = variable_dict["kimspec"]["extended-id"]
+        test_name = template_variables["kimspec"]["extended-id"]
 
         # Create temporary directory
         tmp_test_dir = os.path.join(tempdir, test_name)
-        shutil.copytree(folder, tmp_test_dir)
+        shutil.copytree(directory, tmp_test_dir)
 
         logger.info("BUILDING: {} @ {}".format(test_name, tmp_test_dir))
-        logger.debug("Variable_dict: {}".format(variable_dict))
+        logger.debug("Variable_dict: {}".format(template_variables))
 
         for (basepath, _, files) in os.walk(tmp_test_dir):
             for fl in files:
@@ -189,7 +189,7 @@ def maketest(
                 if filename_search:
                     filename_template = FILENAME_REGEX.search(contents).group(1)
                     filename = jinja2.Template(filename_template).render(
-                        **variable_dict
+                        **template_variables
                     )
 
                 logger.debug("new file name: {}".format(filename))
@@ -197,7 +197,7 @@ def maketest(
                 # Template everything completely other than query calls, for which we only template
                 # the arguments for now
                 template_intermediate = template_environment.get_template(filepath)
-                new_contents = template_intermediate.render(**variable_dict)
+                new_contents = template_intermediate.render(**template_variables)
 
                 # Now actually perform any queries that might be present and write the final rendered
                 # template to file
@@ -301,7 +301,7 @@ if __name__ == "__main__":
         "--destination",
         type=str,
         default=TEDIR,
-        help="Destination folder for generated Tests [default: {}]".format(TEDIR),
+        help="Destination directory for generated Tests [default: {}]".format(TEDIR),
     )
 
     parser.add_argument(
@@ -428,7 +428,8 @@ if __name__ == "__main__":
         except Exception:
             global_vars = json.loads(global_path)
 
-    # If user provided add-random-kimnums option, attempt to overwrite their generator file
+    # If user provided add-random-kimnums option, attempt to overwrite their
+    # generator file
     if random_codes:
         generator_file_dicts = []
         # First, read generator file and ensure there are no 'kimnum' entries
@@ -464,11 +465,11 @@ if __name__ == "__main__":
         os.path.join(td_template_path, "..", generator_file), encoding="utf-8"
     ) as f:
         for line in f:
-            variable_dict = global_vars.copy()
-            variable_dict.update(json.loads(line))
+            template_variables = global_vars.copy()
+            template_variables.update(json.loads(line))
             newtestpath = maketest(
                 td_template_path,
-                variable_dict=variable_dict,
+                template_variables=template_variables,
                 dest=dest,
                 overwrite=overwrite,
                 dry_run=dry_run,
