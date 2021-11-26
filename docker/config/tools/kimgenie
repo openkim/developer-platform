@@ -5,7 +5,7 @@ kimgenie - A simple templating tool for creating KIM Tests and Reference Data
 This tool is capable of generating Tests or Reference Data.
 
 In both modes of operation, the inputs to the tool consist of two parts: (1) a
-directory containing a set of template files and (2) a separate "generator
+root directory containing a set of template files and (2) a separate "generator
 file" that contains JSON dictionaries on each line, each corresponding to a
 Test or Reference Data item to be generated, that are used to render the
 template files.  The template files should be formatted to be processed with
@@ -31,9 +31,9 @@ the Jinja2 python package.  The generation of an item takes place in stages:
      b. Process the rest of the file as a Jinja template, excluding any calls
         to the 'query' function, which is defined in the global template
         variable namespace
-  8. After all other template variables have been rendered, make any calls to
+  7. After all other template variables have been rendered, make any calls to
      'query' function that are present and render the results
-  9. Create the item directory under the appropriate item type subdirectory of
+  8. Create the item directory under the appropriate item type subdirectory of
     ${HOME}
 
 NOTE: For convenience, if the --add-random-kimnums flag is given, the current
@@ -75,8 +75,10 @@ TEDIR = os.path.join(cf.LOCAL_REPOSITORY_PATH, cf.item_subdir_names["te"])
 KIMSPEC_FILE = cf.CONFIG_FILE
 TEMPLATEDIR = "test_template"
 
-# The required argument 'test_driver' is required to be a valid KIM ID for a Test Driver
-RE_TESTDRIVER = r"^(?:([_a-zA-Z][_a-zA-Z0-9]*?)__)?(TD)_([0-9]{12})(?:_([0-9]{3}))$"
+
+class IncompatibleArgumentCombination(Exception):
+    """An incompatible combination of options was passed to the tool"""
+
 
 ##############################
 # Define logger
@@ -251,18 +253,17 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(
-        description="KIM Test generation genie",
+        description="KIM item generation genie",
         epilog=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
-    parser.add_argument(
-        "test-driver",
-        type=str,
-        help="Extended KIM ID of the Test Driver whose Tests you wish to generate",
-    )
+    sub = parser.add_subparsers()
 
-    parser.add_argument(
+    # Shared arguments for the subactions themselves
+    shared = argparse.ArgumentParser(add_help=False)
+
+    shared.add_argument(
         "--template-dir",
         type=str,
         default=TEMPLATEDIR,
@@ -271,49 +272,42 @@ if __name__ == "__main__":
         ),
     )
 
-    parser.add_argument(
-        "--source",
-        type=str,
-        default=TDDIR,
-        help="Parent directory of Test Driver [default: {}]".format(TDDIR),
-    )
-
-    parser.add_argument(
+    shared.add_argument(
         "--generator-file",
         type=str,
         default="test_generator.json",
         help="Generator file [default: test_generator.json]",
     )
 
-    parser.add_argument(
+    shared.add_argument(
         "--global-variables",
         type=str,
         help="Additional JSON-formatted dictionary of global variables, as file or string",
     )
 
-    parser.add_argument(
+    shared.add_argument(
         "--dry-run",
         action="store_true",
-        help="Don't actually create the Tests, but rather just show what would be generated",
+        help="Don't actually create the items, but rather just show what would be generated",
     )
 
-    parser.add_argument(
+    shared.add_argument(
         "--destination",
         type=str,
         default=TEDIR,
-        help="Destination directory for generated Tests [default: {}]".format(TEDIR),
+        help="Destination directory for generated items [default: {}]".format(TEDIR),
     )
 
-    parser.add_argument(
+    shared.add_argument(
         "--overwrite",
         action="store_true",
         help=(
-            "Overwrite any existing Test directories which already exist at the locations where "
+            "Overwrite any existing item directories which already exist at the locations where "
             "the Tests being generated are trying to be written to. Use with caution!"
         ),
     )
 
-    parser.add_argument(
+    shared.add_argument(
         "--add-random-kimnums",
         action="store_true",
         help=(
@@ -327,43 +321,121 @@ if __name__ == "__main__":
         ),
     )
 
-    parser.add_argument(
+    shared.add_argument(
         "--filename-prefix",
         type=str,
-        help="File name prefix; only files with the specified prefix are processed.",
+        help=(
+            "File name prefix; only files with the specified prefix are "
+            "included in the rendered item directories."
+        ),
     )
 
-    parser.add_argument(
+    shared.add_argument(
         "--filename-extension",
         type=str,
-        help="File name extension; only files with the specified extension are processed.",
+        help=(
+            "File name extension; only files with the specified extension are "
+            "included in the rendered item directories."
+        ),
     )
 
-    parser.add_argument(
+    shared.add_argument(
         "--version",
         type=int,
         default=0,
-        help="Parameter to pass as 'version' to global dictionary",
+        help=(
+            "Used to define the 'version' variable in the template variable "
+            "namespace.  Although this option is an integer, it will be cast "
+            "to a three-character string, e.g. a value of 1 is mapped to "
+            "string '001'."
+        ),
     )
 
-    parser.add_argument(
+    shared.add_argument(
         "--logfile",
         type=str,
         help=(
             "Name of file to write logs to. If left unspecified, logs are not written "
-            "(although the list of generated Tests is still printed to the console)."
+            "(although the list of generated items is still printed to the terminal)."
         ),
     )
 
-    parser.add_argument(
+    shared.add_argument(
         "-v",
         "--verbose",
         action="store_true",
         help="Show debugging messages and timestamps in logs",
     )
 
+    # Subactions that can be performed
+    parse_tests = sub.add_parser(
+        name="tests", parents=[shared], help=("Generate Tests")
+    )
+    parse_ref_data = sub.add_parser(
+        name="ref-data", parents=[shared], help=("Generate Reference Data")
+    )
+
+    # Custom options for each subaction
+    parse_tests.add_argument(
+        "--test-driver",
+        type=str,
+        help=(
+            "Extended KIM ID of the Test Driver whose Tests you wish to "
+            "generate.  Either this option or the 'root-dir' option should be "
+            "given.  If this option is specified, the corresponding Test "
+            f"Driver directory must exist under {TDDIR}."
+        ),
+    )
+    parse_tests.add_argument(
+        "--root-dir",
+        type=str,
+        help="The directory that contains the template file directory and "
+        "generator file. Either this option must be supplied or the "
+        "'test-driver' option must be given.",
+    )
+
+    parse_ref_data.add_argument(
+        "root-dir",
+        type=str,
+        help=(
+            "The directory that contains the template file directory and "
+            "generator file.  May be an absolute or relative path."
+        ),
+    )
+
+    parse_tests.set_defaults(action="tests")
+    parse_ref_data.set_defaults(action="ref-data")
+
     args = vars(parser.parse_args())
     logger = None
+
+    global_vars = {}
+
+    action = args.get("action")
+    if not action:
+        # If no action was given, print help text
+        parser.print_help()
+        sys.exit(1)
+
+    elif action == "tests":
+        test_driver = args.get("test_driver")
+        root_dir = args.get("root_dir")
+        if root_dir and test_driver:
+            raise IncompatibleArgumentCombination(
+                "When generating tests, only one of the 'root-dir' or "
+                "'test-driver' options may be given."
+            )
+        elif (not root_dir) and (not test_driver):
+            raise IncompatibleArgumentCombination(
+                "When generating tests, at least one of the 'root-dir' or "
+                "'test-driver' options must be given."
+            )
+        elif (not root_dir) and test_driver:
+            global_vars["TEST_DRIVER_NAME"] = test_driver
+            root_dir = os.path.join(TDDIR, test_driver)
+
+    elif action == "ref-data":
+        root_dir = args.get("root-dir")
 
     template_environment = jinja2.Environment(loader=jinja2.FileSystemLoader("/"))
     template_environment.globals.update({"stripversion": kimcodes.strip_version})
@@ -385,18 +457,6 @@ if __name__ == "__main__":
         else:
             logger = createLogger(args["logfile"], verbose=args["verbose"])
 
-    # Before we do anything, check that the Test Driver supplied is a proper Extended ID
-    if not re.match(RE_TESTDRIVER, args["test_driver"]):
-        print(
-            "ERROR: {} is not a valid KIM ID for a Test Driver. Aborting "
-            "Test generation.\n  See https://openkim.org/about-kim-ids/ "
-            "for information about KIM IDs.".format(args["test_driver"])
-        )
-        exit(1)
-
-    # Source directory
-    source = args["source"]
-
     # Destination directory
     dest = args["destination"]
     overwrite = args["overwrite"]
@@ -406,14 +466,12 @@ if __name__ == "__main__":
     filename_prefix = args["filename_prefix"]
     filename_extension = args["filename_extension"]
 
-    # Expand ~ to home directory in source and dest
-    source = re.sub("~", os.path.expanduser("~"), source)
+    # Expand ~ to home directory in dest
     dest = re.sub("~", os.path.expanduser("~"), dest)
 
-    # Find test_template directory
-    td_template_path = os.path.join(source, args["test_driver"], args["template_dir"])
+    # Find template file directory
+    template_file_directory_path = os.path.join(root_dir, args["template_dir"])
 
-    global_vars = {"TEST_DRIVER_NAME": args["test_driver"]}
     global_vars["version"] = "{:03d}".format(args["version"])
 
     # Get global vars
@@ -421,7 +479,9 @@ if __name__ == "__main__":
         global_path = args["global_variables"]
         try:
             with open(
-                os.path.abspath(os.path.join(td_template_path, "..", global_path)),
+                os.path.abspath(
+                    os.path.join(template_file_directory_path, "..", global_path)
+                ),
                 encoding="utf-8",
             ) as f:
                 global_vars = json.loads(f.read())
@@ -434,7 +494,8 @@ if __name__ == "__main__":
         generator_file_dicts = []
         # First, read generator file and ensure there are no 'kimnum' entries
         with open(
-            os.path.join(td_template_path, "..", generator_file), encoding="utf-8"
+            os.path.join(template_file_directory_path, "..", generator_file),
+            encoding="utf-8",
         ) as f:
             for line in f:
                 this_dict = json.loads(line)
@@ -446,29 +507,30 @@ if __name__ == "__main__":
                         "dictionaries in generator file {}. Please remove "
                         "all instances of 'kimnum' if you wish to use "
                         "--add-random-kimnums. Aborting test "
-                        "generation.".format(
-                            os.path.join(source, args["test_driver"], generator_file)
-                        )
+                        "generation.".format(os.path.join(root_dir, generator_file))
                     )
                     sys.exit(1)
 
         # Now loop over the contents of the generator file and add random kimnums to each dict
         with open(
-            os.path.join(td_template_path, "..", generator_file), "w", encoding="utf-8"
+            os.path.join(template_file_directory_path, "..", generator_file),
+            "w",
+            encoding="utf-8",
         ) as f:
             for this_dict in generator_file_dicts:
                 this_dict["kimnum"] = "%012d" % random.randint(0, 1e12 - 1)
                 f.write(json.dumps(this_dict) + "\n")
 
-    # Generate Tests
+    # Generate items
     with open(
-        os.path.join(td_template_path, "..", generator_file), encoding="utf-8"
+        os.path.join(template_file_directory_path, "..", generator_file),
+        encoding="utf-8",
     ) as f:
         for line in f:
             template_variables = global_vars.copy()
             template_variables.update(json.loads(line))
             newtestpath = maketest(
-                td_template_path,
+                template_file_directory_path,
                 template_variables=template_variables,
                 dest=dest,
                 overwrite=overwrite,
