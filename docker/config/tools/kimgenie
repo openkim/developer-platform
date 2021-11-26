@@ -103,7 +103,7 @@ def createLogger(logfile, verbose):
 ################################
 FILENAME_REGEX = re.compile(
     r"""
-    FILENAME    #magic word
+    FILENAME    # magic word
     \s*         # whitespace
     =           # equal character
     \s*         # whitespace
@@ -113,7 +113,7 @@ FILENAME_REGEX = re.compile(
 )
 
 
-def maketest(
+def generate_item(
     directory,
     template_variables,
     dest=TEDIR,
@@ -532,7 +532,7 @@ if __name__ == "__main__":
     if not action:
         # If no action was given, print help text
         parser.print_help()
-        sys.exit(1)
+        sys.exit(0)
 
     elif action == "tests":
         root_dir = args["root_dir"]
@@ -568,7 +568,7 @@ if __name__ == "__main__":
     if add_random_kimnums:
         add_random_kimnum(root_dir, template_file_directory_path, generator_file)
 
-    # Generate items
+    # Generate items one-by-one
     with open(
         os.path.join(template_file_directory_path, "..", generator_file),
         encoding="utf-8",
@@ -576,7 +576,7 @@ if __name__ == "__main__":
         for line in f:
             template_variables = global_template_vars.copy()
             template_variables.update(json.loads(line))
-            newtestpath = maketest(
+            newtestpath = generate_item(
                 template_file_directory_path,
                 template_variables=template_variables,
                 dest=dest,
