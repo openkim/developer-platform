@@ -140,112 +140,111 @@ def generate_item(
         logger.addHandler(nullhdlr)
 
     try:
-        tempdir = tempfile.mkdtemp()
-        # First parse the kimspec file
-        KIMSPEC_FILE_TEMP = KIMSPEC_FILE + ".genie"
+        with tempfile.TemporaryDirectory() as tempdir:
 
-        file_newconf = os.path.join(directory, KIMSPEC_FILE_TEMP)
-        kimspec_template = template_environment.get_template(file_newconf)
-        kimspec = kimspec_template.render(**template_variables)
+            # First parse the kimspec file
+            KIMSPEC_FILE_TEMP = KIMSPEC_FILE + ".genie"
 
-        with open(os.path.join(tempdir, KIMSPEC_FILE), "w", encoding="utf-8") as f:
-            f.write(kimspec)
+            file_newconf = os.path.join(directory, KIMSPEC_FILE_TEMP)
+            kimspec_template = template_environment.get_template(file_newconf)
+            kimspec = kimspec_template.render(**template_variables)
 
-        # Extend template_variables with everything defined in kimspec
-        kimspeckeys = kim_edn.loads(kimspec)
-        template_variables.update({"kimspec": kimspeckeys})
-        template_variables.update({"query": query_stub})
+            with open(os.path.join(tempdir, KIMSPEC_FILE), "w", encoding="utf-8") as f:
+                f.write(kimspec)
 
-        # Get Test name from kimspec
-        test_name = template_variables["kimspec"]["extended-id"]
+            # Extend template_variables with everything defined in kimspec
+            kimspeckeys = kim_edn.loads(kimspec)
+            template_variables.update({"kimspec": kimspeckeys})
+            template_variables.update({"query": query_stub})
 
-        # Create temporary directory
-        tmp_test_dir = os.path.join(tempdir, test_name)
-        shutil.copytree(directory, tmp_test_dir)
+            # Get Test name from kimspec
+            test_name = template_variables["kimspec"]["extended-id"]
 
-        logger.info("BUILDING: {} @ {}".format(test_name, tmp_test_dir))
-        logger.debug("Variable_dict: {}".format(template_variables))
+            # Create temporary directory
+            tmp_test_dir = os.path.join(tempdir, test_name)
+            shutil.copytree(directory, tmp_test_dir)
 
-        for (basepath, _, files) in os.walk(tmp_test_dir):
-            for fl in files:
-                logger.debug("processing {}".format(fl))
-                filepath = os.path.join(basepath, fl)
-                with open(filepath, encoding="utf-8") as f:
-                    contents = f.read()
-                # copy original mode so we can chmod at end
-                original_mode = os.stat(filepath).st_mode
-                filename = fl
-                if filename_prefix:
-                    if not filename.startswith(filename_prefix):
-                        os.remove(filepath)
-                        continue
+            logger.info("BUILDING: {} @ {}".format(test_name, tmp_test_dir))
+            logger.debug("Variable_dict: {}".format(template_variables))
+
+            for (basepath, _, files) in os.walk(tmp_test_dir):
+                for fl in files:
+                    logger.debug("processing {}".format(fl))
+                    filepath = os.path.join(basepath, fl)
+                    with open(filepath, encoding="utf-8") as f:
+                        contents = f.read()
+                    # copy original mode so we can chmod at end
+                    original_mode = os.stat(filepath).st_mode
+                    filename = fl
+                    if filename_prefix:
+                        if not filename.startswith(filename_prefix):
+                            os.remove(filepath)
+                            continue
+                        else:
+                            filename = filename[len(filename_prefix) :]
+                    if filename_extension:
+                        if not filename.endswith(filename_extension):
+                            os.remove(filepath)
+                            continue
+                        else:
+                            filename = filename[: -len(filename_extension) - 1]
+                    filename_search = FILENAME_REGEX.search(contents)
+                    if filename_search:
+                        filename_template = FILENAME_REGEX.search(contents).group(1)
+                        filename = jinja2.Template(filename_template).render(
+                            **template_variables
+                        )
+
+                    logger.debug("new file name: {}".format(filename))
+
+                    # Template everything completely other than query calls, for which we only template
+                    # the arguments for now
+                    template_intermediate = template_environment.get_template(filepath)
+                    new_contents = template_intermediate.render(**template_variables)
+
+                    # Now actually perform any queries that might be present and
+                    # write the final rendered template to file
+                    template_final = jinja2.Environment(
+                        loader=jinja2.BaseLoader
+                    ).from_string(str(new_contents))
+                    new_contents = template_final.render({"query": kimquery.query})
+
+                    newfilepath = os.path.join(basepath, filename)
+                    os.remove(filepath)
+
+                    with open(newfilepath, "w", encoding="utf-8") as g:
+                        g.write(new_contents)
+                    # Set permissions to match the corresponding template file
+                    os.chmod(newfilepath, original_mode)
+
+            test_dest_name = os.path.join(dest, test_name)
+
+            if not dry_run:
+                # Now move the finished Test directory to its final home
+                if os.path.isdir(test_dest_name):
+                    logger.info("Moving to {}".format(test_dest_name))
+                    if overwrite:
+                        shutil.rmtree(test_dest_name)
+                        shutil.move(tmp_test_dir, test_dest_name)
                     else:
-                        filename = filename[len(filename_prefix) :]
-                if filename_extension:
-                    if not filename.endswith(filename_extension):
-                        os.remove(filepath)
-                        continue
-                    else:
-                        filename = filename[: -len(filename_extension) - 1]
-                filename_search = FILENAME_REGEX.search(contents)
-                if filename_search:
-                    filename_template = FILENAME_REGEX.search(contents).group(1)
-                    filename = jinja2.Template(filename_template).render(
-                        **template_variables
-                    )
-
-                logger.debug("new file name: {}".format(filename))
-
-                # Template everything completely other than query calls, for which we only template
-                # the arguments for now
-                template_intermediate = template_environment.get_template(filepath)
-                new_contents = template_intermediate.render(**template_variables)
-
-                # Now actually perform any queries that might be present and
-                # write the final rendered template to file
-                template_final = jinja2.Environment(
-                    loader=jinja2.BaseLoader
-                ).from_string(str(new_contents))
-                new_contents = template_final.render({"query": kimquery.query})
-
-                newfilepath = os.path.join(basepath, filename)
-                os.remove(filepath)
-
-                with open(newfilepath, "w", encoding="utf-8") as g:
-                    g.write(new_contents)
-                # Set permissions to match the corresponding template file
-                os.chmod(newfilepath, original_mode)
-
-        test_dest_name = os.path.join(dest, test_name)
-
-        if not dry_run:
-            # Now move the finished Test directory to its final home
-            if os.path.isdir(test_dest_name):
-                logger.info("Moving to {}".format(test_dest_name))
-                if overwrite:
-                    shutil.rmtree(test_dest_name)
-                    shutil.move(tmp_test_dir, test_dest_name)
+                        shutil.rmtree(tempdir)
+                        raise OSError(
+                            "Directory {} already exists! "
+                            "Aborting...".format(test_dest_name)
+                        )
                 else:
-                    shutil.rmtree(tempdir)
-                    raise OSError(
-                        "Directory {} already exists! "
-                        "Aborting...".format(test_dest_name)
-                    )
-            else:
-                shutil.move(tmp_test_dir, test_dest_name)
+                    shutil.move(tmp_test_dir, test_dest_name)
+
+                # Clean up
+                shutil.rmtree(tempdir)
+
+                return os.path.join(dest, test_name)
 
             # Clean up
             shutil.rmtree(tempdir)
-
-            return os.path.join(dest, test_name)
-
-        # Clean up
-        shutil.rmtree(tempdir)
-        return test_dest_name
+            return test_dest_name
 
     except KeyboardInterrupt:
-        # Make sure we clean up our temporary directory if the user interrupts the process
-        shutil.rmtree(tempdir)
         sys.exit(1)
 
 
