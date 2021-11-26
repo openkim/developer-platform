@@ -122,6 +122,7 @@ def read_kimspec_template_and_render(directory, template_variables, kimspec_name
 
 
 def generate_item(
+    mode,
     directory,
     template_variables,
     dest=TEDIR,
@@ -164,14 +165,20 @@ def generate_item(
             template_variables.update({"kimspec": kimspeckeys})
             template_variables.update({"query": query_stub})
 
-            # Get Test name from kimspec
-            test_name = template_variables["kimspec"]["extended-id"]
+            # Get item name from kimspec
+            if mode == "tests":
+                item_name_kimspec_key = "extended-id"
+
+            elif mode == "ref-data":
+                item_name_kimspec_key = "short-id"
+
+            item_name = template_variables["kimspec"][item_name_kimspec_key]
 
             # Create temporary directory
-            tmp_test_dir = os.path.join(tempdir, test_name)
+            tmp_test_dir = os.path.join(tempdir, item_name)
             shutil.copytree(directory, tmp_test_dir)
 
-            logger.info("BUILDING: {} @ {}".format(test_name, tmp_test_dir))
+            logger.info("BUILDING: {} @ {}".format(item_name, tmp_test_dir))
             logger.debug("Variable_dict: {}".format(template_variables))
 
             for (basepath, _, files) in os.walk(tmp_test_dir):
@@ -224,7 +231,7 @@ def generate_item(
                     # Set permissions to match the corresponding template file
                     os.chmod(newfilepath, original_mode)
 
-            test_dest_name = os.path.join(dest, test_name)
+            test_dest_name = os.path.join(dest, item_name)
 
             if not dry_run:
                 # Now move the finished Test directory to its final home
@@ -245,7 +252,7 @@ def generate_item(
                 # Clean up
                 shutil.rmtree(tempdir)
 
-                return os.path.join(dest, test_name)
+                return os.path.join(dest, item_name)
 
             # Clean up
             shutil.rmtree(tempdir)
@@ -583,6 +590,7 @@ if __name__ == "__main__":
             template_variables = global_template_vars.copy()
             template_variables.update(json.loads(line))
             newtestpath = generate_item(
+                action,
                 template_file_directory_path,
                 template_variables=template_variables,
                 dest=dest,
