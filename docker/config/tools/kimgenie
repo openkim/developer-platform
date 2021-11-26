@@ -94,7 +94,7 @@ def createLogger(logfile, verbose):
         formatstr = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
 
     logging.basicConfig(filename=logfile, level=loglevel, format=formatstr)
-    logger = logging.getLogger("testgenie")
+    logger = logging.getLogger("kimgenie")
     return logger
 
 
@@ -145,7 +145,7 @@ def generate_item(
         return f"{{{{ query({rendered}) }}}}"
 
     if logger is None:
-        logger = logging.getLogger("testgenie")
+        logger = logging.getLogger("kimgenie")
         nullhdlr = logging.NullHandler()
         logger.addHandler(nullhdlr)
 
