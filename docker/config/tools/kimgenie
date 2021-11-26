@@ -430,7 +430,16 @@ if __name__ == "__main__":
     parse_tests.set_defaults(action="tests")
     parse_ref_data.set_defaults(action="ref-data")
 
+    # Pull args passed on command line
     args = vars(parser.parse_args())
+
+    dest = args["destination"]
+    overwrite = args["overwrite"]
+    dry_run = args["dry_run"]
+    random_codes = args["add_random_kimnums"]
+    generator_file = args["generator_file"]
+    filename_prefix = args["filename_prefix"]
+    filename_extension = args["filename_extension"]
 
     global_vars = {}
 
@@ -465,15 +474,6 @@ if __name__ == "__main__":
 
     # Set up logger if necessary
     logger = setup_logging(args["logfile"], args["verbose"])
-
-    # Destination directory
-    dest = args["destination"]
-    overwrite = args["overwrite"]
-    dry_run = args["dry_run"]
-    random_codes = args["add_random_kimnums"]
-    generator_file = args["generator_file"]
-    filename_prefix = args["filename_prefix"]
-    filename_extension = args["filename_extension"]
 
     # Expand ~ to home directory in dest
     dest = re.sub("~", os.path.expanduser("~"), dest)
