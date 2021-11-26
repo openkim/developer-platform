@@ -267,6 +267,25 @@ def setup_logging(logfile, verbose):
             return createLogger(logfile, verbose=verbose)
 
 
+def update_global_template_vars(
+    global_vars, template_file_directory_path, global_variables_file
+):
+    """Update global variables dict from file"""
+    if global_variables_file:
+        try:
+            with open(
+                os.path.abspath(
+                    os.path.join(
+                        template_file_directory_path, "..", global_variables_file
+                    )
+                ),
+                encoding="utf-8",
+            ) as global_vars_fl:
+                global_vars.update(json.loads(global_vars_fl.read()))
+        except IOError:
+            global_vars.update(json.loads(global_variables_file))
+
+
 def create_shared_arguments():
     # Shared arguments for the subactions themselves
     shared = argparse.ArgumentParser(add_help=False)
@@ -440,6 +459,7 @@ if __name__ == "__main__":
     generator_file = args["generator_file"]
     filename_prefix = args["filename_prefix"]
     filename_extension = args["filename_extension"]
+    global_variables_file = args["global_variables"]
 
     global_vars = {}
 
@@ -469,6 +489,16 @@ if __name__ == "__main__":
     elif action == "ref-data":
         root_dir = args.get("root-dir")
 
+    template_file_directory_path = os.path.join(root_dir, args["template_dir"])
+
+    global_vars["version"] = "{:03d}".format(args["version"])
+
+    # If the user specified a global variables file, update the global
+    # variables defined thus far
+    update_global_template_vars(
+        global_vars, template_file_directory_path, global_variables_file
+    )
+
     template_environment = jinja2.Environment(loader=jinja2.FileSystemLoader("/"))
     template_environment.globals.update({"stripversion": kimcodes.strip_version})
 
@@ -477,25 +507,6 @@ if __name__ == "__main__":
 
     # Expand ~ to home directory in dest
     dest = re.sub("~", os.path.expanduser("~"), dest)
-
-    # Find template file directory
-    template_file_directory_path = os.path.join(root_dir, args["template_dir"])
-
-    global_vars["version"] = "{:03d}".format(args["version"])
-
-    # Get global vars
-    if args["global_variables"]:
-        global_path = args["global_variables"]
-        try:
-            with open(
-                os.path.abspath(
-                    os.path.join(template_file_directory_path, "..", global_path)
-                ),
-                encoding="utf-8",
-            ) as f:
-                global_vars = json.loads(f.read())
-        except Exception:
-            global_vars = json.loads(global_path)
 
     # If user provided add-random-kimnums option, attempt to overwrite their
     # generator file
