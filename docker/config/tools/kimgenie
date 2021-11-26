@@ -200,21 +200,22 @@ class ItemGenerator:
             return template_file_name
 
     def _move_rendered_item_to_final_destination(
-        self, tmp_item_dir, item_destination_path, overwrite
+        self
     ):
         # Now move the finished item directory to its final home
-        if os.path.isdir(item_destination_path):
-            self.logger.info("Moving to %s", item_destination_path)
-            if overwrite:
-                shutil.rmtree(item_destination_path)
-                shutil.move(tmp_item_dir, item_destination_path)
+        item_dest = self.item_destination_path
+        if os.path.isdir(item_dest):
+            self.logger.info("Moving to %s", item_dest)
+            if self.overwrite:
+                shutil.rmtree(item_dest)
+                shutil.move(self.tmp_item_dir, item_dest)
             else:
                 raise OSError(
                     "Directory {} already exists! "
-                    "Aborting...".format(item_destination_path)
+                    "Aborting...".format(item_dest)
                 )
         else:
-            shutil.move(tmp_item_dir, item_destination_path)
+            shutil.move(self.tmp_item_dir, item_dest)
 
     def generate_item(self):
         """Create an item from a template file directory and a template variable
@@ -250,13 +251,13 @@ class ItemGenerator:
                 ]
 
                 # Copy template file directory to temporary directory
-                tmp_item_dir = os.path.join(tempdir, item_name)
-                shutil.copytree(self.template_file_directory_path, tmp_item_dir)
+                self.tmp_item_dir = os.path.join(tempdir, item_name)
+                shutil.copytree(self.template_file_directory_path, self.tmp_item_dir)
 
-                self.logger.info("BUILDING: %s @ %s", item_name, tmp_item_dir)
+                self.logger.info("BUILDING: %s @ %s", item_name, self.tmp_item_dir)
                 self.logger.debug("Variable_dict: %s", self.template_variables)
 
-                for (basepath, _, files) in os.walk(tmp_item_dir):
+                for (basepath, _, files) in os.walk(self.tmp_item_dir):
                     for fl in files:
                         self.logger.debug("processing %s", fl)
                         filepath = os.path.join(basepath, fl)
@@ -317,9 +318,6 @@ class ItemGenerator:
 
                 if not self.dry_run:
                     self._move_rendered_item_to_final_destination(
-                        tmp_item_dir,
-                        self.item_destination_path,
-                        overwrite=self.overwrite,
                     )
 
         except KeyboardInterrupt:
