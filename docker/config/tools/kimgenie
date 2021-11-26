@@ -27,7 +27,8 @@ the Jinja2 python package.  The generation of an item takes place in stages:
           {# FILENAME = desired_file_name_with_{{ template namespace variables }} #}
         directive exists anywhere in the file.  If so, this is used to
         determine the name of the corresponding rendered file in the generated
-        item.
+        item. NOTE: Ensure that this directive is not immediately preceded by
+        another curly bracket (resulting in '{{# FILENAME...').
      b. Process the rest of the file as a Jinja template, excluding any calls
         to the 'query' function, which is defined in the global template
         variable namespace
