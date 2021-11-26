@@ -516,7 +516,7 @@ if __name__ == "__main__":
     dest = args["destination"]
     overwrite = args["overwrite"]
     dry_run = args["dry_run"]
-    random_codes = args["add_random_kimnums"]
+    add_random_kimnums = args["add_random_kimnums"]
     generator_file = args["generator_file"]
     filename_prefix = args["filename_prefix"]
     filename_extension = args["filename_extension"]
@@ -565,7 +565,7 @@ if __name__ == "__main__":
 
     # If user provided add-random-kimnums option, attempt to overwrite their
     # generator file
-    if random_codes:
+    if add_random_kimnums:
         add_random_kimnum(root_dir, template_file_directory_path, generator_file)
 
     # Generate items
