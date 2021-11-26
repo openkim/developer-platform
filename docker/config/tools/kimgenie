@@ -290,6 +290,38 @@ def expand_tilde_to_home_dir(path_str):
     return re.sub("~", os.path.expanduser("~"), path_str)
 
 
+def add_random_kimnum(root_dir, template_file_directory_path, generator_file):
+    generator_file_dicts = []
+    # First, read generator file and ensure there are no 'kimnum' entries
+    with open(
+        os.path.join(template_file_directory_path, "..", generator_file),
+        encoding="utf-8",
+    ) as generator_fl:
+        for line in generator_fl:
+            this_dict = json.loads(line)
+            generator_file_dicts.append(this_dict)
+            if "kimnum" in this_dict:
+                print(
+                    "Flag --add-random-kimnums was given, but there is "
+                    "a 'kimnum' key present in one or more of the "
+                    "dictionaries in generator file {}. Please remove "
+                    "all instances of 'kimnum' if you wish to use "
+                    "--add-random-kimnums. Aborting test "
+                    "generation.".format(os.path.join(root_dir, generator_file))
+                )
+                sys.exit(1)
+
+    # Now loop over the contents of the generator file and add random kimnums to each dict
+    with open(
+        os.path.join(template_file_directory_path, "..", generator_file),
+        "w",
+        encoding="utf-8",
+    ) as f:
+        for this_dict in generator_file_dicts:
+            this_dict["kimnum"] = "%012d" % random.randint(0, 1e12 - 1)
+            f.write(json.dumps(this_dict) + "\n")
+
+
 def create_shared_arguments():
     # Shared arguments for the subactions themselves
     shared = argparse.ArgumentParser(add_help=False)
@@ -527,35 +559,7 @@ if __name__ == "__main__":
     # If user provided add-random-kimnums option, attempt to overwrite their
     # generator file
     if random_codes:
-        generator_file_dicts = []
-        # First, read generator file and ensure there are no 'kimnum' entries
-        with open(
-            os.path.join(template_file_directory_path, "..", generator_file),
-            encoding="utf-8",
-        ) as f:
-            for line in f:
-                this_dict = json.loads(line)
-                generator_file_dicts.append(this_dict)
-                if "kimnum" in this_dict:
-                    print(
-                        "Flag --add-random-kimnums was given, but there is "
-                        "a 'kimnum' key present in one or more of the "
-                        "dictionaries in generator file {}. Please remove "
-                        "all instances of 'kimnum' if you wish to use "
-                        "--add-random-kimnums. Aborting test "
-                        "generation.".format(os.path.join(root_dir, generator_file))
-                    )
-                    sys.exit(1)
-
-        # Now loop over the contents of the generator file and add random kimnums to each dict
-        with open(
-            os.path.join(template_file_directory_path, "..", generator_file),
-            "w",
-            encoding="utf-8",
-        ) as f:
-            for this_dict in generator_file_dicts:
-                this_dict["kimnum"] = "%012d" % random.randint(0, 1e12 - 1)
-                f.write(json.dumps(this_dict) + "\n")
+        add_random_kimnum(root_dir, template_file_directory_path, generator_file)
 
     # Generate items
     with open(
