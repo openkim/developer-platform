@@ -164,11 +164,29 @@ def determine_final_file_name(template_file_name, contents, template_variables):
         return template_file_name
 
 
+def move_rendered_item_to_final_destination(
+    tmp_item_dir, item_destination_path, overwrite
+):
+    # Now move the finished item directory to its final home
+    if os.path.isdir(item_destination_path):
+        logger.info("Moving to %s", item_destination_path)
+        if overwrite:
+            shutil.rmtree(item_destination_path)
+            shutil.move(tmp_item_dir, item_destination_path)
+        else:
+            raise OSError(
+                "Directory {} already exists! "
+                "Aborting...".format(item_destination_path)
+            )
+    else:
+        shutil.move(tmp_item_dir, item_destination_path)
+
+
 def generate_item(
     mode,
     template_file_directory_path,
     template_variables,
-    dest,
+    destination,
     overwrite=False,
     dry_run=False,
     filename_prefix=None,
@@ -277,27 +295,14 @@ def generate_item(
                     # Set permissions to match the corresponding template file
                     os.chmod(newfilepath, original_mode)
 
-            item_dest_name = os.path.join(dest, item_name)
+            item_destination_path = os.path.join(destination, item_name)
 
             if not dry_run:
-                # Now move the finished item directory to its final home
-                if os.path.isdir(item_dest_name):
-                    logger.info("Moving to %s", item_dest_name)
-                    if overwrite:
-                        shutil.rmtree(item_dest_name)
-                        shutil.move(tmp_item_dir, item_dest_name)
-                    else:
-                        shutil.rmtree(tempdir)
-                        raise OSError(
-                            "Directory {} already exists! "
-                            "Aborting...".format(item_dest_name)
-                        )
-                else:
-                    shutil.move(tmp_item_dir, item_dest_name)
+                move_rendered_item_to_final_destination(
+                    tmp_item_dir, item_destination_path, overwrite=overwrite
+                )
 
-                return os.path.join(dest, item_name)
-
-            return item_dest_name
+            return item_destination_path
 
     except KeyboardInterrupt:
         sys.exit(1)
@@ -603,7 +608,7 @@ if __name__ == "__main__":
     # Pull args passed on command line
     args = vars(parser.parse_args())
 
-    dest = args["destination"]
+    destination = args["destination"]
     overwrite = args["overwrite"]
     dry_run = args["dry_run"]
     add_random_kimnums = args["add_random_kimnums"]
@@ -651,7 +656,7 @@ if __name__ == "__main__":
     logger = setup_logging(log_file, verbose)
 
     # Expand ~ to home directory in dest
-    dest = expand_tilde_to_home_dir(dest)
+    destination = expand_tilde_to_home_dir(destination)
 
     # If user provided add-random-kimnums option, attempt to overwrite their
     # generator file
@@ -670,7 +675,7 @@ if __name__ == "__main__":
                 action,
                 template_file_directory_path,
                 template_variables=template_variables,
-                dest=dest,
+                destination=destination,
                 overwrite=overwrite,
                 dry_run=dry_run,
                 filename_prefix=filename_prefix,
