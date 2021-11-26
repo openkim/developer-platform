@@ -63,6 +63,7 @@ import re
 import random
 import json
 import sys
+import pathlib
 
 import jinja2
 import kim_edn
@@ -150,7 +151,7 @@ class ItemGenerator:
             {"stripversion": kimcodes.strip_version}
         )
 
-    def read_kimspec_template_and_render(self):
+    def _read_kimspec_template_and_render(self):
         kimspec_file_temp = KIMSPEC_FILE + ".genie"
         file_newconf = os.path.join(
             self.template_file_directory_path, kimspec_file_temp
@@ -159,7 +160,7 @@ class ItemGenerator:
         kimspec = kimspec_template.render(**self.template_variables)
         return kimspec
 
-    def determine_final_file_name(self, template_file_name, contents):
+    def _determine_final_file_name(self, template_file_name, contents):
         """Determine the final name for a rendered file.  If a special file name
         directive of the form
         {# FILENAME = desired_file_name_with_{{ template namespace variables }} #}
@@ -190,7 +191,7 @@ class ItemGenerator:
         else:
             return template_file_name
 
-    def move_rendered_item_to_final_destination(
+    def _move_rendered_item_to_final_destination(
         self, tmp_item_dir, item_destination_path, overwrite
     ):
         # Now move the finished item directory to its final home
@@ -211,7 +212,7 @@ class ItemGenerator:
         """Create an item from a template file directory and a template variable
         namespace"""
 
-        def query_stub(x):
+        def _query_stub(x):
             """Render everything inside the argument to the query function, then
             return the output inside of {{ query() }} so the actual query call can
             be made"""
@@ -232,7 +233,7 @@ class ItemGenerator:
             with tempfile.TemporaryDirectory() as tempdir:
 
                 # First parse the kimspec file
-                kimspec = self.read_kimspec_template_and_render()
+                kimspec = self._read_kimspec_template_and_render()
 
                 with open(
                     os.path.join(tempdir, KIMSPEC_FILE), "w", encoding="utf-8"
@@ -242,10 +243,10 @@ class ItemGenerator:
                 # Extend template_variables with everything defined in kimspec
                 kimspeckeys = kim_edn.loads(kimspec)
                 self.template_variables.update({"kimspec": kimspeckeys})
-                self.template_variables.update({"query": query_stub})
+                self.template_variables.update({"query": _query_stub})
 
                 item_name = self.template_variables["kimspec"][
-                    self.item_name_kimspec_key
+                    self._item_name_kimspec_key
                 ]
 
                 # Copy template file directory to temporary directory
@@ -282,7 +283,7 @@ class ItemGenerator:
                                     : -len(self.filename_extension) - 1
                                 ]
 
-                        final_file_name = self.determine_final_file_name(
+                        final_file_name = self._determine_final_file_name(
                             template_file_name, contents
                         )
 
@@ -315,7 +316,7 @@ class ItemGenerator:
                 self.item_destination_path = os.path.join(destination, item_name)
 
                 if not self.dry_run:
-                    self.move_rendered_item_to_final_destination(
+                    self._move_rendered_item_to_final_destination(
                         tmp_item_dir,
                         self.item_destination_path,
                         overwrite=self.overwrite,
@@ -326,19 +327,19 @@ class ItemGenerator:
 
     @property
     @abstractmethod
-    def item_name_kimspec_key(self):
+    def _item_name_kimspec_key(self):
         pass
 
 
 class TestGenerator(ItemGenerator):
     @property
-    def item_name_kimspec_key(self):
+    def _item_name_kimspec_key(self):
         return "extended-id"
 
 
 class RefDataGenerator(ItemGenerator):
     @property
-    def item_name_kimspec_key(self):
+    def _item_name_kimspec_key(self):
         return "short-id"
 
 
