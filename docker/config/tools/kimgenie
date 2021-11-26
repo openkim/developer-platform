@@ -249,6 +249,24 @@ def maketest(
         sys.exit(1)
 
 
+def setup_logging(logfile, verbose):
+    if logfile:
+        if os.path.isfile(logfile):
+            overwrite_log = input(
+                "Log file {} already exists.  Would you like to overwrite "
+                "this file (y/n)? ".format(logfile)
+            )
+            overwrite_log = overwrite_log.lower()
+            if overwrite_log.lower() in ["y", "yes"]:
+                os.remove(logfile)
+                return createLogger(logfile, verbose=verbose)
+            else:
+                print("Aborting Test generation")
+                sys.exit(0)
+        else:
+            return createLogger(logfile, verbose=verbose)
+
+
 def create_shared_arguments():
     # Shared arguments for the subactions themselves
     shared = argparse.ArgumentParser(add_help=False)
@@ -413,7 +431,6 @@ if __name__ == "__main__":
     parse_ref_data.set_defaults(action="ref-data")
 
     args = vars(parser.parse_args())
-    logger = None
 
     global_vars = {}
 
@@ -447,21 +464,7 @@ if __name__ == "__main__":
     template_environment.globals.update({"stripversion": kimcodes.strip_version})
 
     # Set up logger if necessary
-    if args["logfile"]:
-        if os.path.isfile(args["logfile"]):
-            overwrite_log = input(
-                "Log file {} already exists.  Would you like to overwrite "
-                "this file (y/n)? ".format(args["logfile"])
-            )
-            overwrite_log = overwrite_log.lower()
-            if overwrite_log.lower() in ["y", "yes"]:
-                os.remove(args["logfile"])
-                logger = createLogger(args["logfile"], verbose=args["verbose"])
-            else:
-                print("Aborting Test generation")
-                exit()
-        else:
-            logger = createLogger(args["logfile"], verbose=args["verbose"])
+    logger = setup_logging(args["logfile"], args["verbose"])
 
     # Destination directory
     dest = args["destination"]
