@@ -545,9 +545,9 @@ if __name__ == "__main__":
         sys.exit(0)
 
     elif action == "tests":
-        root_dir = args["root_dir"]
-        test_driver = args["test_driver"]
-        process_tests_root_dir_and_test_driver_options(root_dir, test_driver)
+        root_dir, test_driver = process_tests_root_dir_and_test_driver_options(
+            args["root_dir"], args["test_driver"]
+        )
         if test_driver:
             global_template_vars["TEST_DRIVER_NAME"] = test_driver
 
