@@ -460,6 +460,10 @@ if __name__ == "__main__":
     filename_prefix = args["filename_prefix"]
     filename_extension = args["filename_extension"]
     global_variables_file = args["global_variables"]
+    logfile = args["logfile"]
+    verbose = args["verbose"]
+    version = args["version"]
+    template_files_dir = args["template_dir"]
 
     global_template_vars = {}
 
@@ -489,9 +493,9 @@ if __name__ == "__main__":
     elif action == "ref-data":
         root_dir = args.get("root-dir")
 
-    template_file_directory_path = os.path.join(root_dir, args["template_dir"])
+    template_file_directory_path = os.path.join(root_dir, template_files_dir)
 
-    global_template_vars["version"] = "{:03d}".format(args["version"])
+    global_template_vars["version"] = "{:03d}".format(version)
 
     # If the user specified a global variables file, update the global
     # variables defined thus far
@@ -503,7 +507,7 @@ if __name__ == "__main__":
     template_environment.globals.update({"stripversion": kimcodes.strip_version})
 
     # Set up logger if necessary
-    logger = setup_logging(args["logfile"], args["verbose"])
+    logger = setup_logging(logfile, verbose)
 
     # Expand ~ to home directory in dest
     dest = re.sub("~", os.path.expanduser("~"), dest)
