@@ -71,9 +71,20 @@ import excerpts.config as cf
 
 
 TDDIR = os.path.join(cf.LOCAL_REPOSITORY_PATH, cf.item_subdir_names["td"])
-TEDIR = os.path.join(cf.LOCAL_REPOSITORY_PATH, cf.item_subdir_names["te"])
+
 KIMSPEC_FILE = cf.CONFIG_FILE
-TEMPLATEDIR = "test_template"
+
+DEFAULT_GENERATOR_FILE_TESTS = "test_generator.json"
+DEFAULT_GENERATOR_FILE_REFDATA = "refdata_generator.json"
+DEFAULT_TEMPLATE_DIR_TESTS = "test_template"
+DEFAULT_TEMPLATE_DIR_REFDATA = "refdata_template"
+
+DEFAULT_DESTINATION_TESTS = os.path.join(
+    cf.LOCAL_REPOSITORY_PATH, cf.item_subdir_names["te"]
+)
+DEFAULT_DESTINATION_REFDATA = os.path.join(
+    cf.LOCAL_REPOSITORY_PATH, cf.item_subdir_names["rd"]
+)
 
 
 class IncompatibleArgumentCombination(Exception):
@@ -127,7 +138,7 @@ def generate_item(
     mode,
     template_file_directory_path,
     template_variables,
-    dest=TEDIR,
+    dest,
     overwrite=False,
     dry_run=False,
     filename_prefix=None,
@@ -337,22 +348,6 @@ def create_shared_arguments():
     shared = argparse.ArgumentParser(add_help=False)
 
     shared.add_argument(
-        "--template-dir",
-        type=str,
-        default=TEMPLATEDIR,
-        help="Directory containing the template files [default: {}]".format(
-            TEMPLATEDIR
-        ),
-    )
-
-    shared.add_argument(
-        "--generator-file",
-        type=str,
-        default="test_generator.json",
-        help="Generator file [default: test_generator.json]",
-    )
-
-    shared.add_argument(
         "--global-variables",
         type=str,
         help="Additional JSON-formatted dictionary of global variables, as file or string",
@@ -362,13 +357,6 @@ def create_shared_arguments():
         "--dry-run",
         action="store_true",
         help="Don't actually create the items, but rather just show what would be generated",
-    )
-
-    shared.add_argument(
-        "--destination",
-        type=str,
-        default=TEDIR,
-        help="Destination directory for generated items [default: {}]".format(TEDIR),
     )
 
     shared.add_argument(
@@ -454,6 +442,15 @@ def create_tests_arguments(parse_tests):
             f"Driver directory must exist under {TDDIR}."
         ),
     )
+
+    default_generator_file = DEFAULT_GENERATOR_FILE_TESTS
+    parse_tests.add_argument(
+        "--generator-file",
+        type=str,
+        default=default_generator_file,
+        help=f"Generator file [default: {default_generator_file}]",
+    )
+
     parse_tests.add_argument(
         "--root-dir",
         type=str,
@@ -462,14 +459,64 @@ def create_tests_arguments(parse_tests):
         "'test-driver' option must be given.",
     )
 
+    default_destination = DEFAULT_DESTINATION_TESTS
+    parse_tests.add_argument(
+        "--destination",
+        type=str,
+        default=default_destination,
+        help="Destination directory for generated items [default: {}]".format(
+            default_destination
+        ),
+    )
+
+    default_template_dir = DEFAULT_TEMPLATE_DIR_TESTS
+    parse_tests.add_argument(
+        "--template-dir",
+        type=str,
+        default=default_template_dir,
+        help="Directory containing the template files [default: {}]".format(
+            default_template_dir
+        ),
+    )
+
 
 def create_ref_data_arguments(parse_ref_data):
+    # TODO: Reduce duplication in creation of args that are essentially shared
+    # with the 'tests' mode but simply have different default values
     parse_ref_data.add_argument(
         "root-dir",
         type=str,
         help=(
             "The directory that contains the template file directory and "
             "generator file.  May be an absolute or relative path."
+        ),
+    )
+
+    default_generator_file = DEFAULT_GENERATOR_FILE_REFDATA
+    parse_ref_data.add_argument(
+        "--generator-file",
+        type=str,
+        default=default_generator_file,
+        help=f"Generator file [default: {default_generator_file}]",
+    )
+
+    default_destination = DEFAULT_DESTINATION_REFDATA
+    parse_ref_data.add_argument(
+        "--destination",
+        type=str,
+        default=default_destination,
+        help="Destination directory for generated items [default: {}]".format(
+            default_destination
+        ),
+    )
+
+    default_template_dir = DEFAULT_TEMPLATE_DIR_REFDATA
+    parse_ref_data.add_argument(
+        "--template-dir",
+        type=str,
+        default=default_template_dir,
+        help="Directory containing the template files [default: {}]".format(
+            default_template_dir
         ),
     )
 
