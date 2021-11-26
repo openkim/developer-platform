@@ -397,6 +397,24 @@ def create_shared_arguments():
     return shared
 
 
+def process_tests_root_dir_and_test_driver_options(root_dir, test_driver):
+
+    if root_dir and test_driver:
+        raise IncompatibleArgumentCombination(
+            "When generating tests, only one of the 'root-dir' or "
+            "'test-driver' options may be given."
+        )
+    elif (not root_dir) and (not test_driver):
+        raise IncompatibleArgumentCombination(
+            "When generating tests, at least one of the 'root-dir' or "
+            "'test-driver' options must be given."
+        )
+    elif (not root_dir) and test_driver:
+        root_dir = os.path.join(TDDIR, test_driver)
+
+    return root_dir, test_driver
+
+
 if __name__ == "__main__":
     import argparse
 
@@ -474,24 +492,14 @@ if __name__ == "__main__":
         sys.exit(1)
 
     elif action == "tests":
-        test_driver = args.get("test_driver")
-        root_dir = args.get("root_dir")
-        if root_dir and test_driver:
-            raise IncompatibleArgumentCombination(
-                "When generating tests, only one of the 'root-dir' or "
-                "'test-driver' options may be given."
-            )
-        elif (not root_dir) and (not test_driver):
-            raise IncompatibleArgumentCombination(
-                "When generating tests, at least one of the 'root-dir' or "
-                "'test-driver' options must be given."
-            )
-        elif (not root_dir) and test_driver:
+        root_dir = args["root_dir"]
+        test_driver = args["test_driver"]
+        process_tests_root_dir_and_test_driver_options(root_dir, test_driver)
+        if test_driver:
             global_template_vars["TEST_DRIVER_NAME"] = test_driver
-            root_dir = os.path.join(TDDIR, test_driver)
 
     elif action == "ref-data":
-        root_dir = args.get("root-dir")
+        root_dir = args["root-dir"]
 
     template_file_directory_path = os.path.join(root_dir, template_files_dir)
 
