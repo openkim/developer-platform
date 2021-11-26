@@ -64,7 +64,7 @@ import json
 import sys
 
 import jinja2
-import edn_format
+import kim_edn
 
 from excerpts import kimquery, kimcodes
 import excerpts.config as cf
@@ -152,7 +152,7 @@ def maketest(
             f.write(kimspec)
 
         # Extend template_variables with everything defined in kimspec
-        kimspeckeys = edn_format.loads(kimspec, write_ply_tables=False)
+        kimspeckeys = kim_edn.loads(kimspec)
         template_variables.update({"kimspec": kimspeckeys})
         template_variables.update({"query": query_stub})
 
