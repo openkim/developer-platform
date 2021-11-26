@@ -45,7 +45,7 @@ NOTE: This tool prints the name of each item directory to stdout after it is
 generated.  This is useful to catch in order to remove these directories later
 if necessary, e.g.
 
-  kimgenie --tests mytestdriver__TD_000000000000_000 > list_of_generated_tests.txt
+  kimgenie tests --test-driver mytestdriver__TD_000000000000_000 > list_of_generated_tests.txt
   cat list_of_generated_tests.txt | xargs rm -r
 
 Copyright (c) 2014-2021, Regents of the University of Minnesota. All rights
