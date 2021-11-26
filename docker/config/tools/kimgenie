@@ -24,7 +24,7 @@ the Jinja2 python package.  The generation of an item takes place in stages:
      file
   6. For each remaining file in the template file directory:
      a. Check if a
-          {# FILENAME = desired_file_name_with_{{ variables }} #}
+          {# FILENAME = desired_file_name_with_{{ template namespace variables }} #}
         directive exists anywhere in the file.  If so, this is used to
         determine the name of the corresponding rendered file in the generated
         item.
@@ -134,6 +134,36 @@ def read_kimspec_template_and_render(
     return kimspec
 
 
+def determine_final_file_name(template_file_name, contents, template_variables):
+    """Determine the final name for a rendered file.  If a special file name
+    directive of the form
+      {# FILENAME = desired_file_name_with_{{ template namespace variables }} #}
+    is found anywhere in the file, its rendered result will be used as the
+    final file name.  Otherwise, the final file name will be the same as the
+    template file name.
+
+    Parameters
+    ----------
+    template_file_name : str
+        The name of the file in the template file directory
+    contents : str
+        The contents of the template file
+
+    Returns
+    -------
+    str
+        The final name to use for the rendered file.
+    """
+    filename_search = FILENAME_REGEX.search(contents)
+    if filename_search:
+        filename_template_search_result = FILENAME_REGEX.search(contents).group(1)
+        return jinja2.Template(filename_template_search_result).render(
+            **template_variables
+        )
+    else:
+        return template_file_name
+
+
 def generate_item(
     mode,
     template_file_directory_path,
@@ -187,7 +217,7 @@ def generate_item(
 
             item_name = template_variables["kimspec"][item_name_kimspec_key]
 
-            # Create temporary directory
+            # Copy template file directory to temporary directory
             tmp_item_dir = os.path.join(tempdir, item_name)
             shutil.copytree(template_file_directory_path, tmp_item_dir)
 
@@ -202,27 +232,30 @@ def generate_item(
                         contents = f.read()
                     # copy original mode so we can chmod at end
                     original_mode = os.stat(filepath).st_mode
-                    filename = fl
-                    if filename_prefix:
-                        if not filename.startswith(filename_prefix):
-                            os.remove(filepath)
-                            continue
-                        else:
-                            filename = filename[len(filename_prefix) :]
-                    if filename_extension:
-                        if not filename.endswith(filename_extension):
-                            os.remove(filepath)
-                            continue
-                        else:
-                            filename = filename[: -len(filename_extension) - 1]
-                    filename_search = FILENAME_REGEX.search(contents)
-                    if filename_search:
-                        filename_template = FILENAME_REGEX.search(contents).group(1)
-                        filename = jinja2.Template(filename_template).render(
-                            **template_variables
-                        )
+                    template_file_name = fl
 
-                    logger.debug("new file name: %s", filename)
+                    if filename_prefix:
+                        if not template_file_name.startswith(filename_prefix):
+                            os.remove(filepath)
+                            continue
+                        else:
+                            template_file_name = template_file_name[
+                                len(filename_prefix) :
+                            ]
+                    if filename_extension:
+                        if not template_file_name.endswith(filename_extension):
+                            os.remove(filepath)
+                            continue
+                        else:
+                            template_file_name = template_file_name[
+                                : -len(filename_extension) - 1
+                            ]
+
+                    final_file_name = determine_final_file_name(
+                        template_file_name, contents, template_variables
+                    )
+
+                    logger.debug("new file name: %s", final_file_name)
 
                     # Template everything completely other than query calls, for which we only template
                     # the arguments for now
@@ -236,7 +269,7 @@ def generate_item(
                     ).from_string(str(new_contents))
                     new_contents = template_final.render({"query": kimquery.query})
 
-                    newfilepath = os.path.join(basepath, filename)
+                    newfilepath = os.path.join(basepath, final_file_name)
                     os.remove(filepath)
 
                     with open(newfilepath, "w", encoding="utf-8") as g:
