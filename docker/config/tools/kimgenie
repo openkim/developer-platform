@@ -191,12 +191,12 @@ def generate_item(
             tmp_item_dir = os.path.join(tempdir, item_name)
             shutil.copytree(template_file_directory_path, tmp_item_dir)
 
-            logger.info("BUILDING: {} @ {}".format(item_name, tmp_item_dir))
-            logger.debug("Variable_dict: {}".format(template_variables))
+            logger.info("BUILDING: %s @ %s", item_name, tmp_item_dir)
+            logger.debug("Variable_dict: %s", template_variables)
 
             for (basepath, _, files) in os.walk(tmp_item_dir):
                 for fl in files:
-                    logger.debug("processing {}".format(fl))
+                    logger.debug("processing %s", fl)
                     filepath = os.path.join(basepath, fl)
                     with open(filepath, encoding="utf-8") as f:
                         contents = f.read()
@@ -222,7 +222,7 @@ def generate_item(
                             **template_variables
                         )
 
-                    logger.debug("new file name: {}".format(filename))
+                    logger.debug("new file name: %s", filename)
 
                     # Template everything completely other than query calls, for which we only template
                     # the arguments for now
@@ -249,7 +249,7 @@ def generate_item(
             if not dry_run:
                 # Now move the finished item directory to its final home
                 if os.path.isdir(item_dest_name):
-                    logger.info("Moving to {}".format(item_dest_name))
+                    logger.info("Moving to %s", item_dest_name)
                     if overwrite:
                         shutil.rmtree(item_dest_name)
                         shutil.move(tmp_item_dir, item_dest_name)
