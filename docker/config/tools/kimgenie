@@ -113,6 +113,14 @@ FILENAME_REGEX = re.compile(
 )
 
 
+def read_kimspec_template_and_render(directory, template_variables, kimspec_name):
+    kimspec_file_temp = kimspec_name + ".genie"
+    file_newconf = os.path.join(directory, kimspec_file_temp)
+    kimspec_template = template_environment.get_template(file_newconf)
+    kimspec = kimspec_template.render(**template_variables)
+    return kimspec
+
+
 def generate_item(
     directory,
     template_variables,
@@ -123,7 +131,8 @@ def generate_item(
     filename_extension=None,
     logger=None,
 ):
-    """Make a Test given the input directory"""
+    """Create an item from a template file directory and a template variable
+    namespace"""
 
     def query_stub(x):
         """Render everything inside the argument to the query function, then
@@ -143,11 +152,9 @@ def generate_item(
         with tempfile.TemporaryDirectory() as tempdir:
 
             # First parse the kimspec file
-            KIMSPEC_FILE_TEMP = KIMSPEC_FILE + ".genie"
-
-            file_newconf = os.path.join(directory, KIMSPEC_FILE_TEMP)
-            kimspec_template = template_environment.get_template(file_newconf)
-            kimspec = kimspec_template.render(**template_variables)
+            kimspec = read_kimspec_template_and_render(
+                directory, template_variables, KIMSPEC_FILE
+            )
 
             with open(os.path.join(tempdir, KIMSPEC_FILE), "w", encoding="utf-8") as f:
                 f.write(kimspec)
