@@ -113,9 +113,11 @@ FILENAME_REGEX = re.compile(
 )
 
 
-def read_kimspec_template_and_render(directory, template_variables, kimspec_name):
+def read_kimspec_template_and_render(
+    template_file_directory_path, template_variables, kimspec_name
+):
     kimspec_file_temp = kimspec_name + ".genie"
-    file_newconf = os.path.join(directory, kimspec_file_temp)
+    file_newconf = os.path.join(template_file_directory_path, kimspec_file_temp)
     kimspec_template = template_environment.get_template(file_newconf)
     kimspec = kimspec_template.render(**template_variables)
     return kimspec
@@ -123,7 +125,7 @@ def read_kimspec_template_and_render(directory, template_variables, kimspec_name
 
 def generate_item(
     mode,
-    directory,
+    template_file_directory_path,
     template_variables,
     dest=TEDIR,
     overwrite=False,
@@ -154,7 +156,7 @@ def generate_item(
 
             # First parse the kimspec file
             kimspec = read_kimspec_template_and_render(
-                directory, template_variables, KIMSPEC_FILE
+                template_file_directory_path, template_variables, KIMSPEC_FILE
             )
 
             with open(os.path.join(tempdir, KIMSPEC_FILE), "w", encoding="utf-8") as f:
@@ -176,7 +178,7 @@ def generate_item(
 
             # Create temporary directory
             tmp_test_dir = os.path.join(tempdir, item_name)
-            shutil.copytree(directory, tmp_test_dir)
+            shutil.copytree(template_file_directory_path, tmp_test_dir)
 
             logger.info("BUILDING: {} @ {}".format(item_name, tmp_test_dir))
             logger.debug("Variable_dict: {}".format(template_variables))
@@ -234,7 +236,7 @@ def generate_item(
             test_dest_name = os.path.join(dest, item_name)
 
             if not dry_run:
-                # Now move the finished Test directory to its final home
+                # Now move the finished item directory to its final home
                 if os.path.isdir(test_dest_name):
                     logger.info("Moving to {}".format(test_dest_name))
                     if overwrite:
