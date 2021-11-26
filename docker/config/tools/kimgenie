@@ -249,17 +249,7 @@ def maketest(
         sys.exit(1)
 
 
-if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser(
-        description="KIM item generation genie",
-        epilog=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-
-    sub = parser.add_subparsers()
-
+def create_shared_arguments():
     # Shared arguments for the subactions themselves
     shared = argparse.ArgumentParser(add_help=False)
 
@@ -366,6 +356,22 @@ if __name__ == "__main__":
         action="store_true",
         help="Show debugging messages and timestamps in logs",
     )
+
+    return shared
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="KIM item generation genie",
+        epilog=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+
+    sub = parser.add_subparsers()
+
+    shared = create_shared_arguments()
 
     # Subactions that can be performed
     parse_tests = sub.add_parser(
