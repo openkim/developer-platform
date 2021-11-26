@@ -219,6 +219,7 @@ item_subdir_names = {}
 if conf.get("USE_FULL_ITEM_NAMES_IN_REPO"):
     item_subdir_names["md"] = "model-drivers"
     item_subdir_names["mo"] = "models"
+    item_subdir_names["rd"] = "reference-data"
     item_subdir_names["sm"] = "simulator-models"
     item_subdir_names["td"] = "test-drivers"
     item_subdir_names["te"] = "tests"
@@ -230,6 +231,7 @@ if conf.get("USE_FULL_ITEM_NAMES_IN_REPO"):
 else:
     item_subdir_names["md"] = "md"
     item_subdir_names["mo"] = "mo"
+    item_subdir_names["rd"] = "rd"
     item_subdir_names["sm"] = "sm"
     item_subdir_names["td"] = "td"
     item_subdir_names["te"] = "te"
