@@ -159,10 +159,11 @@ class ItemGenerator:
 
     def _read_kimspec_template_and_render(self):
         kimspec_file_temp = KIMSPEC_FILE + ".genie"
-        file_newconf = os.path.join(
-            self.template_file_directory_path, kimspec_file_temp
+        file_newconf = (
+            pathlib.Path(self.template_file_directory_path) / kimspec_file_temp
         )
-        kimspec_template = self.template_environment.get_template(file_newconf)
+        file_newconf_abs = str(file_newconf.resolve())
+        kimspec_template = self.template_environment.get_template(file_newconf_abs)
         kimspec = kimspec_template.render(**self.template_variables)
         return kimspec
 
