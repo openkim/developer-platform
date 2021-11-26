@@ -53,6 +53,7 @@ reserved.
 
 This software may be distributed as-is, without modification.
 """
+from abc import abstractmethod
 import logging
 import logging.handlers
 import os
@@ -109,203 +110,236 @@ def createLogger(logfile, verbose):
     return logger
 
 
-################################
-# Primary Test factory function
-################################
-FILENAME_REGEX = re.compile(
-    r"""
-    FILENAME    # magic word
-    \s*         # whitespace
-    =           # equal character
-    \s*         # whitespace
-    (\S+)       # name
-    """,
-    re.VERBOSE,
-)
+class ItemGenerator:
 
+    FILENAME_REGEX = re.compile(
+        r"""
+        FILENAME    # magic word
+        \s*         # whitespace
+        =           # equal character
+        \s*         # whitespace
+        (\S+)       # name
+        """,
+        re.VERBOSE,
+    )
 
-def read_kimspec_template_and_render(
-    template_file_directory_path, template_variables, kimspec_name
-):
-    kimspec_file_temp = kimspec_name + ".genie"
-    file_newconf = os.path.join(template_file_directory_path, kimspec_file_temp)
-    kimspec_template = template_environment.get_template(file_newconf)
-    kimspec = kimspec_template.render(**template_variables)
-    return kimspec
+    def __init__(
+        self,
+        template_file_directory_path,
+        template_variables,
+        destination,
+        overwrite=False,
+        dry_run=False,
+        filename_prefix=None,
+        filename_extension=None,
+        logger=None,
+    ):
+        self.template_file_directory_path = template_file_directory_path
+        self.template_variables = template_variables
+        self.destination = destination
+        self.overwrite = overwrite
+        self.dry_run = dry_run
+        self.filename_prefix = filename_prefix
+        self.filename_extension = filename_extension
+        self.logger = logger
 
-
-def determine_final_file_name(template_file_name, contents, template_variables):
-    """Determine the final name for a rendered file.  If a special file name
-    directive of the form
-      {# FILENAME = desired_file_name_with_{{ template namespace variables }} #}
-    is found anywhere in the file, its rendered result will be used as the
-    final file name.  Otherwise, the final file name will be the same as the
-    template file name.
-
-    Parameters
-    ----------
-    template_file_name : str
-        The name of the file in the template file directory
-    contents : str
-        The contents of the template file
-
-    Returns
-    -------
-    str
-        The final name to use for the rendered file.
-    """
-    filename_search = FILENAME_REGEX.search(contents)
-    if filename_search:
-        filename_template_search_result = FILENAME_REGEX.search(contents).group(1)
-        return jinja2.Template(filename_template_search_result).render(
-            **template_variables
+        self.template_environment = jinja2.Environment(
+            loader=jinja2.FileSystemLoader("/")
         )
-    else:
-        return template_file_name
+        self.template_environment.globals.update(
+            {"stripversion": kimcodes.strip_version}
+        )
 
+    def read_kimspec_template_and_render(self):
+        kimspec_file_temp = KIMSPEC_FILE + ".genie"
+        file_newconf = os.path.join(
+            self.template_file_directory_path, kimspec_file_temp
+        )
+        kimspec_template = self.template_environment.get_template(file_newconf)
+        kimspec = kimspec_template.render(**self.template_variables)
+        return kimspec
 
-def move_rendered_item_to_final_destination(
-    tmp_item_dir, item_destination_path, overwrite
-):
-    # Now move the finished item directory to its final home
-    if os.path.isdir(item_destination_path):
-        logger.info("Moving to %s", item_destination_path)
-        if overwrite:
-            shutil.rmtree(item_destination_path)
-            shutil.move(tmp_item_dir, item_destination_path)
+    def determine_final_file_name(self, template_file_name, contents):
+        """Determine the final name for a rendered file.  If a special file name
+        directive of the form
+        {# FILENAME = desired_file_name_with_{{ template namespace variables }} #}
+        is found anywhere in the file, its rendered result will be used as the
+        final file name.  Otherwise, the final file name will be the same as the
+        template file name.
+
+        Parameters
+        ----------
+        template_file_name : str
+            The name of the file in the template file directory
+        contents : str
+            The contents of the template file
+
+        Returns
+        -------
+        str
+            The final name to use for the rendered file.
+        """
+        filename_search = self.FILENAME_REGEX.search(contents)
+        if filename_search:
+            filename_template_search_result = self.FILENAME_REGEX.search(
+                contents
+            ).group(1)
+            return jinja2.Template(filename_template_search_result).render(
+                **self.template_variables
+            )
         else:
-            raise OSError(
-                "Directory {} already exists! "
-                "Aborting...".format(item_destination_path)
-            )
-    else:
-        shutil.move(tmp_item_dir, item_destination_path)
+            return template_file_name
 
+    def move_rendered_item_to_final_destination(
+        self, tmp_item_dir, item_destination_path, overwrite
+    ):
+        # Now move the finished item directory to its final home
+        if os.path.isdir(item_destination_path):
+            self.logger.info("Moving to %s", item_destination_path)
+            if overwrite:
+                shutil.rmtree(item_destination_path)
+                shutil.move(tmp_item_dir, item_destination_path)
+            else:
+                raise OSError(
+                    "Directory {} already exists! "
+                    "Aborting...".format(item_destination_path)
+                )
+        else:
+            shutil.move(tmp_item_dir, item_destination_path)
 
-def generate_item(
-    mode,
-    template_file_directory_path,
-    template_variables,
-    destination,
-    overwrite=False,
-    dry_run=False,
-    filename_prefix=None,
-    filename_extension=None,
-    logger=None,
-):
-    """Create an item from a template file directory and a template variable
-    namespace"""
+    def generate_item(self):
+        """Create an item from a template file directory and a template variable
+        namespace"""
 
-    def query_stub(x):
-        """Render everything inside the argument to the query function, then
-        return the output inside of {{ query() }} so the actual query call can
-        be made"""
-        tmp_env = jinja2.Environment(loader=jinja2.BaseLoader).from_string(str(x))
-        tmp_env.globals.update({"stripversion": kimcodes.strip_version})
-        rendered = tmp_env.render(**template_variables)
-        return f"{{{{ query({rendered}) }}}}"
+        def query_stub(x):
+            """Render everything inside the argument to the query function, then
+            return the output inside of {{ query() }} so the actual query call can
+            be made"""
+            tmp_env = jinja2.Environment(loader=jinja2.BaseLoader).from_string(str(x))
+            tmp_env.globals.update({"stripversion": kimcodes.strip_version})
+            rendered = tmp_env.render(**self.template_variables)
+            return f"{{{{ query({rendered}) }}}}"
 
-    if logger is None:
-        logger = logging.getLogger("kimgenie")
-        nullhdlr = logging.NullHandler()
-        logger.addHandler(nullhdlr)
+        if self.logger is None:
+            # If no logger was passed, create one
+            logger = logging.getLogger("kimgenie")
+            nullhdlr = logging.NullHandler()
+            logger.addHandler(nullhdlr)
+        else:
+            logger = self.logger
 
-    try:
-        with tempfile.TemporaryDirectory() as tempdir:
+        try:
+            with tempfile.TemporaryDirectory() as tempdir:
 
-            # First parse the kimspec file
-            kimspec = read_kimspec_template_and_render(
-                template_file_directory_path, template_variables, KIMSPEC_FILE
-            )
+                # First parse the kimspec file
+                kimspec = self.read_kimspec_template_and_render()
 
-            with open(os.path.join(tempdir, KIMSPEC_FILE), "w", encoding="utf-8") as f:
-                f.write(kimspec)
+                with open(
+                    os.path.join(tempdir, KIMSPEC_FILE), "w", encoding="utf-8"
+                ) as f:
+                    f.write(kimspec)
 
-            # Extend template_variables with everything defined in kimspec
-            kimspeckeys = kim_edn.loads(kimspec)
-            template_variables.update({"kimspec": kimspeckeys})
-            template_variables.update({"query": query_stub})
+                # Extend template_variables with everything defined in kimspec
+                kimspeckeys = kim_edn.loads(kimspec)
+                self.template_variables.update({"kimspec": kimspeckeys})
+                self.template_variables.update({"query": query_stub})
 
-            # Get item name from kimspec
-            if mode == "tests":
-                item_name_kimspec_key = "extended-id"
+                item_name = self.template_variables["kimspec"][
+                    self.item_name_kimspec_key
+                ]
 
-            elif mode == "ref-data":
-                item_name_kimspec_key = "short-id"
+                # Copy template file directory to temporary directory
+                tmp_item_dir = os.path.join(tempdir, item_name)
+                shutil.copytree(self.template_file_directory_path, tmp_item_dir)
 
-            item_name = template_variables["kimspec"][item_name_kimspec_key]
+                logger.info("BUILDING: %s @ %s", item_name, tmp_item_dir)
+                logger.debug("Variable_dict: %s", self.template_variables)
 
-            # Copy template file directory to temporary directory
-            tmp_item_dir = os.path.join(tempdir, item_name)
-            shutil.copytree(template_file_directory_path, tmp_item_dir)
+                for (basepath, _, files) in os.walk(tmp_item_dir):
+                    for fl in files:
+                        logger.debug("processing %s", fl)
+                        filepath = os.path.join(basepath, fl)
+                        with open(filepath, encoding="utf-8") as f:
+                            contents = f.read()
+                        # copy original mode so we can chmod at end
+                        original_mode = os.stat(filepath).st_mode
+                        template_file_name = fl
 
-            logger.info("BUILDING: %s @ %s", item_name, tmp_item_dir)
-            logger.debug("Variable_dict: %s", template_variables)
+                        if self.filename_prefix:
+                            if not template_file_name.startswith(self.filename_prefix):
+                                os.remove(filepath)
+                                continue
+                            else:
+                                template_file_name = template_file_name[
+                                    len(self.filename_prefix) :
+                                ]
+                        if self.filename_extension:
+                            if not template_file_name.endswith(self.filename_extension):
+                                os.remove(filepath)
+                                continue
+                            else:
+                                template_file_name = template_file_name[
+                                    : -len(self.filename_extension) - 1
+                                ]
 
-            for (basepath, _, files) in os.walk(tmp_item_dir):
-                for fl in files:
-                    logger.debug("processing %s", fl)
-                    filepath = os.path.join(basepath, fl)
-                    with open(filepath, encoding="utf-8") as f:
-                        contents = f.read()
-                    # copy original mode so we can chmod at end
-                    original_mode = os.stat(filepath).st_mode
-                    template_file_name = fl
+                        final_file_name = self.determine_final_file_name(
+                            template_file_name, contents
+                        )
 
-                    if filename_prefix:
-                        if not template_file_name.startswith(filename_prefix):
-                            os.remove(filepath)
-                            continue
-                        else:
-                            template_file_name = template_file_name[
-                                len(filename_prefix) :
-                            ]
-                    if filename_extension:
-                        if not template_file_name.endswith(filename_extension):
-                            os.remove(filepath)
-                            continue
-                        else:
-                            template_file_name = template_file_name[
-                                : -len(filename_extension) - 1
-                            ]
+                        logger.debug("new file name: %s", final_file_name)
 
-                    final_file_name = determine_final_file_name(
-                        template_file_name, contents, template_variables
+                        # Template everything completely other than query calls, for which we only template
+                        # the arguments for now
+                        template_intermediate = self.template_environment.get_template(
+                            filepath
+                        )
+                        new_contents = template_intermediate.render(
+                            **self.template_variables
+                        )
+
+                        # Now actually perform any queries that might be present and
+                        # write the final rendered template to file
+                        template_final = jinja2.Environment(
+                            loader=jinja2.BaseLoader
+                        ).from_string(str(new_contents))
+                        new_contents = template_final.render({"query": kimquery.query})
+
+                        newfilepath = os.path.join(basepath, final_file_name)
+                        os.remove(filepath)
+
+                        with open(newfilepath, "w", encoding="utf-8") as g:
+                            g.write(new_contents)
+                        # Set permissions to match the corresponding template file
+                        os.chmod(newfilepath, original_mode)
+
+                self.item_destination_path = os.path.join(destination, item_name)
+
+                if not self.dry_run:
+                    self.move_rendered_item_to_final_destination(
+                        tmp_item_dir,
+                        self.item_destination_path,
+                        overwrite=self.overwrite,
                     )
 
-                    logger.debug("new file name: %s", final_file_name)
+        except KeyboardInterrupt:
+            sys.exit(1)
 
-                    # Template everything completely other than query calls, for which we only template
-                    # the arguments for now
-                    template_intermediate = template_environment.get_template(filepath)
-                    new_contents = template_intermediate.render(**template_variables)
+    @property
+    @abstractmethod
+    def item_name_kimspec_key(self):
+        pass
 
-                    # Now actually perform any queries that might be present and
-                    # write the final rendered template to file
-                    template_final = jinja2.Environment(
-                        loader=jinja2.BaseLoader
-                    ).from_string(str(new_contents))
-                    new_contents = template_final.render({"query": kimquery.query})
 
-                    newfilepath = os.path.join(basepath, final_file_name)
-                    os.remove(filepath)
+class TestGenerator(ItemGenerator):
+    @property
+    def item_name_kimspec_key(self):
+        return "extended-id"
 
-                    with open(newfilepath, "w", encoding="utf-8") as g:
-                        g.write(new_contents)
-                    # Set permissions to match the corresponding template file
-                    os.chmod(newfilepath, original_mode)
 
-            item_destination_path = os.path.join(destination, item_name)
-
-            if not dry_run:
-                move_rendered_item_to_final_destination(
-                    tmp_item_dir, item_destination_path, overwrite=overwrite
-                )
-
-            return item_destination_path
-
-    except KeyboardInterrupt:
-        sys.exit(1)
+class RefDataGenerator(ItemGenerator):
+    @property
+    def item_name_kimspec_key(self):
+        return "short-id"
 
 
 def setup_logging(logfile, verbose):
@@ -649,9 +683,6 @@ if __name__ == "__main__":
         global_template_vars, template_file_directory_path, global_variables_file
     )
 
-    template_environment = jinja2.Environment(loader=jinja2.FileSystemLoader("/"))
-    template_environment.globals.update({"stripversion": kimcodes.strip_version})
-
     # Set up logger if necessary
     logger = setup_logging(log_file, verbose)
 
@@ -663,6 +694,8 @@ if __name__ == "__main__":
     if add_random_kimnums:
         add_random_kimnum(root_dir, template_file_directory_path, generator_file)
 
+    item_generator_classes = {"tests": TestGenerator, "ref-data": RefDataGenerator}
+
     # Generate items one-by-one
     with open(
         os.path.join(template_file_directory_path, "..", generator_file),
@@ -671,15 +704,20 @@ if __name__ == "__main__":
         for line in f:
             template_variables = global_template_vars.copy()
             template_variables.update(json.loads(line))
-            new_item_path = generate_item(
-                action,
+
+            item_generator_cls = item_generator_classes[action]
+
+            item_generator = item_generator_cls(
                 template_file_directory_path,
-                template_variables=template_variables,
-                destination=destination,
-                overwrite=overwrite,
-                dry_run=dry_run,
-                filename_prefix=filename_prefix,
-                filename_extension=filename_extension,
-                logger=logger,
+                template_variables,
+                destination,
+                overwrite,
+                dry_run,
+                filename_prefix,
+                filename_extension,
+                logger,
             )
-            print(new_item_path)
+
+            item_generator.generate_item()
+
+            print(item_generator.item_destination_path)
