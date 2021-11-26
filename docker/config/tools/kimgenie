@@ -199,9 +199,7 @@ class ItemGenerator:
         else:
             return template_file_name
 
-    def _move_rendered_item_to_final_destination(
-        self
-    ):
+    def _move_rendered_item_to_final_destination(self):
         # Now move the finished item directory to its final home
         item_dest = self.item_destination_path
         if os.path.isdir(item_dest):
@@ -211,8 +209,7 @@ class ItemGenerator:
                 shutil.move(self.tmp_item_dir, item_dest)
             else:
                 raise OSError(
-                    "Directory {} already exists! "
-                    "Aborting...".format(item_dest)
+                    "Directory {} already exists! Aborting...".format(item_dest)
                 )
         else:
             shutil.move(self.tmp_item_dir, item_dest)
@@ -246,15 +243,15 @@ class ItemGenerator:
                 self.template_variables.update({"kimspec": kimspeckeys})
                 self.template_variables.update({"query": _query_stub})
 
-                item_name = self.template_variables["kimspec"][
+                self.item_name = self.template_variables["kimspec"][
                     self._item_name_kimspec_key
                 ]
 
                 # Copy template file directory to temporary directory
-                self.tmp_item_dir = os.path.join(tempdir, item_name)
+                self.tmp_item_dir = os.path.join(tempdir, self.item_name)
                 shutil.copytree(self.template_file_directory_path, self.tmp_item_dir)
 
-                self.logger.info("BUILDING: %s @ %s", item_name, self.tmp_item_dir)
+                self.logger.info("BUILDING: %s @ %s", self.item_name, self.tmp_item_dir)
                 self.logger.debug("Variable_dict: %s", self.template_variables)
 
                 for (basepath, _, files) in os.walk(self.tmp_item_dir):
@@ -314,11 +311,12 @@ class ItemGenerator:
                         # Set permissions to match the corresponding template file
                         os.chmod(newfilepath, original_mode)
 
-                self.item_destination_path = os.path.join(destination, item_name)
+                self.item_destination_path = os.path.join(
+                    self.destination, self.item_name
+                )
 
                 if not self.dry_run:
-                    self._move_rendered_item_to_final_destination(
-                    )
+                    self._move_rendered_item_to_final_destination()
 
         except KeyboardInterrupt:
             sys.exit(1)
