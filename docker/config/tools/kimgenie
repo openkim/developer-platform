@@ -379,7 +379,7 @@ def create_shared_arguments():
     )
 
     shared.add_argument(
-        "--logfile",
+        "--log-file",
         type=str,
         help=(
             "Name of file to write logs to. If left unspecified, logs are not written "
@@ -460,7 +460,7 @@ if __name__ == "__main__":
     filename_prefix = args["filename_prefix"]
     filename_extension = args["filename_extension"]
     global_variables_file = args["global_variables"]
-    logfile = args["logfile"]
+    log_file = args["log_file"]
     verbose = args["verbose"]
     version = args["version"]
     template_files_dir = args["template_dir"]
@@ -507,7 +507,7 @@ if __name__ == "__main__":
     template_environment.globals.update({"stripversion": kimcodes.strip_version})
 
     # Set up logger if necessary
-    logger = setup_logging(logfile, verbose)
+    logger = setup_logging(log_file, verbose)
 
     # Expand ~ to home directory in dest
     dest = re.sub("~", os.path.expanduser("~"), dest)
