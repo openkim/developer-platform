@@ -268,7 +268,7 @@ def setup_logging(logfile, verbose):
 
 
 def update_global_template_vars(
-    global_vars, template_file_directory_path, global_variables_file
+    global_template_vars, template_file_directory_path, global_variables_file
 ):
     """Update global variables dict from file"""
     if global_variables_file:
@@ -280,10 +280,10 @@ def update_global_template_vars(
                     )
                 ),
                 encoding="utf-8",
-            ) as global_vars_fl:
-                global_vars.update(json.loads(global_vars_fl.read()))
+            ) as global_template_vars_fl:
+                global_template_vars.update(json.loads(global_template_vars_fl.read()))
         except IOError:
-            global_vars.update(json.loads(global_variables_file))
+            global_template_vars.update(json.loads(global_variables_file))
 
 
 def create_shared_arguments():
@@ -461,7 +461,7 @@ if __name__ == "__main__":
     filename_extension = args["filename_extension"]
     global_variables_file = args["global_variables"]
 
-    global_vars = {}
+    global_template_vars = {}
 
     action = args.get("action")
     if not action:
@@ -483,7 +483,7 @@ if __name__ == "__main__":
                 "'test-driver' options must be given."
             )
         elif (not root_dir) and test_driver:
-            global_vars["TEST_DRIVER_NAME"] = test_driver
+            global_template_vars["TEST_DRIVER_NAME"] = test_driver
             root_dir = os.path.join(TDDIR, test_driver)
 
     elif action == "ref-data":
@@ -491,12 +491,12 @@ if __name__ == "__main__":
 
     template_file_directory_path = os.path.join(root_dir, args["template_dir"])
 
-    global_vars["version"] = "{:03d}".format(args["version"])
+    global_template_vars["version"] = "{:03d}".format(args["version"])
 
     # If the user specified a global variables file, update the global
     # variables defined thus far
     update_global_template_vars(
-        global_vars, template_file_directory_path, global_variables_file
+        global_template_vars, template_file_directory_path, global_variables_file
     )
 
     template_environment = jinja2.Environment(loader=jinja2.FileSystemLoader("/"))
@@ -547,7 +547,7 @@ if __name__ == "__main__":
         encoding="utf-8",
     ) as f:
         for line in f:
-            template_variables = global_vars.copy()
+            template_variables = global_template_vars.copy()
             template_variables.update(json.loads(line))
             newtestpath = maketest(
                 template_file_directory_path,
