@@ -251,13 +251,8 @@ def generate_item(
                 else:
                     shutil.move(tmp_test_dir, test_dest_name)
 
-                # Clean up
-                shutil.rmtree(tempdir)
-
                 return os.path.join(dest, item_name)
 
-            # Clean up
-            shutil.rmtree(tempdir)
             return test_dest_name
 
     except KeyboardInterrupt:
