@@ -144,6 +144,12 @@ class ItemGenerator:
         self.filename_extension = filename_extension
         self.logger = logger
 
+        if self.logger is None:
+            # If no logger was passed, create one
+            self.logger = logging.getLogger("kimgenie")
+            nullhdlr = logging.NullHandler()
+            self.logger.addHandler(nullhdlr)
+
         self.template_environment = jinja2.Environment(
             loader=jinja2.FileSystemLoader("/")
         )
@@ -221,14 +227,6 @@ class ItemGenerator:
             rendered = tmp_env.render(**self.template_variables)
             return f"{{{{ query({rendered}) }}}}"
 
-        if self.logger is None:
-            # If no logger was passed, create one
-            logger = logging.getLogger("kimgenie")
-            nullhdlr = logging.NullHandler()
-            logger.addHandler(nullhdlr)
-        else:
-            logger = self.logger
-
         try:
             with tempfile.TemporaryDirectory() as tempdir:
 
@@ -253,12 +251,12 @@ class ItemGenerator:
                 tmp_item_dir = os.path.join(tempdir, item_name)
                 shutil.copytree(self.template_file_directory_path, tmp_item_dir)
 
-                logger.info("BUILDING: %s @ %s", item_name, tmp_item_dir)
-                logger.debug("Variable_dict: %s", self.template_variables)
+                self.logger.info("BUILDING: %s @ %s", item_name, tmp_item_dir)
+                self.logger.debug("Variable_dict: %s", self.template_variables)
 
                 for (basepath, _, files) in os.walk(tmp_item_dir):
                     for fl in files:
-                        logger.debug("processing %s", fl)
+                        self.logger.debug("processing %s", fl)
                         filepath = os.path.join(basepath, fl)
                         with open(filepath, encoding="utf-8") as f:
                             contents = f.read()
@@ -287,7 +285,7 @@ class ItemGenerator:
                             template_file_name, contents
                         )
 
-                        logger.debug("new file name: %s", final_file_name)
+                        self.logger.debug("new file name: %s", final_file_name)
 
                         # Template everything completely other than query calls, for which we only template
                         # the arguments for now
