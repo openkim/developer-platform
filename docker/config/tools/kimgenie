@@ -32,8 +32,12 @@ the Jinja2 python package.  The generation of an item takes place in stages:
      b. Process the rest of the file as a Jinja template, excluding any calls
         to the 'query' function, which is defined in the global template
         variable namespace
-  7. After all other template variables have been rendered, make any calls to
-     'query' function that are present and render the results
+     c. After all other template variables have been rendered, make any calls
+     to 'query' function that are present and render the results
+  7. If the special keyword 'FILES_TO_COPY' was given in the dictionary read
+     from the generator file, copy each file listed into the item directory.
+     Note that the value of 'FILES_TO_COPY' should be a list containing strings
+     corresponding to absolute paths of files.
   8. Create the item directory under the appropriate item type subdirectory of
     ${HOME}
 
@@ -89,9 +93,16 @@ DEFAULT_DESTINATION_REFDATA = os.path.join(
     cf.LOCAL_REPOSITORY_PATH, cf.item_subdir_names["rd"]
 )
 
+FILES_TO_COPY_KEY = "FILES_TO_COPY"
+
 
 class IncompatibleArgumentCombination(Exception):
     """An incompatible combination of options was passed to the tool"""
+
+
+class InvalidFilesToCopy(Exception):
+    """The list of files to copy given in a line of a generator file was not a
+    list"""
 
 
 ##############################
@@ -214,6 +225,21 @@ class ItemGenerator:
         else:
             shutil.move(self.tmp_item_dir, item_dest)
 
+    def _copy_additional_files_to_item_dir(self):
+        files_to_copy = self.template_variables[FILES_TO_COPY_KEY]
+        # Enforce that a list was passed
+        if not isinstance(files_to_copy, list) or not all(
+            isinstance(fl_name, str) for fl_name in files_to_copy
+        ):
+            raise InvalidFilesToCopy(
+                f"The value of the reserved key '{FILES_TO_COPY_KEY}' must be "
+                "a list of strings corresponding to absolute paths of files "
+                "to copy into the rendered item directory"
+            )
+
+        for abs_file_path in files_to_copy:
+            shutil.copy2(abs_file_path, self.tmp_item_dir)
+
     def generate_item(self):
         """Create an item from a template file directory and a template variable
         namespace"""
@@ -260,6 +286,7 @@ class ItemGenerator:
                         filepath = os.path.join(basepath, fl)
                         with open(filepath, encoding="utf-8") as f:
                             contents = f.read()
+
                         # copy original mode so we can chmod at end
                         original_mode = os.stat(filepath).st_mode
                         template_file_name = fl
@@ -310,6 +337,11 @@ class ItemGenerator:
                             g.write(new_contents)
                         # Set permissions to match the corresponding template file
                         os.chmod(newfilepath, original_mode)
+
+                # Copy any additional files specified that are specified to
+                # this item
+                if FILES_TO_COPY_KEY in self.template_variables:
+                    self._copy_additional_files_to_item_dir()
 
                 self.item_destination_path = os.path.join(
                     self.destination, self.item_name
