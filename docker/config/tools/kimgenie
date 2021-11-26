@@ -177,13 +177,13 @@ def generate_item(
             item_name = template_variables["kimspec"][item_name_kimspec_key]
 
             # Create temporary directory
-            tmp_test_dir = os.path.join(tempdir, item_name)
-            shutil.copytree(template_file_directory_path, tmp_test_dir)
+            tmp_item_dir = os.path.join(tempdir, item_name)
+            shutil.copytree(template_file_directory_path, tmp_item_dir)
 
-            logger.info("BUILDING: {} @ {}".format(item_name, tmp_test_dir))
+            logger.info("BUILDING: {} @ {}".format(item_name, tmp_item_dir))
             logger.debug("Variable_dict: {}".format(template_variables))
 
-            for (basepath, _, files) in os.walk(tmp_test_dir):
+            for (basepath, _, files) in os.walk(tmp_item_dir):
                 for fl in files:
                     logger.debug("processing {}".format(fl))
                     filepath = os.path.join(basepath, fl)
@@ -233,27 +233,27 @@ def generate_item(
                     # Set permissions to match the corresponding template file
                     os.chmod(newfilepath, original_mode)
 
-            test_dest_name = os.path.join(dest, item_name)
+            item_dest_name = os.path.join(dest, item_name)
 
             if not dry_run:
                 # Now move the finished item directory to its final home
-                if os.path.isdir(test_dest_name):
-                    logger.info("Moving to {}".format(test_dest_name))
+                if os.path.isdir(item_dest_name):
+                    logger.info("Moving to {}".format(item_dest_name))
                     if overwrite:
-                        shutil.rmtree(test_dest_name)
-                        shutil.move(tmp_test_dir, test_dest_name)
+                        shutil.rmtree(item_dest_name)
+                        shutil.move(tmp_item_dir, item_dest_name)
                     else:
                         shutil.rmtree(tempdir)
                         raise OSError(
                             "Directory {} already exists! "
-                            "Aborting...".format(test_dest_name)
+                            "Aborting...".format(item_dest_name)
                         )
                 else:
-                    shutil.move(tmp_test_dir, test_dest_name)
+                    shutil.move(tmp_item_dir, item_dest_name)
 
                 return os.path.join(dest, item_name)
 
-            return test_dest_name
+            return item_dest_name
 
     except KeyboardInterrupt:
         sys.exit(1)
@@ -316,7 +316,7 @@ def add_random_kimnum(root_dir, template_file_directory_path, generator_file):
                     "a 'kimnum' key present in one or more of the "
                     "dictionaries in generator file {}. Please remove "
                     "all instances of 'kimnum' if you wish to use "
-                    "--add-random-kimnums. Aborting test "
+                    "--add-random-kimnums. Aborting item "
                     "generation.".format(os.path.join(root_dir, generator_file))
                 )
                 sys.exit(1)
@@ -389,7 +389,7 @@ def create_shared_arguments():
             "in which a 'kimnum' key (with a random kimcode as its corresponding value) is "
             "added to each dictionary contained within. Before this alteration is made, a "
             "check is performed to determine if there is already a 'kimnum' key present "
-            "in any of the dictionaries in the generator file and, if so, the entire test "
+            "in any of the dictionaries in the generator file and, if so, the entire item "
             "generation process is aborted and your generator file will not be overwritten."
         ),
     )
@@ -586,7 +586,7 @@ if __name__ == "__main__":
         for line in f:
             template_variables = global_template_vars.copy()
             template_variables.update(json.loads(line))
-            newtestpath = generate_item(
+            new_item_path = generate_item(
                 action,
                 template_file_directory_path,
                 template_variables=template_variables,
@@ -597,4 +597,4 @@ if __name__ == "__main__":
                 filename_extension=filename_extension,
                 logger=logger,
             )
-            print(newtestpath)
+            print(new_item_path)
