@@ -286,6 +286,10 @@ def update_global_template_vars(
             global_template_vars.update(json.loads(global_variables_file))
 
 
+def expand_tilde_to_home_dir(path_str):
+    return re.sub("~", os.path.expanduser("~"), path_str)
+
+
 def create_shared_arguments():
     # Shared arguments for the subactions themselves
     shared = argparse.ArgumentParser(add_help=False)
@@ -518,7 +522,7 @@ if __name__ == "__main__":
     logger = setup_logging(log_file, verbose)
 
     # Expand ~ to home directory in dest
-    dest = re.sub("~", os.path.expanduser("~"), dest)
+    dest = expand_tilde_to_home_dir(dest)
 
     # If user provided add-random-kimnums option, attempt to overwrite their
     # generator file
