@@ -433,6 +433,37 @@ def create_shared_arguments():
     return shared
 
 
+def create_tests_arguments(parse_tests):
+    parse_tests.add_argument(
+        "--test-driver",
+        type=str,
+        help=(
+            "Extended KIM ID of the Test Driver whose Tests you wish to "
+            "generate.  Either this option or the 'root-dir' option should be "
+            "given.  If this option is specified, the corresponding Test "
+            f"Driver directory must exist under {TDDIR}."
+        ),
+    )
+    parse_tests.add_argument(
+        "--root-dir",
+        type=str,
+        help="The directory that contains the template file directory and "
+        "generator file. Either this option must be supplied or the "
+        "'test-driver' option must be given.",
+    )
+
+
+def create_ref_data_arguments(parse_ref_data):
+    parse_ref_data.add_argument(
+        "root-dir",
+        type=str,
+        help=(
+            "The directory that contains the template file directory and "
+            "generator file.  May be an absolute or relative path."
+        ),
+    )
+
+
 def process_tests_root_dir_and_test_driver_options(root_dir, test_driver):
 
     if root_dir and test_driver:
@@ -473,32 +504,8 @@ if __name__ == "__main__":
     )
 
     # Custom options for each subaction
-    parse_tests.add_argument(
-        "--test-driver",
-        type=str,
-        help=(
-            "Extended KIM ID of the Test Driver whose Tests you wish to "
-            "generate.  Either this option or the 'root-dir' option should be "
-            "given.  If this option is specified, the corresponding Test "
-            f"Driver directory must exist under {TDDIR}."
-        ),
-    )
-    parse_tests.add_argument(
-        "--root-dir",
-        type=str,
-        help="The directory that contains the template file directory and "
-        "generator file. Either this option must be supplied or the "
-        "'test-driver' option must be given.",
-    )
-
-    parse_ref_data.add_argument(
-        "root-dir",
-        type=str,
-        help=(
-            "The directory that contains the template file directory and "
-            "generator file.  May be an absolute or relative path."
-        ),
-    )
+    create_tests_arguments(parse_tests)
+    create_ref_data_arguments(parse_ref_data)
 
     parse_tests.set_defaults(action="tests")
     parse_ref_data.set_defaults(action="ref-data")
