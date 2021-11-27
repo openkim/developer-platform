@@ -18,6 +18,31 @@ _queryall(){
     echo ${temp//,/} # Remove commas
 }
 
+_glob_on_dirs(){
+    cwd=`pwd`
+    part=$1
+
+    if [[ $part == /* ]] || [[ $part == ~* ]]; then
+        # TODO: Add recursive directory completion.  The challenge of this is
+        # that you can't simply find the first match and finish the completion;
+        # if the first match is itself a directory, you want to traverse down
+        # to it and start matching on its contents rather than simply ending
+        # the completion process
+        :
+    else
+        if [ ! -n "$part" ]; then
+            # part was null
+            temp=$(find ${cwd}/* -maxdepth 0 -type d -printf "%f " 2>/dev/null)
+            echo $temp
+        else
+            # part was not null
+            temp=$(find ${cwd}/* -maxdepth 0 -type d -name "$part*" -printf "%f " 2>/dev/null)
+            echo $temp
+        fi
+    fi
+
+}
+
 _getall(){
     folders=$1
     part=$2
@@ -450,22 +475,51 @@ _complete_pipeline_runpair(){
     fi
 }
 
-_complete_testgenie(){
-    local cur prev
+_complete_kimgenie(){
+    local cur prev opts
     COMPREPLY=()
+    allwords="${COMP_WORDS[@]}"
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="-h --help -v --verbose --templatedir --source --generator-file
-         --global-variables --dry-run --destination --overwrite --add-random-kimnums
-         --filename-prefix --filename-extension --version --logfile"
 
-    if [[ $cur == -* ]]; then
-        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
-        return 0
-    else
-        local objs=$(_getall "td" "$cur")
-        COMPREPLY=( $(compgen -W "${objs}" -- ${cur}) )
-        return 0
+    opts="tests ref-data"
+
+    shared_opts="-h --help -v --verbose --root-dir --template-dir --generator-file
+         --global-variables --dry-run --destination --overwrite --add-random-kimnums
+         --filename-prefix --filename-extension --version --log-file"
+
+    tests_opts=${shared_opts}" --test-driver"
+
+    if [[ $allwords =~ kimgenie.*tests ]]; then
+        if [[ $cur == -* ]]; then
+            COMPREPLY=( $(compgen -W "${tests_opts}" -- ${cur}) )
+            return 0
+        else
+            # If we're the first word after the --test-driver flag, complete on
+            # Test Drivers in the local repository
+            if [[ $prev == --test-driver ]]; then
+                local objs=$(_getall "td" "$cur")
+                COMPREPLY=( $(compgen -W "${objs}" -- ${cur}) )
+                return 0
+            fi
+        fi
+    elif [[ $allwords =~ kimgenie.*ref-data.* ]]; then
+        if [[ $cur == -* ]]; then
+            COMPREPLY=( $(compgen -W "${shared_opts}" -- ${cur}) )
+            return 0
+        else
+            local matching_dirs=$(_glob_on_dirs "$cur")
+            COMPREPLY=( $(compgen -W "${matching_dirs}" -- ${cur}) )
+            return 0
+        fi
+    elif [[ $allwords =~ kimgenie ]]; then
+        if [[ $cur == -* ]]; then
+            COMPREPLY=( $(compgen -W "-h --help" -- ${cur}) )
+            return 0
+        else
+            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+            return 0
+        fi
     fi
 }
 
@@ -476,4 +530,4 @@ complete -F _complete_pipeline_findmatches pipeline-find-matches
 complete -F _complete_pipeline_runmatches pipeline-run-matches
 complete -F _complete_pipeline_runtests pipeline-run-tests
 complete -F _complete_pipeline_runverificationchecks pipeline-run-verification-checks
-complete -F _complete_testgenie testgenie
+complete -F _complete_kimgenie kimgenie
