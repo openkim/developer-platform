@@ -465,15 +465,18 @@ def create_shared_arguments():
     shared.add_argument(
         "--dry-run",
         action="store_true",
-        help="Don't actually create the items, but rather just show what would be generated",
+        help=(
+            "Don't actually create the items, but rather just show what would "
+            "be generated."
+        ),
     )
 
     shared.add_argument(
         "--filename-extension",
         type=str,
         help=(
-            "File name extension; only files with the specified extension are "
-            "included in the rendered item directories."
+            "Only files with the specified extension are included in the "
+            "rendered item directories."
         ),
     )
 
@@ -481,8 +484,8 @@ def create_shared_arguments():
         "--filename-prefix",
         type=str,
         help=(
-            "File name prefix; only files with the specified prefix are "
-            "included in the rendered item directories."
+            "Only files with the specified prefix are included in the "
+            "rendered item directories."
         ),
     )
 
