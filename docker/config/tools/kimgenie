@@ -449,27 +449,6 @@ def create_shared_arguments():
     shared = argparse.ArgumentParser(add_help=False)
 
     shared.add_argument(
-        "--global-variables-file",
-        type=str,
-        help="Additional JSON-formatted dictionary of global variables, as file or string",
-    )
-
-    shared.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Don't actually create the items, but rather just show what would be generated",
-    )
-
-    shared.add_argument(
-        "--overwrite",
-        action="store_true",
-        help=(
-            "Overwrite any existing item directories which already exist at the locations where "
-            "the Tests being generated are trying to be written to. Use with caution!"
-        ),
-    )
-
-    shared.add_argument(
         "--add-random-kimnums",
         action="store_true",
         help=(
@@ -484,12 +463,9 @@ def create_shared_arguments():
     )
 
     shared.add_argument(
-        "--filename-prefix",
-        type=str,
-        help=(
-            "File name prefix; only files with the specified prefix are "
-            "included in the rendered item directories."
-        ),
+        "--dry-run",
+        action="store_true",
+        help="Don't actually create the items, but rather just show what would be generated",
     )
 
     shared.add_argument(
@@ -499,6 +475,46 @@ def create_shared_arguments():
             "File name extension; only files with the specified extension are "
             "included in the rendered item directories."
         ),
+    )
+
+    shared.add_argument(
+        "--filename-prefix",
+        type=str,
+        help=(
+            "File name prefix; only files with the specified prefix are "
+            "included in the rendered item directories."
+        ),
+    )
+
+    shared.add_argument(
+        "--global-variables-file",
+        type=str,
+        help="Additional JSON-formatted dictionary of global variables, as file or string",
+    )
+
+    shared.add_argument(
+        "--log-file",
+        type=str,
+        help=(
+            "Name of file to write logs to. If left unspecified, logs are not written "
+            "(although the list of generated items is still printed to the terminal)."
+        ),
+    )
+
+    shared.add_argument(
+        "--overwrite",
+        action="store_true",
+        help=(
+            "Overwrite any existing item directories which already exist at the locations where "
+            "the Tests being generated are trying to be written to. Use with caution!"
+        ),
+    )
+
+    shared.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Show debugging messages and timestamps in logs",
     )
 
     shared.add_argument(
@@ -513,34 +529,18 @@ def create_shared_arguments():
         ),
     )
 
-    shared.add_argument(
-        "--log-file",
-        type=str,
-        help=(
-            "Name of file to write logs to. If left unspecified, logs are not written "
-            "(although the list of generated items is still printed to the terminal)."
-        ),
-    )
-
-    shared.add_argument(
-        "-v",
-        "--verbose",
-        action="store_true",
-        help="Show debugging messages and timestamps in logs",
-    )
-
     return shared
 
 
 def create_tests_arguments(parse_tests):
+
+    default_destination = DEFAULT_DESTINATION_TESTS
     parse_tests.add_argument(
-        "--test-driver",
+        "--destination",
         type=str,
-        help=(
-            "Extended KIM ID of the Test Driver whose Tests you wish to "
-            "generate.  Either this option or the 'root-dir' option should be "
-            "given.  If this option is specified, the corresponding Test "
-            f"Driver directory must exist under {TDDIR}."
+        default=default_destination,
+        help="Destination directory for generated items [default: {}]".format(
+            default_destination
         ),
     )
 
@@ -560,16 +560,6 @@ def create_tests_arguments(parse_tests):
         "'test-driver' option must be given.",
     )
 
-    default_destination = DEFAULT_DESTINATION_TESTS
-    parse_tests.add_argument(
-        "--destination",
-        type=str,
-        default=default_destination,
-        help="Destination directory for generated items [default: {}]".format(
-            default_destination
-        ),
-    )
-
     default_template_dir = DEFAULT_TEMPLATE_DIR_TESTS
     parse_tests.add_argument(
         "--template-dir",
@@ -580,16 +570,28 @@ def create_tests_arguments(parse_tests):
         ),
     )
 
+    parse_tests.add_argument(
+        "--test-driver",
+        type=str,
+        help=(
+            "Extended KIM ID of the Test Driver whose Tests you wish to "
+            "generate.  Either this option or the 'root-dir' option should be "
+            "given.  If this option is specified, the corresponding Test "
+            f"Driver directory must exist under {TDDIR}."
+        ),
+    )
+
 
 def create_ref_data_arguments(parse_ref_data):
     # TODO: Reduce duplication in creation of args that are essentially shared
     # with the 'tests' mode but simply have different default values
+    default_destination = DEFAULT_DESTINATION_REFDATA
     parse_ref_data.add_argument(
-        "root-dir",
+        "--destination",
         type=str,
-        help=(
-            "The directory that contains the template file directory and "
-            "generator file.  May be an absolute or relative path."
+        default=default_destination,
+        help="Destination directory for generated items [default: {}]".format(
+            default_destination
         ),
     )
 
@@ -601,13 +603,12 @@ def create_ref_data_arguments(parse_ref_data):
         help=f"Generator file [default: {default_generator_file}]",
     )
 
-    default_destination = DEFAULT_DESTINATION_REFDATA
     parse_ref_data.add_argument(
-        "--destination",
+        "root-dir",
         type=str,
-        default=default_destination,
-        help="Destination directory for generated items [default: {}]".format(
-            default_destination
+        help=(
+            "The directory that contains the template file directory and "
+            "generator file.  May be an absolute or relative path."
         ),
     )
 
