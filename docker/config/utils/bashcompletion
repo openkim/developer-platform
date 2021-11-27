@@ -485,7 +485,7 @@ _complete_kimgenie(){
     opts="tests ref-data"
 
     shared_opts="-h --help -v --verbose --root-dir --template-dir --generator-file
-         --global-variables-file --dry-run --destination --overwrite --add-random-kimnums
+         --global-variables --dry-run --destination --overwrite --add-random-kimnums
          --filename-prefix --filename-extension --version --log-file"
 
     tests_opts=${shared_opts}" --test-driver"

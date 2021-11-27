@@ -12,8 +12,8 @@ template files.  The template files should be formatted to be processed with
 the Jinja2 python package.  The generation of an item takes place in stages:
 
   1. Grab the dictionary defined in a given line of the generator file
-  2. If a global template variables file is passed as input, add the
-     corresponding variables to the global template variable namespace used
+  2. If a global template variables string or file path is passed as input, add
+     the corresponding variables to the global template variable namespace used
      during the rendering process
   3. Render the kimspec.edn.genie file (which is required to exist) in the
      template file directory
@@ -390,22 +390,20 @@ def setup_logging(logfile, verbose):
 
 
 def update_global_template_vars(
-    global_template_vars, template_file_directory_path, global_variables_file
+    global_template_vars, template_file_directory_path, global_variables
 ):
     """Update global variables dict from file"""
-    if global_variables_file:
+    if global_variables:
         try:
             with open(
                 os.path.abspath(
-                    os.path.join(
-                        template_file_directory_path, "..", global_variables_file
-                    )
+                    os.path.join(template_file_directory_path, "..", global_variables)
                 ),
                 encoding="utf-8",
             ) as global_template_vars_fl:
                 global_template_vars.update(json.loads(global_template_vars_fl.read()))
         except IOError:
-            global_template_vars.update(json.loads(global_variables_file))
+            global_template_vars.update(json.loads(global_variables))
 
 
 def expand_tilde_to_home_dir(path_str):
@@ -490,7 +488,7 @@ def create_shared_arguments():
     )
 
     shared.add_argument(
-        "--global-variables-file",
+        "--global-variables",
         type=str,
         help="Additional JSON-formatted dictionary of global variables, as file or string",
     )
@@ -682,7 +680,7 @@ if __name__ == "__main__":
     generator_file = args["generator_file"]
     filename_prefix = args["filename_prefix"]
     filename_extension = args["filename_extension"]
-    global_variables_file = args["global_variables_file"]
+    global_variables = args["global_variables"]
     log_file = args["log_file"]
     verbose = args["verbose"]
     version = args["version"]
@@ -713,7 +711,7 @@ if __name__ == "__main__":
     # If the user specified a global variables file, update the global
     # variables defined thus far
     update_global_template_vars(
-        global_template_vars, template_file_directory_path, global_variables_file
+        global_template_vars, template_file_directory_path, global_variables
     )
 
     # Set up logger if necessary
