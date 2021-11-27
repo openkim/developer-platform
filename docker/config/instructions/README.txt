@@ -24,7 +24,7 @@ Summary of this document:
                   B. Where do results and errors end up?
                   C. How can I iteratively develop a KIM Item and rerun it?
                   D. What about dependencies between Tests?
-  Section V   - Automatic generation of KIM Tests from templates
+  Section V   - Automatic generation of KIM Tests and Reference Data from templates
   Section VI  - Command-line utilities
                   A. kimitems
                        Used for searching through the official repository of
@@ -48,8 +48,9 @@ Summary of this document:
                   G. pipeline-run-verification-checks
                        Used to run all KIM Verification Checks on the container against
                        a given KIM Model or Simulator Model on the container
-                  H. testgenie
-                       Tool used to autogenerate KIM Tests using Jinja templates
+                  H. kimgenie
+                       Tool used to autogenerate KIM Tests and Reference Data using Jinja
+                       templates
 
 -----------------------------------------------------------------------------------------
 
@@ -274,18 +275,19 @@ Section IV. Running your content
     to `pipeline-run-tests`.
 
 
-Section V. Automatic generation of KIM Tests from templates
+Section V. Automatic generation of KIM Tests and Reference Data from templates
 
   When developing a Test Driver, it is common to want to create a large number
   of Tests which make use of it.  For example, when creating a Test Driver
   which computes a property of a bulk crystal, each of its corresponding Tests
   typically corresponds to a different specific crystal lattice structure and
-  atomic species.  The `testgenie` utility is designed to facilitate the
-  process of generating these Tests.  This utility requires that you supply a
-  set of template files that ought to be created for each Test along with a
-  json file containing dictionaries of keyword-value pairs, which each
-  dictionary corresponding to a Test that is to be created.  See the
-  description of `testgenie` in the following section for more details.
+  atomic species.  The `kimgenie` utility is designed to facilitate the process
+  of generating these Tests, and can also be used to similarly generate
+  Reference Data from templates.  This utility requires that you supply a set
+  of template files that ought to be created for each Test along with a json
+  file containing dictionaries of keyword-value pairs, which each dictionary
+  corresponding to a Test that is to be created.  See the description of
+  `kimgenie` in the following section for more details.
 
 
 Section VI. Command-line utilities
@@ -575,7 +577,7 @@ Section VI. Command-line utilities
 
     The local mongo database is stored at /pipeline/db/
 
-    NOTE: The `kimitems` and `testgenie` utilities will always perform their queries
+    NOTE: The `kimitems` and `kimgenie` utilities will always perform their queries
           to the remote OpenKIM database, even if you are using a local database.
 
     Subcommands
@@ -909,38 +911,142 @@ Section VI. Command-line utilities
         stderr streams of the job to be written to the console while it is
         running.
 
-  H. testgenie [-h] [--templatedir TEMPLATEDIR] [--source SOURCE]
-                 [--generator-file GENERATOR_FILE]
-                 [--global-variables GLOBAL_VARIABLES] [--dry-run]
-                 [--destination DESTINATION] [--overwrite] [--random-kimnums]
-                 [--add-random-kimnums] [--filename-prefix FILENAME_PREFIX]
-                 [--filename-extension FILENAME_EXTENSION] [--version VERSION]
-                 [--logfile LOGFILE] [-v] <Test Driver>
+  H. kimgenie
 
-    Generate a set of Tests for a given Test Driver based on a set of template
-    files.  By default, when this utility is invoked for a given Test Driver,
+    Generate a set of Tests or Reference Data based on a set of template files.
+    See the output of `kimgenie -h` for a description of how this tool works.
 
-      `testgenie mytestdriver__TD_000000000000_000`
+    Usage:
 
-    it will attempt to find a file named test_generator.json and a directory
-    named test_template under ~/test-drivers/mytestdriver__TD_000000000000_000.
-    The file test_generator.json contains one JSON-formatted (i.e.
-    python-style) dictionary on each of its lines.  The key-value pairs in each
-    of these dictionaries are used fill in each of the files under
-    test_template/ and a corresponding Test is created under ~/tests/.  The
-    substitution of key-value pairs into the template files under
-    test_template/ is accomplished using the python Jinja2 library; this means
-    that places where you wish to make a substitution in the template files
-    should contain the desired key name enclosed in double curly brackets.  For
-    example, if each dictionary in test_generator.json contains the key
-    'lattice'
+      kimgenie [-h] {tests,ref-data} ...
 
-      {"lattice": "fcc"}
-      {"lattice": "bcc"}
-      .
-      .
-      .
+      Arguments and options vary depending on which subcommand ('tests' or 'ref-data').
 
-    then one would place {{lattice}} in the files under test_template/ where
-    the corresponding values are to be substituted.  Please consult the help
-    text (`testgenie -h`) for details of the options available for this utility.
+    Examples:
+
+      kimgenie tests --test-driver LatticeConstantCubicEnergy__TD_475411767977_007
+      kimgenie ref-data ~/my_refdata_templating_root_dir/
+
+    Options
+    =======
+
+      The following options can be used with either `kimgenie` subcommand:
+
+      --add-random-kimnums
+
+        Use randomly generated kimid numbers, provided as Jinja key 'kimnum'.
+        Using this flag means that the generator file you provide will be
+        OVERWRITTEN with one in which a 'kimnum' key (with a random kimcode as
+        its corresponding value) is added to each dictionary contained within.
+        Before this alteration is made, a check is performed to determine if
+        there is already a 'kimnum' key present in any of the dictionaries in
+        the generator file and, if so, the entire item generation process is
+        aborted and your generator file will not be overwritten.
+
+      --destination DESTINATION
+
+        Destination directory for generated items.  When using the 'tests'
+        subcommand, the default is ~/tests/; when using the 'ref-data'
+        subcommand, the default is ~/reference-data/.
+
+      --dry-run
+
+        Don't actually create the items, but rather just show what would be
+        generated.
+
+      --filename-extension FILENAME_EXTENSION
+
+        Only files with the specified extension are included in the rendered
+        item directories.
+
+      --filename-prefix FILENAME_PREFIX
+
+        Only files with the specified prefix are included in the rendered
+        item directories.
+
+      --generator-file GENERATOR_FILE
+
+        A file where each line is a JSON-formatted dictionary used to create a
+        template variable namespace to apply to the files in the template file
+        directory in order to generate an item.  When using the 'tests'
+        subcommand, the default is test_generator.json; when using the
+        'ref-data' subcommand, the default is refdata_generator.json.
+
+      --global-variables GLOBAL_VARIABLES
+
+        Additional JSON-formatted dictionary of global variables, as file or string
+
+      --log-file LOG_FILE
+
+        Name of file to write logs to. If left unspecified, logs are not
+        written (although the list of generated items is still printed to the
+        terminal).
+
+      --overwrite
+
+        Overwrite any existing item directories which already exist at the
+        locations where the Tests being generated are trying to be written to.
+        Use with caution!
+
+      --template-dir TEMPLATE_DIR
+
+        Directory containing the template files.  When using the 'tests'
+        subcommand, the default is test_template; when using the 'ref-data'
+        subcommand, the default refdata_template.
+
+      -v, --verbose
+
+        Show debugging messages and timestamps in log
+
+      --version VERSION
+
+        Used to define the 'version' variable in the template variable
+        namespace.  Although this option is an integer, it will be cast to a
+        three-character string, e.g. a value of 1 is mapped to string '001'.
+
+    Subcommands
+    ===========
+
+    + tests
+
+      Usage:
+
+        kimgenie tests [-h] [--add-random-kimnums] [--dry-run]
+                       [--filename-extension FILENAME_EXTENSION] [--filename-prefix FILENAME_PREFIX]
+                       [--global-variables GLOBAL_VARIABLES] [--log-file LOG_FILE] [--overwrite] [-v]
+                       [--version VERSION] [--destination DESTINATION]
+                       [--generator-file GENERATOR_FILE] [--root-dir ROOT_DIR]
+                       [--template-dir TEMPLATE_DIR] [--test-driver TEST_DRIVER]
+
+      Generates tests from a generator file and template file directory.
+
+      Options
+      -------
+
+        --root-dir
+
+          The directory that contains the template file directory and generator
+          file.  Either this option must be supplied or the 'test-driver'
+          option must be supplied.
+
+        --test-driver
+
+          Extended KIM ID of the Test Driver whose Tests you wish to generate.
+          Either this option or the 'root-dir' option should be given.  If this
+          option is specified, the corresponding Test Driver directory must
+          exist under ~/test-drivers/.
+
+    + ref-data
+
+      Usage:
+
+        kimgenie ref-data [-h] [--add-random-kimnums] [--dry-run]
+                          [--filename-extension FILENAME_EXTENSION]
+                          [--filename-prefix FILENAME_PREFIX] [--global-variables GLOBAL_VARIABLES]
+                          [--log-file LOG_FILE] [--overwrite] [-v] [--version VERSION]
+                          [--destination DESTINATION] [--generator-file GENERATOR_FILE]
+                          [--template-dir TEMPLATE_DIR]
+                          root-dir
+
+      Generates reference data from a generator file and template file
+      directory.  No additional options are offered beyond those given above.
