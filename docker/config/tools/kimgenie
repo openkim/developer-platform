@@ -550,7 +550,12 @@ def create_tests_arguments(parse_tests):
         "--generator-file",
         type=str,
         default=default_generator_file,
-        help=f"Generator file [default: {default_generator_file}]",
+        help=(
+            "A file where each line is a JSON-formatted dictionary used to "
+            "create a template variable namespace to apply to the files in "
+            "the template file directory in order to generate an item. "
+            f"[default: {default_generator_file}]"
+        ),
     )
 
     parse_tests.add_argument(
@@ -601,7 +606,12 @@ def create_ref_data_arguments(parse_ref_data):
         "--generator-file",
         type=str,
         default=default_generator_file,
-        help=f"Generator file [default: {default_generator_file}]",
+        help=(
+            "A file where each line is a JSON-formatted dictionary used to "
+            "create a template variable namespace to apply to the files in "
+            "the template file directory in order to generate an item. "
+            f"[default: {default_generator_file}]"
+        ),
     )
 
     parse_ref_data.add_argument(
