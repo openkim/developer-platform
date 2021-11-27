@@ -449,7 +449,7 @@ def create_shared_arguments():
     shared = argparse.ArgumentParser(add_help=False)
 
     shared.add_argument(
-        "--global-variables",
+        "--global-variables-file",
         type=str,
         help="Additional JSON-formatted dictionary of global variables, as file or string",
     )
@@ -678,7 +678,7 @@ if __name__ == "__main__":
     generator_file = args["generator_file"]
     filename_prefix = args["filename_prefix"]
     filename_extension = args["filename_extension"]
-    global_variables_file = args["global_variables"]
+    global_variables_file = args["global_variables_file"]
     log_file = args["log_file"]
     verbose = args["verbose"]
     version = args["version"]
