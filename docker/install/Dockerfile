@@ -35,6 +35,7 @@ ARG PYTHON=python3
 RUN ${PIP} install wheel==0.36.2
 RUN ${PIP} install setuptools==54.0.0
 RUN ${PIP} install packaging==20.9
+RUN ${PIP} install markupsafe==2.0.1
 RUN ${PIP} install Jinja2==2.11.3
 RUN ${PIP} install edn_format==0.7.5
 RUN ${PIP} install kim-edn==1.3.1
