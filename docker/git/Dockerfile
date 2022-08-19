@@ -21,7 +21,7 @@ RUN git clone -q https://github.com/openkim/kim-python-utils -b master ${PACKAGE
 RUN git clone -q https://github.com/lammps/lammps -b stable_23Jun2022 ${PACKAGE_DIR}/lammps
 RUN git clone -q https://gitlab.com/openkim/ase -b user-species ${PACKAGE_DIR}/ase \
   && cd ${PACKAGE_DIR}/ase \
-  && git checkout 94c6ad70814965408a2977f7428b62271988619c
+  && git checkout e00c8da0f84fb3a726c411f7ef2792241434c9a3
 RUN git clone -q https://gitlab.com/micronano_public/MDpp -b release ${PACKAGE_DIR}/MD++ \
   && cd ${PACKAGE_DIR}/MD++ \
   && git checkout f7d64a7720a4bc1602371a128c8db7779fcf8dcb
