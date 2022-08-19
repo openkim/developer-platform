@@ -69,7 +69,7 @@ RUN cd ${PACKAGE_DIR}/MD++ \
 #########################################
 ## KIM API
 #########################################
-ARG KIM_API_VER=2.2.1
+ARG KIM_API_VER=2.3.0
 ARG KIM_API_PACKAGE=kim-api-${KIM_API_VER}
 ARG KIM_API_ARCHIVE_TXZ=${KIM_API_PACKAGE}.txz
 RUN cd ${PACKAGE_DIR} \
@@ -105,7 +105,7 @@ RUN apt-get update -qq \
 ## kimpy
 #########################################
 # NOTE: Must be installed after KIM API
-RUN ${PIP} install kimpy==2.0.0
+RUN ${PIP} install kimpy==2.0.1
 
 #########################################
 ## LAMMPS
