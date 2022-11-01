@@ -3,7 +3,7 @@ Contains the tools required to perform a pipeline computation.  The main object
 is Computation, which takes a runner and subject and runs them against each
 other
 
-Copyright (c) 2014-2021, Regents of the University of Minnesota. All rights
+Copyright (c) 2014-2022, Regents of the University of Minnesota. All rights
 reserved.
 
 This software may be distributed as-is, without modification.
@@ -151,6 +151,7 @@ class Command:
 
                     if not readable:
                         # This OutStream is finished
+                        os.close(file_desc.fileno())
                         file_descriptors.remove(file_desc)
 
         else:

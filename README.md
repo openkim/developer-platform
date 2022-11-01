@@ -22,9 +22,9 @@ Feedback and bug reports are welcome and may be posted on the
 ### Installing Docker
 
 The KIM Developer Platform is distributed on the Github Container Registry as
-a Docker image.  See
+a docker image.  In order to use it, you will need to install docker.  See
 [https://docs.docker.com/get-docker/](https://docs.docker.com/get-docker/) for
-instructions on installing Docker Desktop for your platform.  If using macOS or
+instructions on installing Docker Desktop for your OS.  If using macOS or
 Windows, remember to start the Docker Desktop application before attempting to
 use any `docker` commands.
 
@@ -51,21 +51,25 @@ while all of the containers created from your local images can be viewed with
 running).  You can view the size of the containers you have created by doing
 `docker ps -as`.
 
-## Installing images from this repository
+## Images hosted in this repository
 
 There are two images published with each release of the KDP: a "full" image and
 a "minimal" image.  The former image contains all of the packages necessary to
 run all KIM tests and verification checks, while the latter includes a set of
 packages sufficient to run most of them but not all.  In particular, the
 biggest difference at the moment is that the full image contains an
-installation of [OVITO](https://www.ovito.org/), which doubles the uncompressed size of the
-image from roughly 1.04GB ➝ 2.04GB; this package is currently only used to run
-the dislocation tests, so for most users the minimal images will suffice.
+installation of [OVITO](https://www.ovito.org/), which doubles the uncompressed
+size of the image from roughly 1.04GB ➝ 2.04GB; this package is currently only
+used to run the dislocation tests, so for most users the minimal images will
+suffice.
 
-## Creating a container from the image
+## Installing the KIM Developer Platform
 
-To create a container from the latest image, you must first pull the image
-itself.   If you want the latest minimal image, you must explicitly specify a
+Once docker is installed, there are two remaining steps in setting up the KIM
+Developer Platform: (1) pulling one of the images hosted in this repository,
+and (2) spawning a container from the image.  As mentioned above, the former is
+accomplished using `docker pull`, while the latter can be done with `docker
+run`.  If you want the latest minimal image, you must explicitly specify a
 corresponding docker tag ending in '-minimal' (replacing `kim_dev` with
 whatever name you wish to use for the container on your system):
 ```

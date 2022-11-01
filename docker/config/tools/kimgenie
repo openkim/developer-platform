@@ -1,0 +1,764 @@
+#! /usr/bin/env python3
+"""
+kimgenie - A simple templating tool for creating KIM Tests and Reference Data
+
+This tool is capable of generating Tests or Reference Data.
+
+In both modes of operation, the inputs to the tool consist of two parts: (1) a
+root directory containing a set of template files and (2) a separate "generator
+file" that contains JSON dictionaries on each line, each corresponding to a
+Test or Reference Data item to be generated, that are used to render the
+template files.  The template files should be formatted to be processed with
+the Jinja2 python package.  The generation of an item takes place in stages:
+
+  1. Grab the dictionary defined in a given line of the generator file
+  2. If a global template variables string or file path is passed as input, add
+     the corresponding variables to the global template variable namespace used
+     during the rendering process
+  3. Render the kimspec.edn.genie file (which is required to exist) in the
+     template file directory
+  4. Add all of the variables defined in the rendered kimspec.edn to the local
+     template variable namspace being used to generate the current item
+  5. Set the directory name for the item being generated to be equal to the
+     'extended-id' attribute (required to exist) in the rendered kimspec.edn
+     file
+  6. For each remaining file in the template file directory:
+     a. Check if a
+          {# FILENAME = desired_file_name_with_{{ template namespace variables }} #}
+        directive exists anywhere in the file.  If so, this is used to
+        determine the name of the corresponding rendered file in the generated
+        item. NOTE: Ensure that this directive is not immediately preceded by
+        another curly bracket (resulting in '{{# FILENAME...').
+     b. Process the rest of the file as a Jinja template, excluding any calls
+        to the 'query' function, which is defined in the global template
+        variable namespace
+     c. After all other template variables have been rendered, make any calls
+     to 'query' function that are present and render the results
+  7. If the special keyword 'FILES_TO_COPY' was given in the dictionary read
+     from the generator file, copy each file listed into the item directory.
+     Note that the value of 'FILES_TO_COPY' should be a list containing strings
+     corresponding to absolute paths of files.
+  8. Create the item directory under the appropriate item type subdirectory of
+    ${HOME}
+
+NOTE: For convenience, if the --add-random-kimnums flag is given, the current
+generator file will be overwritten with one for which random KIM IDs have been
+added to each dictionary under the template variable name 'kimnum'.  The
+resulting generator file is then used to carry out the item generation process.
+
+NOTE: This tool prints the name of each item directory to stdout after it is
+generated.  This is useful to catch in order to remove these directories later
+if necessary, e.g.
+
+  kimgenie tests --test-driver mytestdriver__TD_000000000000_000 > list_of_generated_tests.txt
+  cat list_of_generated_tests.txt | xargs rm -r
+
+Copyright (c) 2014-2022, Regents of the University of Minnesota. All rights
+reserved.
+
+This software may be distributed as-is, without modification.
+"""
+from abc import abstractmethod
+import logging
+import logging.handlers
+import os
+import tempfile
+import shutil
+import re
+import random
+import json
+import sys
+import pathlib
+
+import jinja2
+import kim_edn
+
+from excerpts import kimquery, kimcodes
+import excerpts.config as cf
+
+
+TDDIR = os.path.join(cf.LOCAL_REPOSITORY_PATH, cf.item_subdir_names["td"])
+
+KIMSPEC_FILE = cf.CONFIG_FILE
+
+DEFAULT_GENERATOR_FILE_TESTS = "test_generator.json"
+DEFAULT_GENERATOR_FILE_REFDATA = "refdata_generator.json"
+DEFAULT_TEMPLATE_DIR_TESTS = "test_template"
+DEFAULT_TEMPLATE_DIR_REFDATA = "refdata_template"
+
+DEFAULT_DESTINATION_TESTS = os.path.join(
+    cf.LOCAL_REPOSITORY_PATH, cf.item_subdir_names["te"]
+)
+DEFAULT_DESTINATION_REFDATA = os.path.join(
+    cf.LOCAL_REPOSITORY_PATH, cf.item_subdir_names["rd"]
+)
+
+FILES_TO_COPY_KEY = "FILES_TO_COPY"
+
+
+class IncompatibleArgumentCombination(Exception):
+    """An incompatible combination of options was passed to the tool"""
+
+
+class InvalidFilesToCopy(Exception):
+    """The list of files to copy given in a line of a generator file was not a
+    list"""
+
+
+##############################
+# Define logger
+##############################
+def createLogger(logfile, verbose):
+    if verbose:
+        # Show debug log messages and lines/timestamps
+        loglevel = logging.DEBUG
+        formatstr = "%(filename)s:%(lineno)d _ %(asctime)s - %(levelname)s - %(name)s - %(message)s"
+    else:
+        # Show info log messages and don't write lines/timestamps
+        loglevel = logging.INFO
+        formatstr = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
+
+    logging.basicConfig(filename=logfile, level=loglevel, format=formatstr)
+    logger = logging.getLogger("kimgenie")
+    return logger
+
+
+class ItemGenerator:
+
+    FILENAME_REGEX = re.compile(
+        r"""
+        FILENAME    # magic word
+        \s*         # whitespace
+        =           # equal character
+        \s*         # whitespace
+        (\S+)       # name
+        """,
+        re.VERBOSE,
+    )
+
+    def __init__(
+        self,
+        template_file_directory_path,
+        template_variables,
+        destination,
+        overwrite=False,
+        dry_run=False,
+        filename_prefix=None,
+        filename_extension=None,
+        logger=None,
+    ):
+        self.template_file_directory_path = template_file_directory_path
+        self.template_variables = template_variables
+        self.destination = destination
+        self.overwrite = overwrite
+        self.dry_run = dry_run
+        self.filename_prefix = filename_prefix
+        self.filename_extension = filename_extension
+        self.logger = logger
+
+        if self.logger is None:
+            # If no logger was passed, create one
+            self.logger = logging.getLogger("kimgenie")
+            nullhdlr = logging.NullHandler()
+            self.logger.addHandler(nullhdlr)
+
+        self.template_environment = jinja2.Environment(
+            loader=jinja2.FileSystemLoader("/")
+        )
+        self.template_environment.globals.update(
+            {"stripversion": kimcodes.strip_version}
+        )
+
+    def _read_kimspec_template_and_render(self):
+        kimspec_file_temp = KIMSPEC_FILE + ".genie"
+        file_newconf = (
+            pathlib.Path(self.template_file_directory_path) / kimspec_file_temp
+        )
+        file_newconf_abs = str(file_newconf.resolve())
+        kimspec_template = self.template_environment.get_template(file_newconf_abs)
+        kimspec = kimspec_template.render(**self.template_variables)
+        return kimspec
+
+    def _determine_final_file_name(self, template_file_name, contents):
+        """Determine the final name for a rendered file.  If a special file name
+        directive of the form
+        {# FILENAME = desired_file_name_with_{{ template namespace variables }} #}
+        is found anywhere in the file, its rendered result will be used as the
+        final file name.  Otherwise, the final file name will be the same as the
+        template file name.
+
+        Parameters
+        ----------
+        template_file_name : str
+            The name of the file in the template file directory
+        contents : str
+            The contents of the template file
+
+        Returns
+        -------
+        str
+            The final name to use for the rendered file.
+        """
+        filename_search = self.FILENAME_REGEX.search(contents)
+        if filename_search:
+            filename_template_search_result = self.FILENAME_REGEX.search(
+                contents
+            ).group(1)
+            return jinja2.Template(filename_template_search_result).render(
+                **self.template_variables
+            )
+        else:
+            return template_file_name
+
+    def _move_rendered_item_to_final_destination(self):
+        # Now move the finished item directory to its final home
+        item_dest = self.item_destination_path
+        if os.path.isdir(item_dest):
+            self.logger.info("Moving to %s", item_dest)
+            if self.overwrite:
+                shutil.rmtree(item_dest)
+                shutil.move(self.tmp_item_dir, item_dest)
+            else:
+                raise OSError(
+                    "Directory {} already exists! Aborting...".format(item_dest)
+                )
+        else:
+            shutil.move(self.tmp_item_dir, item_dest)
+
+    def _copy_additional_files_to_item_dir(self):
+        files_to_copy = self.template_variables[FILES_TO_COPY_KEY]
+        # Enforce that a list was passed
+        if not isinstance(files_to_copy, list) or not all(
+            isinstance(fl_name, str) for fl_name in files_to_copy
+        ):
+            raise InvalidFilesToCopy(
+                f"The value of the reserved key '{FILES_TO_COPY_KEY}' must be "
+                "a list of strings corresponding to absolute paths of files "
+                "to copy into the rendered item directory"
+            )
+
+        for abs_file_path in files_to_copy:
+            shutil.copy2(abs_file_path, self.tmp_item_dir)
+
+    def generate_item(self):
+        """Create an item from a template file directory and a template variable
+        namespace"""
+
+        def _query_stub(x):
+            """Render everything inside the argument to the query function, then
+            return the output inside of {{ query() }} so the actual query call can
+            be made"""
+            tmp_env = jinja2.Environment(loader=jinja2.BaseLoader).from_string(str(x))
+            tmp_env.globals.update({"stripversion": kimcodes.strip_version})
+            rendered = tmp_env.render(**self.template_variables)
+            return f"{{{{ query({rendered}) }}}}"
+
+        try:
+            with tempfile.TemporaryDirectory() as tempdir:
+
+                # First parse the kimspec file
+                kimspec = self._read_kimspec_template_and_render()
+
+                with open(
+                    os.path.join(tempdir, KIMSPEC_FILE), "w", encoding="utf-8"
+                ) as f:
+                    f.write(kimspec)
+
+                # Extend template_variables with everything defined in kimspec
+                kimspeckeys = kim_edn.loads(kimspec)
+                self.template_variables.update({"kimspec": kimspeckeys})
+                self.template_variables.update({"query": _query_stub})
+
+                self.item_name = self.template_variables["kimspec"][
+                    self._item_name_kimspec_key
+                ]
+
+                # Copy template file directory to temporary directory
+                self.tmp_item_dir = os.path.join(tempdir, self.item_name)
+                shutil.copytree(self.template_file_directory_path, self.tmp_item_dir)
+
+                self.logger.info("BUILDING: %s @ %s", self.item_name, self.tmp_item_dir)
+                self.logger.debug("Variable_dict: %s", self.template_variables)
+
+                for (basepath, _, files) in os.walk(self.tmp_item_dir):
+                    for fl in files:
+                        self.logger.debug("processing %s", fl)
+                        filepath = os.path.join(basepath, fl)
+                        with open(filepath, encoding="utf-8") as f:
+                            contents = f.read()
+
+                        # copy original mode so we can chmod at end
+                        original_mode = os.stat(filepath).st_mode
+                        template_file_name = fl
+
+                        if self.filename_prefix:
+                            if not template_file_name.startswith(self.filename_prefix):
+                                os.remove(filepath)
+                                continue
+                            else:
+                                template_file_name = template_file_name[
+                                    len(self.filename_prefix) :
+                                ]
+                        if self.filename_extension:
+                            if not template_file_name.endswith(self.filename_extension):
+                                os.remove(filepath)
+                                continue
+                            else:
+                                template_file_name = template_file_name[
+                                    : -len(self.filename_extension) - 1
+                                ]
+
+                        final_file_name = self._determine_final_file_name(
+                            template_file_name, contents
+                        )
+
+                        self.logger.debug("new file name: %s", final_file_name)
+
+                        # Template everything completely other than query calls, for which we only template
+                        # the arguments for now
+                        template_intermediate = self.template_environment.get_template(
+                            filepath
+                        )
+                        new_contents = template_intermediate.render(
+                            **self.template_variables
+                        )
+
+                        # Now actually perform any queries that might be present and
+                        # write the final rendered template to file
+                        template_final = jinja2.Environment(
+                            loader=jinja2.BaseLoader
+                        ).from_string(str(new_contents))
+                        new_contents = template_final.render({"query": kimquery.query})
+
+                        newfilepath = os.path.join(basepath, final_file_name)
+                        os.remove(filepath)
+
+                        with open(newfilepath, "w", encoding="utf-8") as g:
+                            g.write(new_contents)
+                        # Set permissions to match the corresponding template file
+                        os.chmod(newfilepath, original_mode)
+
+                # Copy any additional files specified that are specified to
+                # this item
+                if FILES_TO_COPY_KEY in self.template_variables:
+                    self._copy_additional_files_to_item_dir()
+
+                self.item_destination_path = os.path.join(
+                    self.destination, self.item_name
+                )
+
+                if not self.dry_run:
+                    self._move_rendered_item_to_final_destination()
+
+        except KeyboardInterrupt:
+            sys.exit(1)
+
+    @property
+    @abstractmethod
+    def _item_name_kimspec_key(self):
+        pass
+
+
+class TestGenerator(ItemGenerator):
+    @property
+    def _item_name_kimspec_key(self):
+        return "extended-id"
+
+
+class RefDataGenerator(ItemGenerator):
+    @property
+    def _item_name_kimspec_key(self):
+        return "short-id"
+
+
+def setup_logging(logfile, verbose):
+    if logfile:
+        if os.path.isfile(logfile):
+            overwrite_log = input(
+                "Log file {} already exists.  Would you like to overwrite "
+                "this file (y/n)? ".format(logfile)
+            )
+            overwrite_log = overwrite_log.lower()
+            if overwrite_log.lower() in ["y", "yes"]:
+                os.remove(logfile)
+                return createLogger(logfile, verbose=verbose)
+            else:
+                print("Aborting Test generation")
+                sys.exit(0)
+        else:
+            return createLogger(logfile, verbose=verbose)
+
+
+def update_global_template_vars(
+    global_template_vars, template_file_directory_path, global_variables
+):
+    """Update global variables dict from file"""
+    if global_variables:
+        try:
+            with open(
+                os.path.abspath(
+                    os.path.join(template_file_directory_path, "..", global_variables)
+                ),
+                encoding="utf-8",
+            ) as global_template_vars_fl:
+                global_template_vars.update(json.loads(global_template_vars_fl.read()))
+        except IOError:
+            global_template_vars.update(json.loads(global_variables))
+
+
+def expand_tilde_to_home_dir(path_str):
+    return re.sub("~", os.path.expanduser("~"), path_str)
+
+
+def add_random_kimnum(root_dir, template_file_directory_path, generator_file):
+    generator_file_dicts = []
+    # First, read generator file and ensure there are no 'kimnum' entries
+    with open(
+        os.path.join(template_file_directory_path, "..", generator_file),
+        encoding="utf-8",
+    ) as generator_fl:
+        for line in generator_fl:
+            this_dict = json.loads(line)
+            generator_file_dicts.append(this_dict)
+            if "kimnum" in this_dict:
+                print(
+                    "Flag --add-random-kimnums was given, but there is "
+                    "a 'kimnum' key present in one or more of the "
+                    "dictionaries in generator file {}. Please remove "
+                    "all instances of 'kimnum' if you wish to use "
+                    "--add-random-kimnums. Aborting item "
+                    "generation.".format(os.path.join(root_dir, generator_file))
+                )
+                sys.exit(1)
+
+    # Now loop over the contents of the generator file and add random kimnums to each dict
+    with open(
+        os.path.join(template_file_directory_path, "..", generator_file),
+        "w",
+        encoding="utf-8",
+    ) as f:
+        for this_dict in generator_file_dicts:
+            this_dict["kimnum"] = "%012d" % random.randint(0, 1e12 - 1)
+            f.write(json.dumps(this_dict) + "\n")
+
+
+def create_shared_arguments():
+    # Shared arguments for the subactions themselves
+    shared = argparse.ArgumentParser(add_help=False)
+
+    shared.add_argument(
+        "--add-random-kimnums",
+        action="store_true",
+        help=(
+            "Use randomly generated kimid numbers, provided as Jinja key 'kimnum'. Using "
+            "this flag means that the generator file you provide will be OVERWRITTEN with one "
+            "in which a 'kimnum' key (with a random kimcode as its corresponding value) is "
+            "added to each dictionary contained within. Before this alteration is made, a "
+            "check is performed to determine if there is already a 'kimnum' key present "
+            "in any of the dictionaries in the generator file and, if so, the entire item "
+            "generation process is aborted and your generator file will not be overwritten."
+        ),
+    )
+
+    shared.add_argument(
+        "--dry-run",
+        action="store_true",
+        help=(
+            "Don't actually create the items, but rather just show what would "
+            "be generated."
+        ),
+    )
+
+    shared.add_argument(
+        "--filename-extension",
+        type=str,
+        help=(
+            "Only files with the specified extension are included in the "
+            "rendered item directories."
+        ),
+    )
+
+    shared.add_argument(
+        "--filename-prefix",
+        type=str,
+        help=(
+            "Only files with the specified prefix are included in the "
+            "rendered item directories."
+        ),
+    )
+
+    shared.add_argument(
+        "--global-variables",
+        type=str,
+        help="Additional JSON-formatted dictionary of global variables, as file or string",
+    )
+
+    shared.add_argument(
+        "--log-file",
+        type=str,
+        help=(
+            "Name of file to write logs to. If left unspecified, logs are not written "
+            "(although the list of generated items is still printed to the terminal)."
+        ),
+    )
+
+    shared.add_argument(
+        "--overwrite",
+        action="store_true",
+        help=(
+            "Overwrite any existing item directories which already exist at the locations where "
+            "the Tests being generated are trying to be written to. Use with caution!"
+        ),
+    )
+
+    shared.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Show debugging messages and timestamps in logs",
+    )
+
+    shared.add_argument(
+        "--version",
+        type=int,
+        default=0,
+        help=(
+            "Used to define the 'version' variable in the template variable "
+            "namespace.  Although this option is an integer, it will be cast "
+            "to a three-character string, e.g. a value of 1 is mapped to "
+            "string '001'."
+        ),
+    )
+
+    return shared
+
+
+def create_tests_arguments(parse_tests):
+
+    default_destination = DEFAULT_DESTINATION_TESTS
+    parse_tests.add_argument(
+        "--destination",
+        type=str,
+        default=default_destination,
+        help="Destination directory for generated items [default: {}]".format(
+            default_destination
+        ),
+    )
+
+    default_generator_file = DEFAULT_GENERATOR_FILE_TESTS
+    parse_tests.add_argument(
+        "--generator-file",
+        type=str,
+        default=default_generator_file,
+        help=(
+            "A file where each line is a JSON-formatted dictionary used to "
+            "create a template variable namespace to apply to the files in "
+            "the template file directory in order to generate an item. "
+            f"[default: {default_generator_file}]"
+        ),
+    )
+
+    parse_tests.add_argument(
+        "--root-dir",
+        type=str,
+        help="The directory that contains the template file directory and "
+        "generator file. Either this option must be supplied or the "
+        "'test-driver' option must be given.",
+    )
+
+    default_template_dir = DEFAULT_TEMPLATE_DIR_TESTS
+    parse_tests.add_argument(
+        "--template-dir",
+        type=str,
+        default=default_template_dir,
+        help="Directory containing the template files [default: {}]".format(
+            default_template_dir
+        ),
+    )
+
+    parse_tests.add_argument(
+        "--test-driver",
+        type=str,
+        help=(
+            "Extended KIM ID of the Test Driver whose Tests you wish to "
+            "generate.  Either this option or the 'root-dir' option should be "
+            "given.  If this option is specified, the corresponding Test "
+            f"Driver directory must exist under {TDDIR}."
+        ),
+    )
+
+
+def create_ref_data_arguments(parse_ref_data):
+    # TODO: Reduce duplication in creation of args that are essentially shared
+    # with the 'tests' mode but simply have different default values
+    default_destination = DEFAULT_DESTINATION_REFDATA
+    parse_ref_data.add_argument(
+        "--destination",
+        type=str,
+        default=default_destination,
+        help="Destination directory for generated items [default: {}]".format(
+            default_destination
+        ),
+    )
+
+    default_generator_file = DEFAULT_GENERATOR_FILE_REFDATA
+    parse_ref_data.add_argument(
+        "--generator-file",
+        type=str,
+        default=default_generator_file,
+        help=(
+            "A file where each line is a JSON-formatted dictionary used to "
+            "create a template variable namespace to apply to the files in "
+            "the template file directory in order to generate an item. "
+            f"[default: {default_generator_file}]"
+        ),
+    )
+
+    parse_ref_data.add_argument(
+        "root-dir",
+        type=str,
+        help=(
+            "The directory that contains the template file directory and "
+            "generator file.  May be an absolute or relative path."
+        ),
+    )
+
+    default_template_dir = DEFAULT_TEMPLATE_DIR_REFDATA
+    parse_ref_data.add_argument(
+        "--template-dir",
+        type=str,
+        default=default_template_dir,
+        help="Directory containing the template files [default: {}]".format(
+            default_template_dir
+        ),
+    )
+
+
+def process_tests_root_dir_and_test_driver_options(root_dir, test_driver):
+
+    if root_dir and test_driver:
+        raise IncompatibleArgumentCombination(
+            "When generating tests, only one of the 'root-dir' or "
+            "'test-driver' options may be given."
+        )
+    elif (not root_dir) and (not test_driver):
+        raise IncompatibleArgumentCombination(
+            "When generating tests, at least one of the 'root-dir' or "
+            "'test-driver' options must be given."
+        )
+    elif (not root_dir) and test_driver:
+        root_dir = os.path.join(TDDIR, test_driver)
+
+    return root_dir, test_driver
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="KIM item generation genie",
+        epilog=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+
+    sub = parser.add_subparsers()
+
+    shared = create_shared_arguments()
+
+    # Subactions that can be performed
+    parse_tests = sub.add_parser(
+        name="tests", parents=[shared], help=("Generate Tests")
+    )
+    parse_ref_data = sub.add_parser(
+        name="ref-data", parents=[shared], help=("Generate Reference Data")
+    )
+
+    # Custom options for each subaction
+    create_tests_arguments(parse_tests)
+    create_ref_data_arguments(parse_ref_data)
+
+    parse_tests.set_defaults(action="tests")
+    parse_ref_data.set_defaults(action="ref-data")
+
+    # Pull args passed on command line
+    args = vars(parser.parse_args())
+
+    destination = args["destination"]
+    overwrite = args["overwrite"]
+    dry_run = args["dry_run"]
+    add_random_kimnums = args["add_random_kimnums"]
+    generator_file = args["generator_file"]
+    filename_prefix = args["filename_prefix"]
+    filename_extension = args["filename_extension"]
+    global_variables = args["global_variables"]
+    log_file = args["log_file"]
+    verbose = args["verbose"]
+    version = args["version"]
+    template_files_dir = args["template_dir"]
+
+    global_template_vars = {}
+
+    action = args.get("action")
+    if not action:
+        # If no action was given, print help text
+        parser.print_help()
+        sys.exit(0)
+
+    elif action == "tests":
+        root_dir, test_driver = process_tests_root_dir_and_test_driver_options(
+            args["root_dir"], args["test_driver"]
+        )
+        if test_driver:
+            global_template_vars["TEST_DRIVER_NAME"] = test_driver
+
+    elif action == "ref-data":
+        root_dir = args["root-dir"]
+
+    template_file_directory_path = os.path.join(root_dir, template_files_dir)
+
+    global_template_vars["version"] = "{:03d}".format(version)
+
+    # If the user specified a global variables file, update the global
+    # variables defined thus far
+    update_global_template_vars(
+        global_template_vars, template_file_directory_path, global_variables
+    )
+
+    # Set up logger if necessary
+    logger = setup_logging(log_file, verbose)
+
+    # Expand ~ to home directory in dest
+    destination = expand_tilde_to_home_dir(destination)
+
+    # If user provided add-random-kimnums option, attempt to overwrite their
+    # generator file
+    if add_random_kimnums:
+        add_random_kimnum(root_dir, template_file_directory_path, generator_file)
+
+    item_generator_classes = {"tests": TestGenerator, "ref-data": RefDataGenerator}
+
+    # Generate items one-by-one
+    with open(
+        os.path.join(template_file_directory_path, "..", generator_file),
+        encoding="utf-8",
+    ) as f:
+        for line in f:
+            template_variables = global_template_vars.copy()
+            template_variables.update(json.loads(line))
+
+            item_generator_cls = item_generator_classes[action]
+
+            item_generator = item_generator_cls(
+                template_file_directory_path,
+                template_variables,
+                destination,
+                overwrite,
+                dry_run,
+                filename_prefix,
+                filename_extension,
+                logger,
+            )
+
+            item_generator.generate_item()
+
+            print(item_generator.item_destination_path)

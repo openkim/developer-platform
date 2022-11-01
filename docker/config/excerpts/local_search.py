@@ -5,7 +5,7 @@ database because only actual test results are inserted into it, i.e. it has a
 'data' collection but not an 'obj' collection like the production mongo does.
 It works by simply using glob patterns, similar
 
-Copyright (c) 2014-2021, Regents of the University of Minnesota. All rights
+Copyright (c) 2014-2022, Regents of the University of Minnesota. All rights
 reserved.
 
 This software may be distributed as-is, without modification.

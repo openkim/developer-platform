@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2018-2021, Regents of the University of Minnesota. All rights
+# Copyright (c) 2018-2022, Regents of the University of Minnesota. All rights
 # reserved.
 #
 # This software may be distributed as-is, without modification.
@@ -35,9 +35,10 @@ ARG PYTHON=python3
 RUN ${PIP} install wheel==0.36.2
 RUN ${PIP} install setuptools==54.0.0
 RUN ${PIP} install packaging==20.9
+RUN ${PIP} install markupsafe==2.0.1
 RUN ${PIP} install Jinja2==2.11.3
 RUN ${PIP} install edn_format==0.7.5
-RUN ${PIP} install kim-edn==1.2.0
+RUN ${PIP} install kim-edn==1.3.1
 RUN ${PIP} install kim-property==2.4.0
 RUN ${PIP} install kim-query==3.0.0
 RUN ${PIP} install simplejson==3.17.2
@@ -68,7 +69,7 @@ RUN cd ${PACKAGE_DIR}/MD++ \
 #########################################
 ## KIM API
 #########################################
-ARG KIM_API_VER=2.2.1
+ARG KIM_API_VER=2.3.0
 ARG KIM_API_PACKAGE=kim-api-${KIM_API_VER}
 ARG KIM_API_ARCHIVE_TXZ=${KIM_API_PACKAGE}.txz
 RUN cd ${PACKAGE_DIR} \
@@ -104,7 +105,7 @@ RUN apt-get update -qq \
 ## kimpy
 #########################################
 # NOTE: Must be installed after KIM API
-RUN ${PIP} install kimpy==2.0.0
+RUN ${PIP} install kimpy==2.0.1
 
 #########################################
 ## LAMMPS

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Copyright (c) 2014-2021, Regents of the University of Minnesota. All rights
+Copyright (c) 2014-2022, Regents of the University of Minnesota. All rights
 reserved.
 
 This software may be distributed as-is, without modification.
@@ -147,7 +147,7 @@ it.  This utility also allows you to:
 
 The local mongo database is stored at /pipeline/db/
 
-NOTE: The `kimitems` and `testgenie` utilities will always perform their queries
+NOTE: The `kimitems` and `kimgenie` utilities will always perform their queries
       to the remote OpenKIM database, even if you are using a local database.""",
         epilog=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2018-2021, Regents of the University of Minnesota. All rights
+# Copyright (c) 2018-2022, Regents of the University of Minnesota. All rights
 # reserved.
 #
 # This software may be distributed as-is, without modification.
@@ -48,7 +48,7 @@ COPY utils/pipeline-run-matches /usr/local/bin/
 COPY utils/pipeline-run-pair /usr/local/bin/
 COPY utils/pipeline-run-tests /usr/local/bin/
 COPY utils/pipeline-run-verification-checks /usr/local/bin/
-COPY utils/testgenie /usr/local/bin/
+COPY utils/kimgenie /usr/local/bin/
 
 # Create local repository directory structure
 ENV LOCAL_REPOSITORY_ROOT=/home/openkim/
