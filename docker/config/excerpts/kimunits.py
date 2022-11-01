@@ -1,7 +1,7 @@
 """
 Simple wrapper for executable for converting arbitrary units to SI units
 
-Copyright (c) 2014-2021, Regents of the University of Minnesota. All rights
+Copyright (c) 2014-2022, Regents of the University of Minnesota. All rights
 reserved.
 
 This software may be distributed as-is, without modification.

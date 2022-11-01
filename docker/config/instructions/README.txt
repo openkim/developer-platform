@@ -4,7 +4,7 @@ Your sudo password is the same as your user name: "openkim"
 
 Comments/questions/bug reports are appreciated and can be sent to support@openkim.org.
 
-Copyright (c) 2014-2021, Regents of the University of Minnesota. All rights
+Copyright (c) 2014-2022, Regents of the University of Minnesota. All rights
 reserved.
 
 This file may be distributed as-is, without modification.
