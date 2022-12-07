@@ -105,7 +105,7 @@ RUN apt-get update -qq \
 ## kimpy
 #########################################
 # NOTE: Must be installed after KIM API
-RUN ${PIP} install kimpy==2.0.1
+RUN ${PIP} install kimpy==2.1.0
 
 #########################################
 ## LAMMPS
