@@ -20,8 +20,9 @@ the Jinja2 python package.  The generation of an item takes place in stages:
   4. Add all of the variables defined in the rendered kimspec.edn to the local
      template variable namspace being used to generate the current item
   5. Set the directory name for the item being generated to be equal to the
-     'extended-id' attribute (required to exist) in the rendered kimspec.edn
-     file
+     'extended-id' attribute in the rendered kimspec.edn file for tests,
+     or the 'short-id' attribute in the rendered kimspec.edn file for reference
+     data. These attributes are required to exist
   6. For each remaining file in the template file directory:
      a. Check if a
           {# FILENAME = desired_file_name_with_{{ template namespace variables }} #}
