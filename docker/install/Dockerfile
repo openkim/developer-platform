@@ -44,7 +44,7 @@ RUN ${PIP} install kim-query==3.0.0
 RUN ${PIP} install simplejson==3.17.2
 RUN ${PIP} install numpy==1.19.5
 RUN ${PIP} install scipy==1.5.4
-RUN ${PIP} install matplotlib==3.3.4
+RUN ${PIP} install matplotlib==3.7.1
 RUN ${PIP} install pymongo==3.11.3
 RUN ${PIP} install montydb==2.1.1
 RUN ${PIP} install pybind11==2.6.2
