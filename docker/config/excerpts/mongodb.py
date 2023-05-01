@@ -396,7 +396,7 @@ def set_latest_version_result_or_error(runner_num, subject_num):
     )
 
     # Now set the most recent result or error to have latest=True
-    db[dbname].update_one(
+    db[dbname].update_many(
         filter={prefix + "uuid": uuids[0]},
         update={"$set": {"latest": True}},
     )
