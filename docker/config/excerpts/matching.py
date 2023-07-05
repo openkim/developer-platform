@@ -252,7 +252,7 @@ def run_compatibility_matching_models_match(runner, subject):
             # with the runner's "matching-models" list.  Note that
             # 'run-compatibility' is completely ignored in this case
             match, mismatch_info = simulator_potential_hierarchy_match(
-                runner.simulator_potential, subject.simulator_potential
+                runner.matching_models, subject.simulator_potential
             )
 
     return match, mismatch_info
