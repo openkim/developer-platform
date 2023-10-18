@@ -110,6 +110,7 @@ RUN ${PIP} install kimpy==2.1.0
 #########################################
 ## LAMMPS
 #########################################
+ARG DEBIAN_FRONTEND=noninteractive
 RUN cd ${PACKAGE_DIR}/lammps/ \
  && mkdir build && cd build \
  && cmake \
@@ -131,9 +132,16 @@ RUN cd ${PACKAGE_DIR}/lammps/ \
       -D PKG_REAXFF=yes \
       -D PKG_MISC=yes \
       -D PKG_SMTBQ=yes \
+      -D PKG_EXTRA-PAIR=yes \
       ../cmake \
  && make -j2 \
  && make install \
+ && apt-get update -qq \
+ && apt-get install --no-install-recommends -qqy python3-venv \
+ && make install-python \
+ && apt-get purge -y python3-venv \
+ && apt-get clean \
+ && rm -fr /var/lib/apt/lists/* \
  && ln -s /usr/local/bin/lmp /usr/local/bin/lammps \
  && rm -r /usr/local/share/lammps/potentials \
  && cd ${PACKAGE_DIR} \
