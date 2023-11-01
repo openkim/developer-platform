@@ -39,7 +39,7 @@ RUN ${PIP} install markupsafe==2.0.1
 RUN ${PIP} install Jinja2==2.11.3
 RUN ${PIP} install edn_format==0.7.5
 RUN ${PIP} install kim-edn==1.3.1
-RUN ${PIP} install kim-property==2.4.0
+RUN ${PIP} install kim-property==2.5.7
 RUN ${PIP} install kim-query==3.0.0
 RUN ${PIP} install simplejson==3.17.2
 RUN ${PIP} install numpy==1.19.5
@@ -48,6 +48,7 @@ RUN ${PIP} install matplotlib==3.7.1
 RUN ${PIP} install pymongo==3.11.3
 RUN ${PIP} install montydb==2.1.1
 RUN ${PIP} install pybind11==2.6.2
+RUN ${PIP} install spglib==2.1.0
 
 #########################################
 ## MD++
@@ -159,3 +160,19 @@ RUN cd ${PACKAGE_DIR} \
  && rm convergence.txz \
  && cd convergence \
  && ${PIP} install .
+
+#########################################
+## AFLOW
+#########################################
+ARG AFLOW_VER=3.2.14
+ARG AFLOW_PACKAGE=aflow.${AFLOW_VER}
+ARG AFLOW_ARCHIVE_TXZ=${AFLOW_PACKAGE}.tar.xz
+RUN cd ${PACKAGE_DIR} \
+ && wget -q http://materials.duke.edu/AFLOW/${AFLOW_ARCHIVE_TXZ} \
+ && tar xJf ${AFLOW_ARCHIVE_TXZ} \
+ && rm ${AFLOW_ARCHIVE_TXZ} \
+ && cd ${AFLOW_PACKAGE} \
+ && make -j2 \
+ && cp aflow aflow_data /usr/local/bin \
+ && cd ${PACKAGE_DIR} \
+ && rm -r ${AFLOW_PACKAGE}
