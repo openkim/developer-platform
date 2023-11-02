@@ -1,4 +1,4 @@
-name: Docker publish
+name: Docker publish and test
 
 # This workflow uses actions that are not certified by GitHub.
 # They are provided by a third-party and are governed by
@@ -10,6 +10,7 @@ on:
     types: [ published ]
   pull_request:
     branches: [ main ]
+  push:
 
 env:
   REGISTRY: ghcr.io
@@ -185,7 +186,7 @@ jobs:
       # Login against a Docker registry except on PR
       # https://github.com/docker/login-action
       - name: Log into registry ${{ env.REGISTRY }}
-        if: github.event_name != 'pull_request'
+        if: (github.event_name != 'pull_request') && (github.event_name != 'push')
         uses: docker/login-action@28218f9b04b4f3f62068d7b6ce6ca5b26e35336c
         with:
           registry: ${{ env.REGISTRY }}
@@ -228,7 +229,7 @@ jobs:
         with:
           context: docker/${{ env.DOCKER_DIR_CONFIG }}
           file: docker/${{ env.DOCKER_DIR_CONFIG }}/${{ env.DOCKERFILE_NAME }}
-          push: ${{ github.event_name != 'pull_request' }}
+          push: ${{ (github.event_name != 'pull_request') && (github.event_name != 'push') }}
           build-args: |
             "IMAGE_INSTALL=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_INSTALL }}"
           tags: |
@@ -246,6 +247,10 @@ jobs:
           rm -rf ${{ env.IMAGE_CACHE_DIR_SYS }}
           rm -rf ${{ env.IMAGE_CACHE_DIR_GIT }}
 
+      - name: Test minimal image
+        run: |
+          docker run --rm --mount type=bind,src=$PWD/test/test_scripts_and_data,target=/home/openkim/test_scripts_and_data --env LD_LIBRARY_PATH=:/usr/local/lib image_minimal /bin/bash -c 'cd /home/openkim/test_scripts_and_data && bash set_up_and_run_equilibriumcrystalstructure_sample.sh && python compare_dbs.py'
+
       # Finally, install additional packages to create the full image based on
       # the minimal image
       #
@@ -255,7 +260,7 @@ jobs:
         with:
           context: docker/${{ env.DOCKER_DIR_ADDITIONAL }}
           file: docker/${{ env.DOCKER_DIR_ADDITIONAL }}/${{ env.DOCKERFILE_NAME }}
-          push: ${{ github.event_name != 'pull_request' }}
+          push: ${{ (github.event_name != 'pull_request') && (github.event_name != 'push') }}
           build-args: |
             "IMAGE_MINIMAL=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}-minimal"
           tags: |
