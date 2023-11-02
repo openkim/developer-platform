@@ -249,7 +249,7 @@ jobs:
 
       - name: Test minimal image
         run: |
-          docker run --rm --mount type=bind,src=$PWD/test/test_scripts_and_data,target=/home/openkim/test_scripts_and_data --env LD_LIBRARY_PATH=:/usr/local/lib image_minimal /bin/bash -c 'cd /home/openkim/test_scripts_and_data && bash set_up_and_run_equilibriumcrystalstructure_sample.sh && python compare_dbs.py'
+          docker run --rm --mount type=bind,src=$PWD/test/test_scripts_and_data,target=/home/openkim/test_scripts_and_data --env LD_LIBRARY_PATH=:/usr/local/lib ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}-minimal /bin/bash -c 'cd /home/openkim/test_scripts_and_data && bash set_up_and_run_equilibriumcrystalstructure_sample.sh && python compare_dbs.py'
 
       # Finally, install additional packages to create the full image based on
       # the minimal image
