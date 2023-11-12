@@ -161,6 +161,12 @@ RUN cd ${PACKAGE_DIR}/kim-python-utils \
  && ${PIP} install .
 
 #########################################
+## crystal-genome-util
+#########################################
+RUN cd ${PACKAGE_DIR}/crystal-genome-util \
+ && ${PIP} install .
+
+#########################################
 ## convergence
 #########################################
 RUN cd ${PACKAGE_DIR} \
