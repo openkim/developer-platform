@@ -1,6 +1,7 @@
 from montydb import MontyClient
 import numpy as np
 import json
+import sys
 
 
 # TODO: more sophisticated checks for these keys
@@ -91,8 +92,8 @@ def compare_db_to_reference(reference_json_path: str, test_db_path: str, float_f
                             reference_source_value_array_flat=reference_source_value_array.flat
                             if len(reference_source_value_array_flat[0].keys()) != 1:
                                 raise RuntimeError("\n\nElements of reference DB value\n\n%s\n\nare not single-key dicts as expected."%reference_source_value_array)
-                            mongo_dtype = list(reference_source_value_array_flat[0].keys())[0]
-                            for reference_source_value_dict,test_source_value_dict in zip(reference_source_value_array_flat,test_source_value_array.flat):                            
+                            for reference_source_value_dict,test_source_value_dict in zip(reference_source_value_array_flat,test_source_value_array.flat):                                                            
+                                mongo_dtype = list(reference_source_value_dict.keys())[0]
                                 if mongo_dtype == "$numberDouble":
                                     reference_source_value = float(reference_source_value_dict[mongo_dtype])                                    
                                     test_source_value = float(test_source_value_dict[mongo_dtype])
@@ -108,8 +109,8 @@ def compare_db_to_reference(reference_json_path: str, test_db_path: str, float_f
                                 else:
                                     raise RuntimeError("Unexpected data type %s in reference DB"%mongo_dtype)
 
-if __name__=='__main__':
-    reference_json_file = "data.json"
+if __name__=='__main__':    
+    reference_json_file = sys.argv[1]+".json"
     test_db  = "/pipeline/db"
     compare_db_to_reference(reference_json_file,test_db)
     print("SUCCESS! All results provided in reference database were successfully matched.")
