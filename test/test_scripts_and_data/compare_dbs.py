@@ -110,10 +110,9 @@ def compare_db_to_reference(reference_json_path: str, test_db_path: str, float_f
                                         "Integer values are not equal."
                                 else:
                                     raise RuntimeError("Unexpected data type %s in reference DB"%mongo_dtype)
-
-    with open(os.path.join(test_db_path,"/db/data.json")) as f:
+    with open(os.path.join(test_db_path,"db/data.json")) as f:
         test_db = json.load(f)
-        assert len(test_db)==len(reference_db), "Database lengths are unequal. Because all results have been matched, this means there are exxtra results in the test db"
+        assert len(test_db)==len(reference_db), "Database lengths are unequal. Because all results have been matched, this means there are extra results in the test db"
 
 if __name__=='__main__':    
     reference_json_file = sys.argv[1]+".json"
