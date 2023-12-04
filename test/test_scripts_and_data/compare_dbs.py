@@ -2,6 +2,7 @@ from montydb import MontyClient
 import numpy as np
 import json
 import sys
+import os
 
 
 # TODO: more sophisticated checks for these keys
@@ -24,6 +25,7 @@ def compare_db_to_reference(reference_json_path: str, test_db_path: str, float_f
     """
     with open(reference_json_path) as f:
         reference_db = json.load(f)
+            
     with MontyClient(test_db_path, cache_modified=0) as client:
         db = client.db
         for i, reference_result in enumerate(reference_db):
@@ -108,6 +110,10 @@ def compare_db_to_reference(reference_json_path: str, test_db_path: str, float_f
                                         "Integer values are not equal."
                                 else:
                                     raise RuntimeError("Unexpected data type %s in reference DB"%mongo_dtype)
+
+    with open(os.path.join(test_db_path,"/db/data.json")) as f:
+        test_db = json.load(f)
+        assert len(test_db)==len(reference_db), "Database lengths are unequal. Because all results have been matched, this means there are exxtra results in the test db"
 
 if __name__=='__main__':    
     reference_json_file = sys.argv[1]+".json"
