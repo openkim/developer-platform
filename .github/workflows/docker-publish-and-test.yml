@@ -249,8 +249,8 @@ jobs:
 
       - name: Test minimal image
         run: |
-          bash tests/run_tests.sh ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}-minimal pm_fast_tests
-          bash tests/run_tests.sh ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}-minimal sm_fast_tests
+          bash test/run_tests.sh ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}-minimal pm_fast_tests
+          bash test/run_tests.sh ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}-minimal sm_fast_tests
 
       # Finally, install additional packages to create the full image based on
       # the minimal image
