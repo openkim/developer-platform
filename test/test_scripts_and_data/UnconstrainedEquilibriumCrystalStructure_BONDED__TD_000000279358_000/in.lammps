@@ -1,0 +1,117 @@
+# Minimize energy to obtain equilibrium unit cell and cohesive energy
+# for a BONDED force field
+
+# Set up logging
+log             output/lammps.log
+
+# Initialize model
+boundary        p p p
+kim             init ${model} metal unit_conversion_mode
+
+# Read and set up geometry, topology and model
+print           "=============================================================="
+print           "Input datafile             = ${datafile}"
+print           "=============================================================="
+read_data       ${datafile}
+change_box      all triclinic 
+kim             interactions fixed_types
+timestep        $(0.00025*v__u_time)
+
+# Set up variables that are in metal units regardless of model's native units
+variable        fmax_eVperA equal fmax/${_u_force}
+variable        delx_A equal (xhi-xlo)/${_u_distance}
+variable        dely_A equal (yhi-ylo)/${_u_distance}
+variable        delz_A equal (zhi-zlo)/${_u_distance}
+variable        xy_A equal xy/${_u_distance}
+variable        xz_A equal xz/${_u_distance}
+variable        yz_A equal yz/${_u_distance}
+variable        E_eV equal pe/${_u_energy} # Note that we will use thermo_modify norm yes later, so this is automatically per atom
+variable        pxx_bar equal pxx/${_u_pressure}
+variable        pyy_bar equal pyy/${_u_pressure}
+variable        pzz_bar equal pzz/${_u_pressure}
+variable        pxy_bar equal pxy/${_u_pressure}
+variable        pyz_bar equal pyz/${_u_pressure}
+variable        pxz_bar equal pxz/${_u_pressure}
+
+thermo          1000
+thermo_style    custom step v_fmax_eVperA v_E_eV v_pxx_bar v_pyy_bar v_pzz_bar v_pxy_bar v_pxz_bar v_pyz_bar pe pxx pyy pzz pxy pxz pyz
+thermo_modify   norm yes 
+
+# Do a sequence of minimizations alternating between box minimization and
+# minimization of internal atom positions
+variable        num loop 1 100
+label           minloop
+print           "==========================="
+print           "Minimization iteration: ${num} "
+print           "==========================="
+
+# Perform an isotropic energy scan
+variable xlo_orig string $(xlo)
+variable xhi_orig string $(xhi)
+variable ylo_orig string $(ylo)
+variable yhi_orig string $(yhi)
+variable zlo_orig string $(zlo)
+variable zhi_orig string $(zhi)
+variable xy_orig string $(xy)
+variable xz_orig string $(xz)
+variable yz_orig string $(yz)
+
+variable minpress string 1e99
+variable currscale equal 1+v_scalestep*(v_stepnum)
+
+variable stepnum loop -20 20
+variable scalestep string 2.5e-4
+label startloop
+change_box all x final $(v_currscale*v_xlo_orig) $(v_currscale*v_xhi_orig) &
+               y final $(v_currscale*v_ylo_orig) $(v_currscale*v_yhi_orig) &
+               z final $(v_currscale*v_zlo_orig) $(v_currscale*v_zhi_orig) &
+               xy final $(v_currscale*v_xy_orig) &
+               xz final $(v_currscale*v_xz_orig) &
+               yz final $(v_currscale*v_yz_orig) remap
+               
+run 0
+if "$(abs(press))<$(v_minpress)" then "variable minpress string $(abs(press))" "variable argminscale string $(v_currscale)" "variable argminstep string $(v_stepnum)"
+next stepnum
+jump SELF startloop
+print "=============== Isotropic scan result ========================="
+print "Minumum pressure ${minpress} found at scale ${argminscale} at step number ${argminstep}"
+
+change_box all x final $(v_argminscale*v_xlo_orig) $(v_argminscale*v_xhi_orig) &
+               y final $(v_argminscale*v_ylo_orig) $(v_argminscale*v_yhi_orig) &
+               z final $(v_argminscale*v_zlo_orig) $(v_argminscale*v_zhi_orig) &
+               xy final $(v_argminscale*v_xy_orig) &
+               xz final $(v_argminscale*v_xz_orig) &
+               yz final $(v_argminscale*v_yz_orig) remap
+
+# Set boundary conditions to be stress-free in the x,y,z directions
+fix             1 all box/relax tri 0.0
+fix             2 all setforce 0.0 0.0 0.0
+min_style       cg
+#min_modify     line backtrack
+minimize        1.0e-10 $(1.0e-10*v__u_force) 100000 200000
+unfix           1
+unfix           2
+min_style       fire
+min_modify      integrator verlet tmax 2.0 tmin 0.0
+minimize        0.0 $(v_ftol*v__u_force) 10000 700000
+if "(${fmax_eVperA}<${ftol}) && ($(abs(v_pxx_bar))<${stol}) && ($(abs(v_pyy_bar))<${stol}) && ($(abs(v_pzz_bar))<${stol}) && ($(abs(v_pxy_bar))<${stol}) && ($(abs(v_pxz_bar))<${stol}) && ($(abs(v_pyz_bar))<${stol})" then "jump SELF break"
+next            num
+jump            SELF minloop
+label           break
+
+print           "======================================"
+print           "Relaxed a = (${delx_A}, 0.0, 0.0) Angstrom"
+print           "Relaxed b = (${xy_A}, ${dely_A}, 0.0) Angstrom"
+print           "Relaxed c = (${xz_A}, ${yz_A}, ${delz_A}) Angstrom"
+print           "Energy per atom = ${E_eV} eV/atom"
+print           "======================================"
+print           "${delx_A}" file ${resultsfile}
+print           "${dely_A}" append ${resultsfile}
+print           "${delz_A}" append ${resultsfile}
+print           "${xy_A}" append ${resultsfile}
+print           "${xz_A}" append ${resultsfile}
+print           "${yz_A}" append ${resultsfile}
+print           "${E_eV}" append ${resultsfile}
+
+write_dump      all custom ${dumpfile} xs ys zs type id fx fy fz modify format float %20.15g
+write_data      "output/relax.dat"

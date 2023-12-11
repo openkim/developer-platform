@@ -1,0 +1,335 @@
+#!/usr/bin/env python3
+"""
+Calculates equilibrium crystal structure and energy at zero temperature and pressure by performing an unconstrained minimization starting from one or more LAMMPS data file. Computes `binding-energy-crystal <https://openkim.org/properties/show/2023-02-21/staff@noreply.openkim.org/binding-energy-crystal>`_ and `crystal-structure-npt <https://openkim.org/properties/show/2023-02-21/staff@noreply.openkim.org/crystal-structure-npt>`_ OpenKIM properties. If multiple data files are provided for the test, multiple mimimizations starting from different initial guesses will be performed. If the relaxed structures are unique, multiple pairs of these properties will be written. Optionally, takes an AFLOW prototype label as input. If the relaxed prototype label differs from the given one for any individiual minimization, the property pair is not written.
+
+Inputs read from ``stdin`` 
+===========================
+
+These are usually fed by a test's ``runner`` from a file rendered from a test generator using ``test_template/pipeline.stdin.tpl.genie``).
+
+.. data:: prototype_label
+
+    AFLOW prototype label (if "" is given, this is not enforced)
+
+    :type: str
+
+.. data:: sym_map_filename
+
+    Path to filename containing atom type to chemical element mapping
+
+    :type: str
+
+.. data:: modelname
+
+    KIM model name
+
+    :type: str
+
+
+Overview of operation:
+----------------------    
+1) Inputs are read and processed
+2) ...
+3) Use :func:`util.property_util.find_unique_materials_and_write_properties` to remove duplicates from the relaxed structures and write properties
+
+Date: 8/23/2023
+Author: Ilia Nikiforov <nikif002@umn.edu>, Ellad Tadmor <tadmor@umn.edu>
+"""
+
+
+from crystal_genome_util.property_util.equilibrium_crystal_structure import find_unique_materials_and_write_properties
+import numpy as np
+import subprocess
+import pathlib
+from crystal_genome_util.aflow_util import read_shortnames, AFLOW
+import os, re, shutil
+from ase import Atoms
+from typing import Any, Callable, Dict, List, Optional, Tuple
+from bonded_util.bonded_util import get_labelmap_from_lammps_data, get_type_to_element_mapping
+
+# Set path to driver to find LAMMPS template
+TEST_DRIVER_DIR = pathlib.Path(__file__).parent
+
+NP = 1
+LAMMPS_IN_FILENAME = "in.lammps"
+LAMMPS_DATA_TEMPLATE = "input%d.dat"
+LAMMPS_DUMP_TEMPLATE = "output/lammps%d.dump"
+LAMMPS_RESULTS_TEMPLATE = "output/lammps_results%d.txt"
+KIM_RESULTS_FILENAME = "output/results.edn"
+
+STRESS_TOL = 1000 # stress tolerance in Bar
+FORCE_TOL = 1e-2 # force tolerance in eV/Angstrom
+
+COMPARE_DIR = "compare"
+
+###############################################################################
+def read_LAMMPS_minimization_results(lammps_results_filename: str, lammps_dump_filename: str, offset: float = 0.0) -> Tuple[
+    float, # delx_rlx
+    float, # dely_rlx
+    float, # delz_rlx
+    float, # xy_rlx
+    float, # xz_rlx
+    float, # yz_rlx
+    float, # energy_per_atom_raw
+    List[List[float]], # scaled_pos_rlx,
+    List[int], # atom_types
+    List[List[float]], # forces
+    ]:
+    
+    """
+    Read lattice vectors, energy, and scaled basis atom positions written
+    out by a LAMMPS minimization calculation
+
+        Args:
+            lammps_results_filename:
+                Text file containing outputs of minimization
+
+            lammps_dump_filename:
+                LAMMPS dump file
+            
+            offset:
+                Value to shift the atomic coordinates by before returning
+
+        Raises:
+            RuntimeError:
+                If output file format is incorrect, contains unphysical quantities, or the file cannot be found
+
+        Returns:            
+            * First six return values: delx, dely, delz, xy, xz, yz. These comprise the relaxed LAMPPS simulation cell a = [delx,0,0] b = [xy,dely,0] c=[xz,yz,delz]
+            * Total energy per atom (without any isolated energy subtracted out)
+            * Relaxed fractional coordinates of each atom
+            * The LAMMPS atom type index of each atom
+            * Forces on each atom
+    """
+    # Read relaxed lattice vectors outputted by LAMMPS
+    try:
+        with open(lammps_results_filename) as f:
+            lines = f.readlines()
+            if len(lines) != 7:
+                raise RuntimeError(
+                    "LAMMPS run results file for unit cell minimization does not have 7 values as expected."
+                )
+            delx_rlx = float(lines[0])
+            dely_rlx = float(lines[1])
+            delz_rlx = float(lines[2])
+            xy_rlx = float(lines[3])
+            xz_rlx = float(lines[4])
+            yz_rlx = float(lines[5])
+            energy_per_atom = float(lines[6])
+    except:
+        raise RuntimeError("Error reading LAMMPS results file.")
+    if delx_rlx <= 0.0 or dely_rlx <= 0.0 or delz_rlx <= 0.0:
+        raise RuntimeError(
+            "Lattice converged to unphysical results with "
+            "delx = {} Angstroms, dely = {} Angstroms, delz = {} Angstrom.".format(
+                delx_rlx, dely_rlx, delz_rlx
+            )
+        )
+
+    # Read relaxed atom positions outputted by LAMMPS
+    try:
+        with open(lammps_dump_filename) as f:
+            lines = f.readlines()
+            if len(lines) < 10:
+                raise RuntimeError(
+                    "LAMMPS run dump file for unit cell minimization has {} lines, but should have at least 10.".format(
+                        len(lines)
+                    )
+                )
+            scaled_pos_rlx = []
+            atom_types = []
+            # Note: forces will be in model's native units, and are not used. For debugging only.
+            forces = []
+            for i in range(9, len(lines)):
+                line_list = lines[i].split()
+                scaled_pos_rlx.append([float(item) - offset for item in line_list[0:3]])
+                atom_types.append(int(line_list[3]))
+                forces.append([float(item) for item in line_list[4:7]])
+    except:
+        raise RuntimeError("Could not find LAMMPS dump file.")
+
+    return (
+        delx_rlx,
+        dely_rlx,
+        delz_rlx,
+        xy_rlx,
+        xz_rlx,
+        yz_rlx,
+        energy_per_atom,
+        scaled_pos_rlx,
+        atom_types,
+    )
+
+###############################################################################
+def do_LAMMPS_run(lammps_data_filename: str, lammps_results_filename: str, lammps_dump_filename: str, modelname:str):
+    """
+    Run the LAMMPS simulation for a given model
+    
+        Args:
+            lammps_data_filename:
+                LAMMPS data file containing initial config
+
+            lammps_results_filename:
+                Text file containing outputs of minimization
+
+            lammps_dump_filename:
+                LAMMPS dump file
+
+            modelname:
+                KIM model name used for energy calculations  
+        Raises:
+            RuntimeError:
+                If the LAMMPS run fails some reason
+    """
+
+    # Call LAMMPS to minimize energy
+    print("")
+    print(12 * "LAMMPS")
+    print(12 * "LAMMPS")
+    print(12 * "LAMMPS")
+
+    runargs =         [            
+            "lammps",
+            "-var",
+            "model",
+            modelname,
+            "-var",
+            "ftol",
+            str(FORCE_TOL),
+            "-var",
+            "stol",
+            str(STRESS_TOL),
+            "-var",
+            "datafile",
+            lammps_data_filename,
+            "-var",
+            "resultsfile",
+            lammps_results_filename,
+            "-var",
+            "dumpfile",
+            lammps_dump_filename,                        
+            "-in",
+            str(TEST_DRIVER_DIR / LAMMPS_IN_FILENAME),
+        ]
+    if NP > 1:
+        runargs = [
+            "mpirun",
+            "--use-hwthread-cpus",
+            "-np",
+            str(NP),
+            ] + runargs
+    lmprun = subprocess.run(
+        runargs
+    )
+    print(12 * "LAMMPS")
+    print(12 * "LAMMPS")
+    print(12 * "LAMMPS")
+    print("")
+    if lmprun.returncode:
+        raise RuntimeError("LAMMPS run failed.")
+
+###############################################################################
+if __name__ == "__main__":
+    
+
+    """ DEBUGGING
+    # 5678 is the default attach port in the VS Code debug configurations. Unless a host and port are specified, host defaults to 127.0.0.1
+    import debugpy
+    debugpy.listen(5678)
+    print("Waiting for debugger attach")
+    debugpy.wait_for_client()
+    debugpy.breakpoint()    
+    print('break on this line')
+    """
+    # grab from stdin (or a file)
+    modelname = input("model name:\n")
+    print(modelname)
+    prototype_label = input(
+        "AFLOW prototype label:\n"
+    )
+    print(prototype_label)
+    sym_map_filename = input("path to atom type mapping file:")    
+    print(sym_map_filename)
+
+    # Verify input
+    param_set_indices = []
+    # See how many geometries input0.dat, input1.dat etc are in the directory
+    for filename in os.listdir():
+        currmatch = re.fullmatch("input([0-9]+)\.dat",filename)
+        if currmatch:
+            # Append input file number to list
+            param_set_indices.append(int(currmatch.group(1)))
+
+    param_set_indices.sort()
+    num_param_sets = len(param_set_indices)
+    print ("Found %d input files"%num_param_sets)
+    if (len(set(param_set_indices))!=num_param_sets) or (param_set_indices[-1]!=num_param_sets-1) or (param_set_indices[0]!=0):
+        raise RuntimeError(
+            "Test directory does not contain consecutively numbered \"input([0-9]+)/.dat\" starting at 0"
+        )
+
+    if not os.path.exists(sym_map_filename):
+        raise RuntimeError(
+            "Atom type mapping file {} not found".format(sym_map_filename)
+        )
+
+    # Get dictionary of shortnames for prototype labels
+    shortnames = read_shortnames()
+
+    if os.path.isdir(COMPARE_DIR):
+        shutil.rmtree(COMPARE_DIR)
+    os.mkdir(COMPARE_DIR)
+
+    aflow = AFLOW(np=NP)
+    energy_per_atom = []
+    species = None
+
+    for i in range(num_param_sets):
+        do_LAMMPS_run(LAMMPS_DATA_TEMPLATE%i,LAMMPS_RESULTS_TEMPLATE%i,LAMMPS_DUMP_TEMPLATE%i,modelname)
+        
+        # Read LAMMPS results
+        (
+            delx_rlx,
+            dely_rlx,
+            delz_rlx,
+            xy_rlx,
+            xz_rlx,
+            yz_rlx,
+            curr_energy_per_atom,
+            scaled_pos_rlx,
+            atom_types,
+        ) = read_LAMMPS_minimization_results(LAMMPS_RESULTS_TEMPLATE%i,LAMMPS_DUMP_TEMPLATE%i)
+
+        energy_per_atom.append(curr_energy_per_atom)
+
+        lammps_cell_rlx = np.array(
+            [[delx_rlx, 0.0, 0.0], [xy_rlx, dely_rlx, 0.0], [xz_rlx, yz_rlx, delz_rlx]]
+        )
+        
+        num_to_type = get_labelmap_from_lammps_data(LAMMPS_DATA_TEMPLATE%i)
+        type_to_sym = get_type_to_element_mapping(sym_map_filename)
+        
+        scaled_pos_copy = scaled_pos_rlx
+        symbols_and_scaled_pos = []
+        for j in range(len(scaled_pos_copy)):
+            sym = type_to_sym[num_to_type[atom_types[j]]]
+            if not sym == "IGNORE":
+                symbols_and_scaled_pos.append([sym]+scaled_pos_copy[j])
+        symbols_and_scaled_pos.sort(key=lambda line:line[0])
+
+        symbols = []
+        scaled_pos_rlx = []
+        for symbol_and_scaled_pos in symbols_and_scaled_pos:
+            symbols.append(symbol_and_scaled_pos[0])
+            scaled_pos_rlx.append(symbol_and_scaled_pos[1:])
+
+        atoms = Atoms("".join(symbols),cell=lammps_cell_rlx,scaled_positions=scaled_pos_rlx)
+        atoms.write(os.path.join(COMPARE_DIR,str(i)),format='vasp')
+
+        currspecies = sorted(list(set(symbols)))
+        if species is None:
+            species = currspecies
+        elif species != currspecies:
+            raise RuntimeError("Input data files consist of different species")
+
+    find_unique_materials_and_write_properties(COMPARE_DIR,prototype_label,energy_per_atom,species)

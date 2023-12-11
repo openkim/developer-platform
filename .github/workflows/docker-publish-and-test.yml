@@ -253,6 +253,8 @@ jobs:
           bash test/run_tests.sh ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}-minimal sm_fast_tests
           bash test/run_vcs.sh ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}-minimal pm_fast_vcs
           bash test/run_vcs.sh ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}-minimal sm_fast_vcs
+          bash test/run_tests.sh ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}-minimal equilibriumcrystalstructure
+          bash test/run_tests.sh ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}-minimal sp_sm_test
 
       # Finally, install additional packages to create the full image based on
       # the minimal image

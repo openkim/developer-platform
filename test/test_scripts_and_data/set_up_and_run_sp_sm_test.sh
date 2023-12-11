@@ -1,0 +1,13 @@
+#!/bin/bash
+
+kimitems install -D  Sim_LAMMPS_CoreShell_MitchellFincham_1993_NaCl__SM_672022050407_000
+
+# for testing non-matching
+kimitems install -D Sim_LAMMPS_EIM_Zhou_2010_BrClCsFIKLiNaRb__SM_259779394709_000
+
+cp -r UnconstrainedEquilibriumCrystalStructure_BONDED__TD_000000279358_000 /home/openkim/test-drivers/
+cp -r UnconstrainedEquilibriumCrystalStructure_BONDED_AB_cF8_225_a_b_Cl_Na_core_shell__TE_440148952847_000 /home/openkim/tests/
+
+pipeline-database set local
+
+pipeline-run-matches UnconstrainedEquilibriumCrystalStructure_BONDED_AB_cF8_225_a_b_Cl_Na_core_shell__TE_440148952847_000
