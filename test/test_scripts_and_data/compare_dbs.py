@@ -1,10 +1,12 @@
 from montydb import MontyClient
 import numpy as np
 import json
+import sys
+import os
 
 
 # TODO: more sophisticated checks for these keys
-KEYS_TO_SKIP = ["parameter-values"]
+KEYS_TO_SKIP = ["parameter-values","excess"]
 
 
 def compare_db_to_reference(reference_json_path: str, test_db_path: str, float_fractional_tolerance: float = 0.01):
@@ -21,95 +23,105 @@ def compare_db_to_reference(reference_json_path: str, test_db_path: str, float_f
         float_fractional_tolerance:
             Fraction of the reference value of floating-point numbers that the test db is allowed to deviate by       
     """
-    with open(reference_json_path) as f:
-        reference_db = json.load(f)
-    with MontyClient(test_db_path, cache_modified=0) as client:
-        db = client.db
-        for i, reference_result in enumerate(reference_db):
-            print ("Processing reference result %d of %d"%(i,len(reference_db)),end="\r")
-            reference_uuid = reference_result["meta"]["uuid"]
-            reference_runner_and_subject = "-".join(reference_uuid.split("-")[:-2])        
-            reference_instance_id = int(reference_result["instance-id"]["$numberInt"])
-            for key in reference_result:
-                if key == "vc-comment":
-                    # VC comments may be a string with float numbers embedded, too much hassle to test
-                    continue
-                if isinstance(reference_result[key],dict):                
-                    if ("source-value" in reference_result[key]) and (key not in KEYS_TO_SKIP):
-                        # ok, this is a property key, search for this result                    
-                        # generic error message
-                        error_message_specifying_pair_and_key = "\n\nTest failed while comparing to key '%s' in instance-id %d in reference runner-subject pair %s:\n" \
-                            %(key,reference_instance_id,reference_runner_and_subject)               
+    if os.path.exists(reference_json_path):
+        with open(reference_json_path) as f:
+            reference_db = json.load(f)
+    else:
+        reference_db = []
+
+    if os.path.exists(test_db_path):
+        with MontyClient(test_db_path, cache_modified=0) as client:
+            db = client.db
+            for i, reference_result in enumerate(reference_db):
+                print ("Processing reference result %d of %d"%(i,len(reference_db)),end="\r")
+                reference_uuid = reference_result["meta"]["uuid"]
+                reference_runner_and_subject = "-".join(reference_uuid.split("-")[:-2])        
+                reference_instance_id = int(reference_result["instance-id"]["$numberInt"])
+                for key in reference_result:
+                    if key == "vc-comment":
+                        # VC comments may be a string with float numbers embedded, too much hassle to test
+                        continue
+                    if isinstance(reference_result[key],dict):                
+                        if ("source-value" in reference_result[key]) and (key not in KEYS_TO_SKIP):
+                            # ok, this is a property key, search for this result                    
+                            # generic error message
+                            error_message_specifying_pair_and_key = "\n\nTest failed while comparing to key '%s' in instance-id %d in reference runner-subject pair %s:\n" \
+                                %(key,reference_instance_id,reference_runner_and_subject)               
+                                
+                            # get numpy array of the source-value from the reference db
+                            reference_source_value_array = np.asarray(reference_result[key]["source-value"])                    
+
+                            """
+                            MONTYDB VERSION NOTE:
+                                In 2.1.1, the version in the KDP, querying the  /pipeline/db like this gives and requires dicts
+                                e.g. {"$numberDouble": "0.70535806"} for typed values, just like the raw json in the reference db. 
+                                However, if we ever upgrade to 2.5.2 (or even some earlier versions might have this),
+                                typed values just have the value.
+                            """
+
+                            # query the test DB
+                            query={
+                                "meta.uuid":{"$regex":reference_runner_and_subject},
+                                "instance-id.$numberInt":str(reference_instance_id)
+                            }                    
+                            cursor=db.data.find(query)
+
+                            # get numpy array of the source-value from the DB we are testing
+                            try:
+                                test_source_value_array = np.asarray(next(cursor)[key]["source-value"])
+                            except StopIteration:
+                                assert False, error_message_specifying_pair_and_key+"No matches found in test DB." 
+                            except:
+                                raise RuntimeError("Unexpected exception when searching test DB")                     
                             
-                        # get numpy array of the source-value from the reference db
-                        reference_source_value_array = np.asarray(reference_result[key]["source-value"])                    
+                            # should be only one result, test this
+                            try:                        
+                                next(cursor)
+                                assert False, error_message_specifying_pair_and_key+"Multiple matches found in test DB."                          
+                            except StopIteration:
+                                pass
+                            except:
+                                raise RuntimeError("Unexpected exception when searching test DB")
+                            
+                            # error message segment for displaying the source-values
+                            error_message_showing_source_values = "\nMismatch found between reference value\n\n%s\n\nand test value\n\n%s\n\n" % \
+                                (reference_source_value_array,test_source_value_array)
 
-                        """
-                        MONTYDB VERSION NOTE:
-                            In 2.1.1, the version in the KDP, querying the  /pipeline/db like this gives and requires dicts
-                            e.g. {"$numberDouble": "0.70535806"} for typed values, just like the raw json in the reference db. 
-                            However, if we ever upgrade to 2.5.2 (or even some earlier versions might have this),
-                            typed values just have the value.
-                        """
+                            # arrays should be the same shape                    
+                            assert reference_source_value_array.shape == test_source_value_array.shape, \
+                                error_message_specifying_pair_and_key + error_message_showing_source_values + "Arrays are different shapes."
+                            if reference_source_value_array.dtype != "object": 
+                                # this means it's strings, if its doubles or ints, each entry is a dict e.g. "$numberDouble": "0.70535806"
+                                assert (reference_source_value_array == test_source_value_array).all(), \
+                                    error_message_specifying_pair_and_key + error_message_showing_source_values + "Non-numerical values are not equal."
+                            else: # the reference ndarray is dicts, so we have to look at data types
+                                reference_source_value_array_flat=reference_source_value_array.flat
+                                if len(reference_source_value_array_flat[0].keys()) != 1:
+                                    raise RuntimeError("\n\nElements of reference DB value\n\n%s\n\nare not single-key dicts as expected."%reference_source_value_array)
+                                for reference_source_value_dict,test_source_value_dict in zip(reference_source_value_array_flat,test_source_value_array.flat):                                                            
+                                    mongo_dtype = list(reference_source_value_dict.keys())[0]
+                                    if mongo_dtype == "$numberDouble":
+                                        reference_source_value = float(reference_source_value_dict[mongo_dtype])                                    
+                                        test_source_value = float(test_source_value_dict[mongo_dtype])
+                                        assert abs(reference_source_value-test_source_value) <= abs(float_fractional_tolerance*reference_source_value), \
+                                            error_message_specifying_pair_and_key + error_message_showing_source_values + \
+                                            "Floating point values are not within the requested fractional tolerance %f"%float_fractional_tolerance
+                                    elif mongo_dtype == "$numberInt":
+                                        reference_source_value = int(reference_source_value_dict[mongo_dtype])
+                                        test_source_value = int(test_source_value_dict[mongo_dtype])
+                                        assert reference_source_value == test_source_value, \
+                                            error_message_specifying_pair_and_key + error_message_showing_source_values + \
+                                            "Integer values are not equal."
+                                    else:
+                                        raise RuntimeError("Unexpected data type %s in reference DB"%mongo_dtype)                                    
+        with open(os.path.join(test_db_path,"db/data.json")) as f:
+            test_db = json.load(f)
+            assert len(test_db)==len(reference_db), "Database lengths are unequal. Because all results have been matched, this means there are extra results in the test db"
+    else:
+        assert reference_db == [], "Nonexistent test database trying to compare to a nonempty reference database"
 
-                        # query the test DB
-                        query={
-                            "meta.uuid":{"$regex":reference_runner_and_subject},
-                            "instance-id.$numberInt":str(reference_instance_id)
-                        }                    
-                        cursor=db.data.find(query)
-
-                        # get numpy array of the source-value from the DB we are testing
-                        try:
-                            test_source_value_array = np.asarray(next(cursor)[key]["source-value"])
-                        except StopIteration:
-                            assert False, error_message_specifying_pair_and_key+"No matches found in test DB." 
-                        except:
-                            raise RuntimeError("Unexpected exception when searching test DB")                     
-                        
-                        # should be only one result, test this
-                        try:                        
-                            next(cursor)
-                            assert False, error_message_specifying_pair_and_key+"Multiple matches found in test DB."                          
-                        except StopIteration:
-                            pass
-                        except:
-                            raise RuntimeError("Unexpected exception when searching test DB")
-                        
-                        # error message segment for displaying the source-values
-                        error_message_showing_source_values = "\nMismatch found between reference value\n\n%s\n\nand test value\n\n%s\n\n" % \
-                            (reference_source_value_array,test_source_value_array)
-
-                        # arrays should be the same shape                    
-                        assert reference_source_value_array.shape == test_source_value_array.shape, \
-                            error_message_specifying_pair_and_key + error_message_showing_source_values + "Arrays are different shapes."
-                        if reference_source_value_array.dtype != "object": 
-                            # this means it's strings, if its doubles or ints, each entry is a dict e.g. "$numberDouble": "0.70535806"
-                            assert (reference_source_value_array == test_source_value_array).all(), \
-                                error_message_specifying_pair_and_key + error_message_showing_source_values + "Non-numerical values are not equal."
-                        else: # the reference ndarray is dicts, so we have to look at data types
-                            reference_source_value_array_flat=reference_source_value_array.flat
-                            if len(reference_source_value_array_flat[0].keys()) != 1:
-                                raise RuntimeError("\n\nElements of reference DB value\n\n%s\n\nare not single-key dicts as expected."%reference_source_value_array)
-                            mongo_dtype = list(reference_source_value_array_flat[0].keys())[0]
-                            for reference_source_value_dict,test_source_value_dict in zip(reference_source_value_array_flat,test_source_value_array.flat):                            
-                                if mongo_dtype == "$numberDouble":
-                                    reference_source_value = float(reference_source_value_dict[mongo_dtype])                                    
-                                    test_source_value = float(test_source_value_dict[mongo_dtype])
-                                    assert abs(reference_source_value-test_source_value) <= abs(float_fractional_tolerance*reference_source_value), \
-                                        error_message_specifying_pair_and_key + error_message_showing_source_values + \
-                                        "Floating point values are not within the requested fractional tolerance %f"%float_fractional_tolerance
-                                elif mongo_dtype == "$numberInt":
-                                    reference_source_value = int(reference_source_value_dict[mongo_dtype])
-                                    test_source_value = int(test_source_value_dict[mongo_dtype])
-                                    assert reference_source_value == test_source_value, \
-                                        error_message_specifying_pair_and_key + error_message_showing_source_values + \
-                                        "Integer values are not equal."
-                                else:
-                                    raise RuntimeError("Unexpected data type %s in reference DB"%mongo_dtype)
-
-if __name__=='__main__':
-    reference_json_file = "data.json"
+if __name__=='__main__':    
+    reference_json_file = sys.argv[1]+".json"
     test_db  = "/pipeline/db"
     compare_db_to_reference(reference_json_file,test_db)
     print("SUCCESS! All results provided in reference database were successfully matched.")
