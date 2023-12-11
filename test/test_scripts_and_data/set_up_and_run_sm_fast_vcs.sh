@@ -2,6 +2,9 @@
 
 kimitems install -D  Sim_LAMMPS_MEAM_Wagner_2007_SiC__SM_264944083668_000
 
+# for testing non-matching of special-purpose models
+kimitems install -D  Sim_LAMMPS_CoreShell_MitchellFincham_1993_NaCl__SM_672022050407_000
+
 kimitems install -D DimerContinuityC1__VC_303890932454_005
 kimitems install -D InversionSymmetry__VC_021653764022_002
 kimitems install -D Objectivity__VC_813478999433_002
@@ -13,3 +16,6 @@ kimitems install -D UnitConversion__VC_128739598203_001
 pipeline-database set local
 
 pipeline-run-verification-checks Sim_LAMMPS_MEAM_Wagner_2007_SiC__SM_264944083668_000
+
+# should not match with anything
+pipeline-run-verification-checks Sim_LAMMPS_CoreShell_MitchellFincham_1993_NaCl__SM_672022050407_000
