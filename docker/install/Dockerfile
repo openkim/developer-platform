@@ -187,7 +187,9 @@ RUN cd ${PACKAGE_DIR} \
  && tar xJf ${AFLOW_ARCHIVE_TXZ} \
  && rm ${AFLOW_ARCHIVE_TXZ} \
  && cd ${AFLOW_PACKAGE} \
- && make -j2 \
- && cp aflow aflow_data /usr/local/bin \
+ && make -j2 aflow \
+ && cp aflow /usr/local/bin \
+ && touch /usr/local/bin/aflow_data \
+ && chmod +x /usr/local/bin/aflow_data \
  && cd ${PACKAGE_DIR} \
  && rm -r ${AFLOW_PACKAGE}
