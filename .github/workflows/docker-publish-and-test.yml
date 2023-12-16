@@ -208,6 +208,7 @@ jobs:
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
           context: docker/${{ env.DOCKER_DIR_INSTALL }}
+          load: true
           file: docker/${{ env.DOCKER_DIR_INSTALL }}/${{ env.DOCKERFILE_NAME }}
           push: false
           build-args: |
@@ -216,12 +217,36 @@ jobs:
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_INSTALL }}
           labels: ${{ steps.meta.outputs.labels }}
 
-      # Perform final configurations and push image to registry (unless
-      # triggered by a PR):
+      # Perform final configurations 
       # - User creation and sudo configuration
       # - Creation of local repository directory structure for KIM items
       # - Vim configuration
       # - Environment and shell configuration
+      #
+      # https://github.com/docker/build-push-action
+      - name: Configure and export minimal image
+        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+        with:
+          context: docker/${{ env.DOCKER_DIR_CONFIG }}
+          file: docker/${{ env.DOCKER_DIR_CONFIG }}/${{ env.DOCKERFILE_NAME }}
+          push: false
+          build-args: |
+            "IMAGE_INSTALL=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_INSTALL }}"
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Test minimal image
+        run: |
+          bash test/run_tests.sh ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test pm_fast_tests
+          bash test/run_tests.sh ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test sm_fast_tests
+          bash test/run_vcs.sh ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test pm_fast_vcs
+          bash test/run_vcs.sh ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test sm_fast_vcs
+          bash test/run_tests.sh ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test equilibriumcrystalstructure
+          bash test/run_tests.sh ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test sp_sm_test
+
+      # Re-run the previous buildx action, except this time push the image if needed. Because of caching, this
+      # does not rebuild the image.
       #
       # https://github.com/docker/build-push-action
       - name: Configure and push minimal image
@@ -235,7 +260,7 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}-minimal
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-minimal
-          labels: ${{ steps.meta.outputs.labels }}
+          labels: ${{ steps.meta.outputs.labels }}          
 
       # List docker images in local repository to confirm exactly what tags were
       # created
@@ -246,15 +271,6 @@ jobs:
         run: |
           rm -rf ${{ env.IMAGE_CACHE_DIR_SYS }}
           rm -rf ${{ env.IMAGE_CACHE_DIR_GIT }}
-
-      - name: Test minimal image
-        run: |
-          bash test/run_tests.sh ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}-minimal pm_fast_tests
-          bash test/run_tests.sh ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}-minimal sm_fast_tests
-          bash test/run_vcs.sh ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}-minimal pm_fast_vcs
-          bash test/run_vcs.sh ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}-minimal sm_fast_vcs
-          bash test/run_tests.sh ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}-minimal equilibriumcrystalstructure
-          bash test/run_tests.sh ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}-minimal sp_sm_test
 
       # Finally, install additional packages to create the full image based on
       # the minimal image
