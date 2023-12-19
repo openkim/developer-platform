@@ -1,3 +1,0 @@
-# UnconstrainedEquilibriumCrystalStructure_BONDED__TD_000000279358_000
-
-KIM test driver that performs an unconstrained relaxation of a crystal described by a LAMMPS data file with type labels and bonding topology corresponding to a bonded force field. If the material in a test name is specified using an AFLOW prototype label, the runner will expect the structurre to relax to the same symmetry, and report an error if it does not. If the material in a test name is specified in English (e.g. "Alpha-Quartz" as in UnconstrainedEquilibriumCrystalStructure_BONDED_Alpha_Quartz_PCFF_INTERFACE__TE_056888110342_000), it is expected that the test will pass an empty line in place of a prototype label to the runner, and the symmetry of the relaxed structure will be reported as-is.
