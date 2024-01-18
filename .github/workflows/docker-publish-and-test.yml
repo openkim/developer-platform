@@ -186,7 +186,7 @@ jobs:
       # Login against a Docker registry except on PR
       # https://github.com/docker/login-action
       - name: Log into registry ${{ env.REGISTRY }}
-        if: (github.event_name != 'pull_request') && (github.event_name != 'push')
+        if: github.event_name == 'release'
         uses: docker/login-action@28218f9b04b4f3f62068d7b6ce6ca5b26e35336c
         with:
           registry: ${{ env.REGISTRY }}
@@ -254,7 +254,7 @@ jobs:
         with:
           context: docker/${{ env.DOCKER_DIR_CONFIG }}
           file: docker/${{ env.DOCKER_DIR_CONFIG }}/${{ env.DOCKERFILE_NAME }}
-          push: ${{ (github.event_name != 'pull_request') && (github.event_name != 'push') }}
+          push: ${{ github.event_name == 'release' }}
           build-args: |
             "IMAGE_INSTALL=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_INSTALL }}"
           tags: |
@@ -281,7 +281,7 @@ jobs:
         with:
           context: docker/${{ env.DOCKER_DIR_ADDITIONAL }}
           file: docker/${{ env.DOCKER_DIR_ADDITIONAL }}/${{ env.DOCKERFILE_NAME }}
-          push: ${{ (github.event_name != 'pull_request') && (github.event_name != 'push') }}
+          push: ${{ github.event_name == 'release' }}
           build-args: |
             "IMAGE_MINIMAL=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}-minimal"
           tags: |
