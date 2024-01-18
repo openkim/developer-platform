@@ -485,15 +485,13 @@ class Runner(KIMObject):
 
     @property
     def matching_models(self):
-        if not self.kimspec.get("matching-models"):
-            # FIXME: Uncomment this and raise an exception here once we add
-            #        the 'matching-models' key to all runners.
-            return ["standard-models"]
-            # raise cf.MetadataKeyMissing(
-            #    "Required key 'matching-models' not found in "
-            #    "kimspec.edn file of {}".format(self.kim_code)
-            # )
-        return self.kimspec["matching-models"]
+        """
+        Specifies what types of subjects the runner can match with, as a list of strings.  Required to be present.
+        """
+        if not self.kimspec:
+            return None
+        else:
+            return self.kimspec["matching-models"]
 
 
 class Subject(KIMObject):
@@ -534,23 +532,6 @@ class Subject(KIMObject):
         with open(specfile, encoding="utf-8") as f:
             spec = util.loadedn(f)
         return spec
-
-    @property
-    def run_compatibility(self):
-        """
-        Whether the SM can run against regular Tests (that are designed to run
-        against portable models) as opposed to Tests that are specifically
-        constructed to run against a particular subclass of SMs.
-        """
-        if not self.kimspec.get("run-compatibility"):
-            # FIXME: Uncomment this and raise an exception here once we add
-            #        the 'run-compatibility' key to all subjects.
-            return "portable-models"
-            # raise cf.MetadataKeyMissing(
-            #    "Required key 'run-compatibility' not found in "
-            #    "kimspec.edn file of {}".format(self.kim_code)
-            # )
-        return self.kimspec["run-compatibility"]
 
 
 # ===============================================
@@ -641,6 +622,19 @@ class SimulatorModel(Subject):
                 "kimspec.edn file of {}".format(self.kim_code)
             )
         return self.kimspec["simulator-potential"]
+    
+    @property
+    def run_compatibility(self):
+        """
+        Whether the SM can run against regular Tests (that are designed to run
+        against portable models) as opposed to Tests that are specifically
+        constructed to run against a particular subclass of SMs.
+        """
+        if not self.kimspec:
+            return None
+        else:
+            return self.kimspec["run-compatibility"]
+
 
 
 # =============================================
