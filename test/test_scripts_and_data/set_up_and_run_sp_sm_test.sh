@@ -1,0 +1,12 @@
+#!/bin/bash
+
+kimitems install -D  Sim_LAMMPS_CoreShell_MitchellFincham_1993_NaCl__SM_672022050407_000
+
+# for testing non-matching
+kimitems install -D Sim_LAMMPS_EIM_Zhou_2010_BrClCsFIKLiNaRb__SM_259779394709_000
+
+kimitems install -D EquilibriumCrystalStructure_Unconstrained_TypeLabels_core_shell_AB_cF8_225_a_b_ClNa__TE_102563389665_000
+
+pipeline-database set local
+
+pipeline-run-matches EquilibriumCrystalStructure_Unconstrained_TypeLabels_core_shell_AB_cF8_225_a_b_ClNa__TE_102563389665_000

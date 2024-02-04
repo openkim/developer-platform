@@ -39,7 +39,7 @@ RUN ${PIP} install markupsafe==2.0.1
 RUN ${PIP} install Jinja2==2.11.3
 RUN ${PIP} install edn_format==0.7.5
 RUN ${PIP} install kim-edn==1.3.1
-RUN ${PIP} install kim-property==2.4.0
+RUN ${PIP} install kim-property==2.5.7
 RUN ${PIP} install kim-query==3.0.0
 RUN ${PIP} install simplejson==3.17.2
 RUN ${PIP} install numpy==1.19.5
@@ -48,6 +48,7 @@ RUN ${PIP} install matplotlib==3.7.1
 RUN ${PIP} install pymongo==3.11.3
 RUN ${PIP} install montydb==2.1.1
 RUN ${PIP} install pybind11==2.6.2
+RUN ${PIP} install spglib==2.1.0
 
 #########################################
 ## MD++
@@ -110,6 +111,7 @@ RUN ${PIP} install kimpy==2.1.0
 #########################################
 ## LAMMPS
 #########################################
+ARG DEBIAN_FRONTEND=noninteractive
 RUN cd ${PACKAGE_DIR}/lammps/ \
  && mkdir build && cd build \
  && cmake \
@@ -131,9 +133,17 @@ RUN cd ${PACKAGE_DIR}/lammps/ \
       -D PKG_REAXFF=yes \
       -D PKG_MISC=yes \
       -D PKG_SMTBQ=yes \
+      -D PKG_EXTRA-PAIR=yes \
+      -D PKG_CORESHELL=yes \
       ../cmake \
  && make -j2 \
  && make install \
+ && apt-get update -qq \
+ && apt-get install --no-install-recommends -qqy python3-venv \
+ && make install-python \
+ && apt-get purge -y python3-venv \
+ && apt-get clean \
+ && rm -fr /var/lib/apt/lists/* \
  && ln -s /usr/local/bin/lmp /usr/local/bin/lammps \
  && rm -r /usr/local/share/lammps/potentials \
  && cd ${PACKAGE_DIR} \
@@ -152,6 +162,12 @@ RUN cd ${PACKAGE_DIR}/kim-python-utils \
  && ${PIP} install .
 
 #########################################
+## crystal-genome-util
+#########################################
+RUN cd ${PACKAGE_DIR}/crystal-genome-util \
+ && ${PIP} install .
+
+#########################################
 ## convergence
 #########################################
 RUN cd ${PACKAGE_DIR} \
@@ -159,3 +175,21 @@ RUN cd ${PACKAGE_DIR} \
  && rm convergence.txz \
  && cd convergence \
  && ${PIP} install .
+
+#########################################
+## AFLOW
+#########################################
+ARG AFLOW_VER=3.2.14
+ARG AFLOW_PACKAGE=aflow.${AFLOW_VER}
+ARG AFLOW_ARCHIVE_TXZ=${AFLOW_PACKAGE}.tar.xz
+RUN cd ${PACKAGE_DIR} \
+ && wget -q http://materials.duke.edu/AFLOW/${AFLOW_ARCHIVE_TXZ} \
+ && tar xJf ${AFLOW_ARCHIVE_TXZ} \
+ && rm ${AFLOW_ARCHIVE_TXZ} \
+ && cd ${AFLOW_PACKAGE} \
+ && make -j2 aflow \
+ && cp aflow /usr/local/bin \
+ && touch /usr/local/bin/aflow_data \
+ && chmod +x /usr/local/bin/aflow_data \
+ && cd ${PACKAGE_DIR} \
+ && rm -r ${AFLOW_PACKAGE}

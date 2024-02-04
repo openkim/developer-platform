@@ -1,0 +1,16 @@
+#!/bin/bash
+
+kimitems install -D  MEAM_LAMMPS_Wagner_2007_SiC__MO_430846853065_002
+
+kimitems install -D DimerContinuityC1__VC_303890932454_005
+kimitems install -D InversionSymmetry__VC_021653764022_002
+kimitems install -D Objectivity__VC_813478999433_002
+kimitems install -D PeriodicitySupport__VC_895061507745_004
+kimitems install -D PermutationSymmetry__VC_903502816694_002
+kimitems install -D SpeciesSupportedAsStated__VC_651200051721_002
+kimitems install -D ThreadSafety__VC_881176209980_005
+kimitems install -D UnitConversion__VC_128739598203_001
+
+pipeline-database set local
+
+pipeline-run-verification-checks MEAM_LAMMPS_Wagner_2007_SiC__MO_430846853065_002
