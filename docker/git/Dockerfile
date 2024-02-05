@@ -20,7 +20,7 @@ RUN git clone -q https://github.com/openkim/kim-python-utils -b master ${PACKAGE
   && git checkout e4e21b202264373a9f33dfc47b6e05c0af625950
 RUN git clone -q https://github.com/openkim/crystal-genome-util -b main ${PACKAGE_DIR}/crystal-genome-util \
   && cd ${PACKAGE_DIR}/crystal-genome-util \
-  && git checkout 860993d 
+  && git checkout devel 
 RUN git clone -q https://github.com/lammps/lammps -b stable_2Aug2023_update1 ${PACKAGE_DIR}/lammps
 RUN git clone -q https://gitlab.com/openkim/ase -b user-species ${PACKAGE_DIR}/ase \
   && cd ${PACKAGE_DIR}/ase \
