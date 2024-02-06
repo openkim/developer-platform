@@ -18,6 +18,9 @@ import traceback
 import time
 from contextlib import contextmanager
 
+import kim_edn
+import kim_property
+
 import pty
 import select
 import errno
@@ -188,6 +191,7 @@ class Computation:
         subject=None,
         result_code="",
         verbose=False,
+        verify=True,
     ):
         """
         A pipeline computation object that utilizes all of the pipeline
@@ -198,6 +202,9 @@ class Computation:
             * subject : A Model
             * result_code : if provided, the result will be moved
                 to the appropriate location
+            * verify : If True, the contents of results.edn will be verified to contain
+                valid KIM property instances when the output of the computation is
+                processed. 
         """
         self.runner = runner
         self.subject = subject
@@ -205,6 +212,7 @@ class Computation:
         self.runtime = -1
         self.result_code = result_code
         self.verbose = verbose
+        self.verify = verify
         self.info_dict = None
         self.uuid = None
         self.retcode = None
@@ -373,11 +381,21 @@ class Computation:
                     properties_reported.sort()
                     self.info_dict = {"properties": properties_reported}
             except Exception:
-                raise cf.PipelineRuntimeError(
+                raise cf.PipelineResultsError(
                     "The results file produced by "
                     "the Test or Verification Check ({}) is not valid "
                     "EDN".format(_result_file_path)
                 )
+            
+            if self.verify:
+                # Check whether the entries in results file are valid
+                # property instances
+                valid, msg = test_result_valid(_result_file_path)
+                if not valid:
+                    raise cf.PipelineResultsError(
+                        "Test Result or Verification Result did not conform "
+                        "to property definition\n{}".format(msg)
+                    )
 
         with self.runner_temp.in_dir(), open(
             _result_file_path, "w", encoding="utf-8"
@@ -641,3 +659,23 @@ def append_newline(string):
     if len(string) > 0 and string[-1] != "\n":
         string += "\n"
     return string
+
+
+def test_result_valid(flname):
+    """
+    Uses the kim_property module to check whether all property instances
+    contained in file are valid w.r.t. the current KIM property
+    definitions.  See
+
+        https://github.com/openkim/kim-property
+    """
+    try:
+        kim_property.check_property_instances(fi=flname, fp_path=kim_property.get_properties())
+    except (kim_property.KIMPropertyError, kim_edn.KIMEDNDecodeError):
+        valid = False
+        msg = traceback.format_exc()
+    else:
+        valid = True
+        msg = None
+
+    return valid, msg
