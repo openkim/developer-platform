@@ -1,4 +1,4 @@
-# KIM Developer Platform
+# KIM Developer Platform -- Hackathon Edition
 
 ## Background
 The KIM Developer Platform is a docker container image that provides a
@@ -69,18 +69,22 @@ Once docker is installed, there are two remaining steps in setting up the KIM
 Developer Platform: (1) pulling one of the images hosted in this repository,
 and (2) spawning a container from the image.  As mentioned above, the former is
 accomplished using `docker pull`, while the latter can be done with `docker
-run`.  If you want the latest minimal image, you must explicitly specify a
-corresponding docker tag ending in '-minimal' (replacing `kim_dev` with
-whatever name you wish to use for the container on your system):
+run`.  To pull the custom images created for the hackathon, you must explicitly 
+specify a corresponding docker tag ending in 'hackathon-latest-minimal' or
+'hackathon-latest' (replacing `kim_dev` with whatever name you wish to use for 
+the container on your system):
 ```
-docker pull ghcr.io/openkim/developer-platform:latest-minimal
-docker run -it --name kim_dev ghcr.io/openkim/developer-platform:latest-minimal bash
+docker pull ghcr.io/openkim/developer-platform:hackathon-latest-minimal
+docker run -it --name kim_dev -p 8888:8888 ghcr.io/openkim/developer-platform:hackathon-latest-minimal bash
 ```
 Alternatively, if you want the full image, do this:
 ```
-docker pull ghcr.io/openkim/developer-platform
-docker run -it --name kim_dev ghcr.io/openkim/developer-platform bash
+docker pull ghcr.io/openkim/developer-platform:hackathon-latest
+docker run -it --name kim_dev -p 8888:8888 ghcr.io/openkim/developer-platform:hackathon-latest bash
 ```
+*NOTE:* The `-p 8888:8888` argument exposes port 8888 for use by JupyterLab (see below). 
+You can omit if you do not wish to use JupyterLab.
+
 The container will automatically stop when you close the original bash session
 that was opened by doing `docker run` above; this can be verified by doing
 `docker ps`, which will reveal no running containers.  This will *not* cause
@@ -117,9 +121,9 @@ directory at /home/user/Documents/my_kim_stuff on the host to a directory
 called /home/openkim/kim-dev inside of a container, one could instantiate it
 via
 ```
-docker run -it --name kim_dev --mount \
+docker run -it --name kim_dev -p 8888:8888 --mount \
     type=bind,source=/home/user/Documents/my_kim_stuff,target=/home/openkim/kim-dev \
-    ghcr.io/openkim/developer-platform
+    ghcr.io/openkim/developer-platform:hackathon-latest-minimal
 ```
 Unlike bind mounts, docker volumes are managed internally by docker, and thus
 are not readily visible on the host.  The syntax for mounting a directory in a
@@ -160,6 +164,36 @@ swap space, and disk you want to reserve for Docker to use.  Options for control
 resource allocation on a container-by-container basis can be found at
 https://docs.docker.com/config/containers/resource_constraints/.  In linux, resource
 control must be done on a container-by-container basis.
+
+## IDEs (Jupyter Lab and VSCode)
+
+Once the container is running (either you have not closed it since `docker run`, or
+you have restarted it using `docker start`), and assuming you created the container with
+the `-p 8888:8888` option, you can run a Jupyter Lab server in the container and access it
+through a web browser on your host system. To do so, you need to execute
+```
+jupyter lab --ip 0.0.0.0
+```
+inside the container. You can either do so by running the above command in an already-open
+shell in the container, or from your host terminal by running 
+```
+docker exec kim_dev jupyter lab --ip 0.0.0.0
+```
+where `kim_dev` should be replaced if you named your container something different.
+You should now be able to access the Jupyter Lab IDE inside your container by
+pointing your browser at http://localhost:8888/lab?token=docker or 
+http://127.0.0.1:8888/lab?token=docker.
+
+To work inside the container using VSCode, you can use the "Dev Containers"
+extension which should be installed by default. Select "Remote Explorer" in
+the left sidebar, then choose "Dev Containers" in the drop down menu. Your
+container should be under "Other Containers", and you can attach VSCode to it
+using one of the icons on the right. See image below with relevant UI elements:
+
+![VSCode screenshot](doc_img/vscode.png)
+
+Once you have attached VSCode to your container once, it will appear under 
+"Dev Containers" rather than "Other Containers".
 
 ## References
 
