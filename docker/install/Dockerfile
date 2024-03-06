@@ -39,7 +39,6 @@ RUN ${PIP} install markupsafe==2.0.1
 RUN ${PIP} install Jinja2==2.11.3
 RUN ${PIP} install edn_format==0.7.5
 RUN ${PIP} install kim-edn==1.3.1
-RUN ${PIP} install kim-property==2.5.7
 RUN ${PIP} install kim-query==3.0.0
 RUN ${PIP} install simplejson==3.17.2
 RUN ${PIP} install numpy==1.19.5
@@ -49,6 +48,7 @@ RUN ${PIP} install pymongo==3.11.3
 RUN ${PIP} install montydb==2.1.1
 RUN ${PIP} install pybind11==2.6.2
 RUN ${PIP} install spglib==2.1.0
+RUN ${PIP} install jupyterlab==4.1.2
 
 #########################################
 ## MD++
@@ -93,14 +93,8 @@ RUN cd ${PACKAGE_DIR} \
 # be installed because it uses pbr (https://docs.openstack.org/pbr/latest/). If
 # we really want, we can build an sdist when we clone the numdifftools repo via
 # `python setup.py sdist && pip install dist/*`, but I'm forgoing this for now
-ARG DEBIAN_FRONTEND=noninteractive
-RUN apt-get update -qq \
- && apt-get install --no-install-recommends -qqy git \
- && cd ${PACKAGE_DIR}/numdifftools \
- && ${PIP} install . \
- && apt-get purge -y git \
- && apt-get clean \
- && rm -fr /var/lib/apt/lists/*
+RUN cd ${PACKAGE_DIR}/numdifftools \
+ && ${PIP} install . 
 
 #########################################
 ## kimpy
@@ -156,16 +150,12 @@ RUN cd ${PACKAGE_DIR}/ase/ \
  && ${PIP} install .
 
 #########################################
-## kim-python-utils
+## crystal-genome-util; 
 #########################################
-RUN cd ${PACKAGE_DIR}/kim-python-utils \
- && ${PIP} install .
-
-#########################################
-## crystal-genome-util
-#########################################
+# uninstall kim-property so we can have an editable user install later
 RUN cd ${PACKAGE_DIR}/crystal-genome-util \
- && ${PIP} install .
+ && ${PIP} install . \
+ && ${PIP} uninstall -y kim-property
 
 #########################################
 ## convergence

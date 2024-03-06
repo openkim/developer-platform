@@ -21,6 +21,12 @@ COPY --from=install /etc/sudoers /etc/sudoers
 ENV LANG C.UTF-8
 ENV LC_ALL C.UTF-8
 
+# Set default shell
+ENV SHELL /bin/bash
+
+# Jupyter lab token
+ENV JUPYTER_TOKEN docker
+
 ARG PACKAGE_DIR=/pipeline/packages/
 RUN mkdir -p ${PACKAGE_DIR}
 COPY --from=install ${PACKAGE_DIR}/kim_api_install_manifest.txt ${PACKAGE_DIR}
@@ -138,3 +144,13 @@ RUN chown -R openkim:openkim /pipeline/
 
 USER openkim
 WORKDIR /home/openkim/
+
+# Change to editable installations of things we're likely to edit during the hackathon. Retained Git for this as well as general use
+RUN git clone -q --single-branch --recurse-submodules -b master https://github.com/openkim/kim-property \
+  && cd kim-property \
+  && pip install --prefix=~/.local -e .
+
+RUN git clone -q --single-branch -b tests https://github.com/openkim/kim-python-utils \
+  && cd kim-python-utils \
+  && pip install -e .
+
