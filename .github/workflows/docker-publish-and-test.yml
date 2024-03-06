@@ -259,7 +259,7 @@ jobs:
             "IMAGE_INSTALL=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_INSTALL }}"
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}-minimal
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-minimal
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:hackathon-latest-minimal
           labels: ${{ steps.meta.outputs.labels }}
 
       # List docker images in local repository to confirm exactly what tags were
@@ -286,5 +286,5 @@ jobs:
             "IMAGE_MINIMAL=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}-minimal"
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:hackathon-latest
           labels: ${{ steps.meta.outputs.labels }}
