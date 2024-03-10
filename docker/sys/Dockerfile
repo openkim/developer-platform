@@ -40,5 +40,6 @@ RUN apt-get update -qq \
  tree \
  libfreetype6-dev \
  git \
+ leiningen \
  && apt-get clean \
  && rm -fr /var/lib/apt/lists/*

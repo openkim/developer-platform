@@ -13,11 +13,10 @@ RUN apt-get install --no-install-recommends -qqy ca-certificates
 RUN apt-get install --no-install-recommends -qqy git
 RUN git clone -q https://github.com/openkim/numdifftools -b master ${PACKAGE_DIR}/numdifftools \
   && cd ${PACKAGE_DIR}/numdifftools \
-  && git checkout a53debb144ed02c5c6eb74d5c18d53058259f27c \
-  && cd ${PACKAGE_DIR}
+  && git checkout a53debb144ed02c5c6eb74d5c18d53058259f27c
 RUN git clone -q https://github.com/openkim/crystal-genome-util -b main ${PACKAGE_DIR}/crystal-genome-util \
   && cd ${PACKAGE_DIR}/crystal-genome-util \
-  && git checkout devel 
+  && git checkout 92e0b4c54ed4ca4e7ef1630499df2c8651bc2333  
 RUN git clone -q https://github.com/lammps/lammps -b stable_2Aug2023_update1 ${PACKAGE_DIR}/lammps
 RUN git clone -q https://gitlab.com/openkim/ase -b user-species ${PACKAGE_DIR}/ase \
   && cd ${PACKAGE_DIR}/ase \
