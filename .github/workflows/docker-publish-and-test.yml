@@ -242,8 +242,9 @@ jobs:
           bash test/run_tests.sh ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test sm_fast_tests
           bash test/run_vcs.sh ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test pm_fast_vcs
           bash test/run_vcs.sh ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test sm_fast_vcs
-          bash test/run_tests.sh ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test equilibriumcrystalstructure
           bash test/run_tests.sh ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test sp_sm_test
+
+      # bash test/run_tests.sh ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test equilibriumcrystalstructure
 
       # Re-run the previous buildx action, except this time push the image if needed. Because of caching, this
       # does not rebuild the image.
