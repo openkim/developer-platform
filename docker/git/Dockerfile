@@ -4,7 +4,7 @@
 #
 # This software may be distributed as-is, without modification.
 #
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 ARG PACKAGE_DIR=/pipeline/packages/
 RUN mkdir -p ${PACKAGE_DIR}
