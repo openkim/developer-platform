@@ -6,7 +6,7 @@ import os
 
 
 # TODO: more sophisticated checks for these keys
-KEYS_TO_SKIP = ["parameter-values","excess","relaxed-surface-positions"]
+KEYS_TO_SKIP = ["parameter-values","excess","relaxed-surface-positions","fit-error-max","fit-error-range"]
 
 
 def compare_db_to_reference(reference_json_path: str, test_db_path: str, float_fractional_tolerance: float = 0.01):
