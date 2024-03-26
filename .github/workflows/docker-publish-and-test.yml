@@ -238,10 +238,8 @@ jobs:
 
       - name: Test minimal image
         run: |
-          bash test/run_tests.sh ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test surf
-
-      # bash test/run_all.sh ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test all
-
+          bash test/run_all.sh ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test all
+        
       # Re-run the previous buildx action, except this time push the image if needed. Because of caching, this
       # does not rebuild the image.
       #

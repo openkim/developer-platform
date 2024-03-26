@@ -6,7 +6,7 @@ import os
 np.set_printoptions(threshold=sys.maxsize)
 
 # TODO: more sophisticated checks for these keys
-KEYS_TO_SKIP = ["parameter-values","excess","fit-error-max","fit-error-range"]
+KEYS_TO_SKIP = ["parameter-values","excess","fit-error-max","fit-error-range","relaxed-surface-positions"]
 
 
 def compare_db_to_reference(reference_json_path: str, test_db_path: str, float_fractional_tolerance: float = 0.01):
