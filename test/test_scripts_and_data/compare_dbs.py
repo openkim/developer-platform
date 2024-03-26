@@ -3,7 +3,7 @@ import numpy as np
 import json
 import sys
 import os
-
+np.set_printoptions(threshold=sys.maxsize)
 
 # TODO: more sophisticated checks for these keys
 KEYS_TO_SKIP = ["parameter-values","excess","fit-error-max","fit-error-range"]
