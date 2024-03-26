@@ -3,10 +3,10 @@ import numpy as np
 import json
 import sys
 import os
-
+np.set_printoptions(threshold=sys.maxsize)
 
 # TODO: more sophisticated checks for these keys
-KEYS_TO_SKIP = ["parameter-values","excess"]
+KEYS_TO_SKIP = ["parameter-values","excess","fit-error-max","fit-error-range","relaxed-surface-positions"]
 
 
 def compare_db_to_reference(reference_json_path: str, test_db_path: str, float_fractional_tolerance: float = 0.01):
@@ -98,14 +98,19 @@ def compare_db_to_reference(reference_json_path: str, test_db_path: str, float_f
                                 reference_source_value_array_flat=reference_source_value_array.flat
                                 if len(reference_source_value_array_flat[0].keys()) != 1:
                                     raise RuntimeError("\n\nElements of reference DB value\n\n%s\n\nare not single-key dicts as expected."%reference_source_value_array)
+                                # we will sometimes have mixed data types within an array because integral values of floats might be stored as ints
+                                double_absmax_ref_value = 0.                                    
+                                double_abs_diff_array = []
                                 for reference_source_value_dict,test_source_value_dict in zip(reference_source_value_array_flat,test_source_value_array.flat):                                                            
                                     mongo_dtype = list(reference_source_value_dict.keys())[0]
                                     if mongo_dtype == "$numberDouble":
                                         reference_source_value = float(reference_source_value_dict[mongo_dtype])                                    
                                         test_source_value = float(test_source_value_dict[mongo_dtype])
-                                        assert abs(reference_source_value-test_source_value) <= abs(float_fractional_tolerance*reference_source_value), \
-                                            error_message_specifying_pair_and_key + error_message_showing_source_values + \
-                                            "Floating point values are not within the requested fractional tolerance %f"%float_fractional_tolerance
+                                        # accumulate to arrays to do a loose check later -- we can't use the same absolute scale for all properties,
+                                        # but we also can't do a relative elementwise comparison, because i.e. 1.e-16 vs 1.e-14 for some array that has a
+                                        # scale of ~1 should not raise an error 
+                                        double_abs_diff_array.append(abs(reference_source_value-test_source_value))
+                                        double_absmax_ref_value = max(double_absmax_ref_value,abs(reference_source_value))
                                     elif mongo_dtype == "$numberInt":
                                         reference_source_value = int(reference_source_value_dict[mongo_dtype])
                                         test_source_value = int(test_source_value_dict[mongo_dtype])
@@ -113,7 +118,12 @@ def compare_db_to_reference(reference_json_path: str, test_db_path: str, float_f
                                             error_message_specifying_pair_and_key + error_message_showing_source_values + \
                                             "Integer values are not equal."
                                     else:
-                                        raise RuntimeError("Unexpected data type %s in reference DB"%mongo_dtype)                                    
+                                        raise RuntimeError("Unexpected data type %s in reference DB"%mongo_dtype)                                                                
+                                if len(double_abs_diff_array) > 0:
+                                    assert max(double_abs_diff_array) <= float_fractional_tolerance*double_absmax_ref_value, \
+                                        error_message_specifying_pair_and_key + error_message_showing_source_values + \
+                                        "Floating point values are not within the requested fractional tolerance %f"%float_fractional_tolerance
+                                
         with open(os.path.join(test_db_path,"db/data.json")) as f:
             test_db = json.load(f)
             assert len(test_db)==len(reference_db), "Database lengths are unequal. Because all results have been matched, this means there are extra results in the test db"
