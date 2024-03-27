@@ -16,11 +16,11 @@ RUN git clone -q https://github.com/openkim/numdifftools -b master ${PACKAGE_DIR
   && git checkout a53debb144ed02c5c6eb74d5c18d53058259f27c
 RUN git clone -q https://github.com/openkim/crystal-genome-util -b main ${PACKAGE_DIR}/crystal-genome-util \
   && cd ${PACKAGE_DIR}/crystal-genome-util \
-  && git checkout 92e0b4c54ed4ca4e7ef1630499df2c8651bc2333  
+  && git checkout e18a2d62fc3e391acbf9c98a28efaebca914b007  
 RUN git clone -q https://github.com/lammps/lammps -b stable_2Aug2023_update1 ${PACKAGE_DIR}/lammps
 RUN git clone -q https://gitlab.com/openkim/ase -b user-species ${PACKAGE_DIR}/ase \
   && cd ${PACKAGE_DIR}/ase \
-  && git checkout e00c8da0f84fb3a726c411f7ef2792241434c9a3
+  && git checkout abe2d6c6e265f7ba6e79cc9b437ef1940731eccc
 RUN git clone -q https://gitlab.com/micronano_public/MDpp -b release ${PACKAGE_DIR}/MD++ \
   && cd ${PACKAGE_DIR}/MD++ \
   && git checkout f7d64a7720a4bc1602371a128c8db7779fcf8dcb

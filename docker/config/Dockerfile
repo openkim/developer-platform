@@ -154,5 +154,13 @@ RUN git clone -q --single-branch -b tests https://github.com/openkim/kim-python-
   && cd kim-python-utils \
   && pip install -e .
 
+RUN git clone -q --single-branch -b tests https://github.com/openkim-hackathons/kim-test-utils \
+  && cd kim-test-utils \
+  && pip install -e .
+
 RUN cd test-drivers \
   && git clone -q https://github.com/openkim-hackathons/BindingEnergyVsWignerSeitzRadius__TD_000000111111_000
+
+RUN cd test-drivers \
+  && git clone -q https://github.com/openkim-hackathons/CrystalGenomeASEExample__TD_000000654321_000
+
