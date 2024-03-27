@@ -154,7 +154,7 @@ RUN git clone -q --single-branch -b tests https://github.com/openkim/kim-python-
   && cd kim-python-utils \
   && pip install -e .
 
-RUN git clone -q --single-branch -b tests https://github.com/openkim-hackathons/kim-test-utils \
+RUN git clone -q https://github.com/openkim-hackathons/kim-test-utils \
   && cd kim-test-utils \
   && pip install -e .
 
