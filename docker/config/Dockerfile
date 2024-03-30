@@ -146,7 +146,7 @@ USER openkim
 WORKDIR /home/openkim/
 
 # Change to editable installations of things we're likely to edit during the hackathon. Retained Git for this as well as general use
-RUN git clone -q --single-branch --recurse-submodules -b spoof-version https://github.com/openkim/kim-property \
+RUN git clone -q --single-branch -b v2.6.1  https://github.com/openkim/kim-property \
   && cd kim-property \
   && pip install -e .
 
