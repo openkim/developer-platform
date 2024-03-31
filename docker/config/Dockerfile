@@ -148,10 +148,6 @@ WORKDIR /home/openkim/
 # Change to editable installations of things we're likely to edit during the hackathon. Retained Git for this as well as general use
 RUN pip install kim-property==2.6.1
 
-RUN git clone -q --single-branch -b tests https://github.com/openkim/kim-python-utils \
-  && cd kim-python-utils \
-  && pip install -e .
-
 RUN git clone -q https://github.com/openkim-hackathons/kim-test-utils \
   && cd kim-test-utils \
   && pip install -e .

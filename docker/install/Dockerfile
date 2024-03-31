@@ -150,9 +150,15 @@ RUN cd ${PACKAGE_DIR}/ase/ \
  && ${PIP} install .
 
 #########################################
-## crystal-genome-util; 
+## kim-python-utils
 #########################################
-# uninstall kim-property so we can have an editable user install later
+RUN cd ${PACKAGE_DIR}/kim-python-utils \
+ && ${PIP} install .
+
+#########################################
+## crystal-genome-util
+#########################################
+# uninstall kim-property so we can have a user install later, for adding properties
 RUN cd ${PACKAGE_DIR}/crystal-genome-util \
  && ${PIP} install . \
  && ${PIP} uninstall -y kim-property

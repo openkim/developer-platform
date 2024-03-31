@@ -14,6 +14,9 @@ RUN apt-get install --no-install-recommends -qqy git
 RUN git clone -q https://github.com/openkim/numdifftools -b master ${PACKAGE_DIR}/numdifftools \
   && cd ${PACKAGE_DIR}/numdifftools \
   && git checkout a53debb144ed02c5c6eb74d5c18d53058259f27c
+RUN git clone -q https://github.com/openkim/kim-python-utils -b tests ${PACKAGE_DIR}/kim-python-utils \
+  && cd ${PACKAGE_DIR}/kim-python-utils \
+  && git checkout 8da809aef78a553d59e795ffd0b8d92db3ce9297
 RUN git clone -q https://github.com/openkim/crystal-genome-util -b main ${PACKAGE_DIR}/crystal-genome-util \
   && cd ${PACKAGE_DIR}/crystal-genome-util \
   && git checkout e18a2d62fc3e391acbf9c98a28efaebca914b007
