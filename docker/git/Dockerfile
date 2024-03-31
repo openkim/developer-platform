@@ -16,7 +16,7 @@ RUN git clone -q https://github.com/openkim/numdifftools -b master ${PACKAGE_DIR
   && git checkout a53debb144ed02c5c6eb74d5c18d53058259f27c
 RUN git clone -q https://github.com/openkim/crystal-genome-util -b main ${PACKAGE_DIR}/crystal-genome-util \
   && cd ${PACKAGE_DIR}/crystal-genome-util \
-  && git checkout e18a2d62fc3e391acbf9c98a28efaebca914b007  
+  && git checkout e18a2d62fc3e391acbf9c98a28efaebca914b007
 RUN git clone -q https://github.com/lammps/lammps -b stable_2Aug2023_update1 ${PACKAGE_DIR}/lammps
 RUN git clone -q https://gitlab.com/openkim/ase -b user-species ${PACKAGE_DIR}/ase \
   && cd ${PACKAGE_DIR}/ase \
