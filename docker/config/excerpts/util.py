@@ -184,7 +184,6 @@ def item_is_latest(kimcode):
         # Discard human-readable prefix, if any
         _, leader, num, ver = kimcodes.parse_kim_code(kimcode)
         short_id = ("_").join((leader, num, ver))
-        leader = leader.lower()
 
         # Query remote database
         query = {
@@ -200,12 +199,10 @@ def item_is_latest(kimcode):
         # onto a single key, a scalar is returned)
         if isinstance(query_result, list):
             if query_result:
-                latest_ver = query_result[0]
+                return query_result[0]
             else:
                 # Couldn't find any results, so we must have the latest version of the item
                 # as far as the local database is concerned
                 return True
         else:
-            latest_ver = query_result
-
-        return ver == latest_ver
+            return query_result

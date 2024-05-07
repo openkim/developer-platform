@@ -129,6 +129,9 @@ def intercept_query(query, subject_name, local, infofile):
 
         # If we're querying from pipeline.stdin.tpl for a stale Model, add history and sort accordingly
         if add_history:
+            print ("WARNING: Querying for stale models will currently return ALL results for that model.\n"
+                   "If your pipeline.stdin.tpl query does not include a 'limit':1 option,\n"
+                   "you may get duplicate and/or 'double stale' (stale model and stale test) results.\n")
             query["history"] = True
             orig_sort = query.get("sort", None)
             if orig_sort:
