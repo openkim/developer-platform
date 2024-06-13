@@ -1,0 +1,23 @@
+#!/usr/bin/env python3
+import sys
+from subprocess import Popen, PIPE
+import fileinput
+
+inp = fileinput.input()
+exe = next(inp).strip()
+args = "".join([line for line in inp])
+
+try:
+    proc = Popen(
+        exe,
+        stdin=PIPE,
+        stdout=sys.stdout,
+        stderr=sys.stderr,
+        shell=True,
+        encoding="utf-8",
+    )
+    proc.communicate(input=args)
+except Exception as e:
+    pass
+finally:
+    exit(proc.returncode)

@@ -1,0 +1,28 @@
+{
+    "contributor-id" "360c0aed-48ce-45f6-ba13-337f12a531e8" 
+    "description" "Check that the model supports periodic boundary conditions correctly.  If the simulation box is increased by an integer factor along a periodic direction, the total energy must multiply by that factor and the forces on atoms that are periodic copies of each other must be the same.  The check is performed for a randomly distorted non-periodic face-centered cubic (FCC) cube base structure. Separate configurations are tested for each species supported by the model, as well as one containing a random distribution of all species. For each configuration, all possible combinations of periodic boundary conditions are tested: TFF, FTF, FFT, TTF, TFT, TTF, TTT (where 'T' indicates periodicity along a direction, and 'F' indicates no periodicity). The verification check passes if the energy of all configurations that the model is able to compute support all periodic boundary conditions correctly.  Configurations used for testing are provided as auxiliary files." 
+    "developer" [
+        "360c0aed-48ce-45f6-ba13-337f12a531e8"
+    ] 
+    "doi" "10.25950/8c95e599" 
+    "domain" "openkim.org" 
+    "executables" [
+        "runner"
+    ] 
+    "extended-id" "PeriodicitySupport__VC_895061507745_004" 
+    "implementer" [
+        "4d62befd-21c4-42b8-a472-86132e6591f3" 
+        "4ad03136-ed7f-4316-b586-1e94ccceb311"
+    ] 
+    "kim-api-version" "2.2" 
+    "maintainer-id" "4ad03136-ed7f-4316-b586-1e94ccceb311" 
+    "matching-models" [
+        "standard-models"
+    ] 
+    "properties" [
+        "tag:tadmor@noreply.openkim.org,2017-02-01:property/verification-check"
+    ] 
+    "publication-year" "2022" 
+    "simulator-name" "ase" 
+    "title" "Verification check of support for periodic boundary conditions v004"
+}

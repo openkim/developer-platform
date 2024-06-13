@@ -1,0 +1,6 @@
+spglib
+ase
+kimpy
+git+https://github.com/openkim/kim-python-utils
+git+https://github.com/openkim/crystal-genome-util
+numpy

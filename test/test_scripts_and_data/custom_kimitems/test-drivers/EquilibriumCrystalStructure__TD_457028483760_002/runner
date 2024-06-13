@@ -1,0 +1,169 @@
+#!/usr/bin/env python3
+"""
+Calculates equilibrium crystal structure and energy at zero temperature and pressure. Supports arbitrary crystal prototypes specified according to the AFLOW prototype label standard for portable models and standard simulator models. Computes `binding-energy-crystal <https://openkim.org/properties/show/2023-02-21/staff@noreply.openkim.org/binding-energy-crystal>`_ and `crystal-structure-npt <https://openkim.org/properties/show/2023-02-21/staff@noreply.openkim.org/crystal-structure-npt>`_ OpenKIM properties. The result is obtained by a symmetry-constrained minimization. If :data:`num_param_sets`>1, multiple relaxations from different initial guesses will be performed. If the relaxed structures are unique, multiple pairs of these properties will be written.
+
+Inputs read from ``stdin`` 
+===========================
+
+These are usually fed by a test's ``runner`` from a file rendered from a test generator (:ref:`doc.test_gen_format`) using ``test_template/pipeline.stdin.tpl.genie``).
+
+.. data:: species
+    
+    Space-separated list of chemical elements
+
+    :type: list[str]
+
+.. data:: prototype_label
+
+    AFLOW prototype label
+
+    :type: str
+
+.. data:: parameter_names
+
+    Space-separated list of parameter names
+
+    :type: list[str]
+
+.. data:: modeltype
+
+    Model type (only 'standard' supported at this time)
+
+    :type: str
+
+.. data:: num_param_sets
+
+    Number of parameter sets
+
+    :type: int
+
+.. data:: param_values_superlist
+
+    Newline-separated list of space-separated lists of parameter values 
+    
+    :type: list[list[str]]
+
+.. data:: modelname
+
+    KIM model name
+
+    :type: str
+
+
+Overview of operation:
+----------------------    
+1) Inputs are read and processed
+2) For each parameter set:
+    a) Use :func:`crystal_genome_util.aflow_util.AFLOW.build_atoms_from_prototype` to build the :class:`ase.atoms.Atoms` object
+    b) Use :class:`ase.spacegroup.symmetrize.FixSymmetry` to constrain the atoms to the crystal symmetry
+    c) Perform symmetry-constrained minimization using :class:`ase.optimize.BFGS`
+    d) Save the structure to a file for later
+3) Use :func:`crystal_genome_util.property_util.equilibrium_crystal_structure.find_unique_materials_and_write_properties` to remove duplicates from the relaxed structures and write properties
+
+Date: 8/7/2023
+Author: Ilia Nikiforov <nikif002@umn.edu>, Ellad Tadmor <tadmor@umn.edu>
+"""
+from kim_python_utils.ase.core import get_isolated_energy_per_atom
+import numpy as np
+import pathlib
+import os, shutil
+from ase.constraints import UnitCellFilter, FixSymmetry
+from ase.optimize import BFGS
+from ase.calculators.kim import KIM
+from crystal_genome_util.aflow_util import AFLOW
+from crystal_genome_util.property_util.equilibrium_crystal_structure import find_unique_materials_and_write_properties
+
+# Set path to driver
+test_driver_dir = pathlib.Path(__file__).parent
+
+MAXSTEP = 0.05
+FTOL = 1e-8
+ITER = 10000
+COMPARE_DIR = "compare"
+
+###############################################################################
+if __name__ == "__main__":
+
+    # grab from stdin (or a file)
+    species = input("element(s):\n").split()
+    print(species)
+    prototype_label = input(
+        "AFLOW prototype label:\n"
+    )
+    print(prototype_label)
+    parameter_names = input("Parameter names:\n").split()
+    print(parameter_names)
+    modeltype = input("model type (only 'standard' supported at this time):\n")    
+    print(modeltype)
+    num_param_sets = int(input("number of parameter sets:\n"))
+    print(num_param_sets)
+    param_values_superlist = []
+    for i in range(num_param_sets):
+        param_values = input("Parameter values for parameter set %d:\n"%i).split()
+        print(param_values)
+        param_values_superlist.append(param_values)
+    modelname = input("model name:\n")
+    print(modelname)
+
+    # Verify input
+    if modeltype not in ["standard"]:
+        raise RuntimeError(
+            "Unknown model type, received modeltype = {}".format(modeltype)
+        )
+
+    spacegroup = int(prototype_label.split("_")[2])
+
+    if os.path.isdir(COMPARE_DIR):
+        shutil.rmtree(COMPARE_DIR)
+    os.mkdir(COMPARE_DIR)
+
+    aflow = AFLOW()
+
+    energy_per_atom = []
+    # Main minimization loop over parameter sets
+    for i in range(num_param_sets):
+        atoms = aflow.build_atoms_from_prototype(species,prototype_label,param_values_superlist[i])
+        # Apply symmetry constraints
+        symmetry = FixSymmetry(atoms)
+        atoms.set_constraint(symmetry)
+        atoms_wrapped = UnitCellFilter(atoms)
+        # Attach the KIM calculator for the model being run
+        atoms.calc = KIM(modelname)        
+        # Optimize
+        opt = BFGS(atoms_wrapped,maxstep=MAXSTEP)
+        try:
+            converged = opt.run(fmax=FTOL,steps=ITER)
+            iteration_limits_reached = not converged
+            minimization_stalled = False
+        except:
+            minimization_stalled = True
+            iteration_limits_reached = False               
+        forces = atoms.get_forces()
+        stress = atoms.get_stress()        
+        # Compute the average energy per atom after subtracting out the energies of the
+        # isolated atoms
+        energy_isolated = sum(
+            [get_isolated_energy_per_atom(modelname,sym) for sym in atoms.get_chemical_symbols()]
+        )
+        energy_per_atom.append((atoms.get_potential_energy() - energy_isolated) 
+                               / atoms.get_global_number_of_atoms())
+
+        print("Minimization "+
+              ("converged" if not minimization_stalled else "stalled")+
+              " after "+
+              (("hitting the maximum of "+str(ITER)) if iteration_limits_reached else str(opt.nsteps))+
+              " steps.")
+        print("Maximum force component: "+str(np.max(np.abs(forces)))+" eV/Angstrom")
+        print("Maximum stress component: "+str(np.max(np.abs(stress)))+" eV/Angstrom^3")
+        print("==== Minimized structure obtained from ASE ====")
+        print("symbols = ", atoms.get_chemical_symbols())
+        print("basis = ", atoms.get_scaled_positions())
+        print("cellpar = ", atoms.get_cell())
+        print("forces = ", forces)
+        print("stress = ", stress)
+        print("energy per atom = ", energy_per_atom[i])
+        print("===============================================")
+
+        atoms.write(os.path.join(COMPARE_DIR,str(i)),format='vasp')
+
+    find_unique_materials_and_write_properties(COMPARE_DIR, prototype_label, energy_per_atom, species)

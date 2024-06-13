@@ -1,0 +1,24 @@
+{
+    "contributor-id" "360c0aed-48ce-45f6-ba13-337f12a531e8" 
+    "description" "Check whether a model is invariant with respect to atom permutations that preserve species, i.e. swapping any two atoms with the same species must not change the energy or forces. This must be true for all models. The check is performed for a randomly distorted non-periodic diamond cube base structure.  Separate configurations are tested for each species supported by the model, as well as one containing a random distribution of all species.  The energy and forces of each configuration are compared with one where each atom is randomly swapped with another atom of the same species. The energy and forces must remain unchanged. The verification check will pass if these conditions are satisfied for all configurations that the model is able to compute. Configurations used for testing are provided as auxiliary files." 
+    "developer" [
+        "360c0aed-48ce-45f6-ba13-337f12a531e8"
+    ] 
+    "doi" "10.25950/6cf4bb36" 
+    "domain" "openkim.org" 
+    "executables" [
+        "runner"
+    ] 
+    "extended-id" "PermutationSymmetry__VC_903502816694_002" 
+    "kim-api-version" "2.0" 
+    "maintainer-id" "360c0aed-48ce-45f6-ba13-337f12a531e8" 
+    "matching-models" [
+        "standard-models"
+    ] 
+    "properties" [
+        "tag:tadmor@noreply.openkim.org,2017-02-01:property/verification-check"
+    ] 
+    "publication-year" "2019" 
+    "simulator-name" "ase" 
+    "title" "Verification check of invariance with respect to atom permutations (permutation symmetry) v002"
+}

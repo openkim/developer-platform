@@ -1,0 +1,10 @@
+@< path("{{TEST_DRIVER_NAME}}") >@ {# FILENAME = pipeline.stdin.tpl #}
+{{species|join(' ')}}
+{{prototype_label}}
+{{parameter_names|join(' ')}}
+{{modeltype}}
+{{num_param_sets}}
+{% for  parameter_set in parameter_sets -%}
+{{parameter_set["parameter_values"]|join(' ')}}
+{% endfor -%}
+@< MODELNAME >@

@@ -1,0 +1,966 @@
+[
+{
+    "_id": {
+        "$oid": "6601037ae6cd456bd11016df"
+    },
+    "property-id": "tag:staff@noreply.openkim.org,2023-02-21:property/binding-energy-crystal",
+    "instance-id": {
+        "$numberInt": "1"
+    },
+    "prototype-label": {
+        "source-value": "A15B4_cI76_220_ae_c"
+    },
+    "stoichiometric-species": {
+        "source-value": [
+            "Cu",
+            "Si"
+        ]
+    },
+    "a": {
+        "source-value": {
+            "$numberDouble": "10.075"
+        },
+        "source-unit": "angstrom",
+        "si-unit": "m",
+        "si-value": {
+            "$numberDouble": "1.0075e-09"
+        }
+    },
+    "parameter-names": {
+        "source-value": [
+            "x2",
+            "x3",
+            "y3",
+            "z3"
+        ]
+    },
+    "parameter-values": {
+        "source-value": [
+            {
+                "$numberDouble": "0.19170374"
+            },
+            {
+                "$numberDouble": "0.16372401"
+            },
+            {
+                "$numberDouble": "0.95383925"
+            },
+            {
+                "$numberDouble": "0.099694285"
+            }
+        ]
+    },
+    "library-prototype-label": {
+        "source-value": "A15B4_cI76_220_ae_c-001"
+    },
+    "short-name": {
+        "source-value": [
+            "Cu15Si4"
+        ]
+    },
+    "binding-potential-energy-per-atom": {
+        "source-value": {
+            "$numberDouble": "-3.6072787098873236"
+        },
+        "source-unit": "eV",
+        "si-unit": "kg m^2 / s^2",
+        "si-value": {
+            "$numberDouble": "-5.779497661307134e-19"
+        }
+    },
+    "binding-potential-energy-per-formula": {
+        "source-value": {
+            "$numberDouble": "-68.53829548785914"
+        },
+        "source-unit": "eV",
+        "si-unit": "kg m^2 / s^2",
+        "si-value": {
+            "$numberDouble": "-1.098104555648356e-17"
+        }
+    },
+    "coordinates-file": {
+        "source-value": "instance-1.poscar"
+    },
+    "meta": {
+        "uuid": "TE_684342186166_002-and-MO_262519520678_002-1711342387-tr",
+        "path": "tr/TE_684342186166_002-and-MO_262519520678_002-1711342387-tr",
+        "type": "tr",
+        "_id": "TE_684342186166_002-and-MO_262519520678_002-1711342387-tr",
+        "runner": {
+            "extended-id": "EquilibriumCrystalStructure_A15B4_cI76_220_ae_c_CuSi__TE_684342186166_002",
+            "short-id": "TE_684342186166_002",
+            "kimid-prefix": "EquilibriumCrystalStructure_A15B4_cI76_220_ae_c_CuSi",
+            "kimid-typecode": "te",
+            "kimid-number": "684342186166",
+            "kimid-version": "002",
+            "kimid-version-as-integer": {
+                "$numberInt": "2"
+            },
+            "name": "EquilibriumCrystalStructure_A15B4_cI76_220_ae_c_CuSi",
+            "type": "te",
+            "kimnum": "684342186166",
+            "version": {
+                "$numberInt": "2"
+            },
+            "shortcode": "TE_684342186166",
+            "kimcode": "EquilibriumCrystalStructure_A15B4_cI76_220_ae_c_CuSi__TE_684342186166_002",
+            "path": "te/EquilibriumCrystalStructure_A15B4_cI76_220_ae_c_CuSi__TE_684342186166_002",
+            "approved": true,
+            "_id": "EquilibriumCrystalStructure_A15B4_cI76_220_ae_c_CuSi__TE_684342186166_002",
+            "makeable": true,
+            "runner": true,
+            "driver": {
+                "extended-id": "EquilibriumCrystalStructure__TD_457028483760_002",
+                "short-id": "TD_457028483760_002",
+                "kimid-prefix": "EquilibriumCrystalStructure",
+                "kimid-typecode": "td",
+                "kimid-number": "457028483760",
+                "kimid-version": "002",
+                "kimid-version-as-integer": {
+                    "$numberInt": "2"
+                },
+                "name": "EquilibriumCrystalStructure",
+                "type": "td",
+                "kimnum": "457028483760",
+                "version": {
+                    "$numberInt": "2"
+                },
+                "shortcode": "TD_457028483760",
+                "kimcode": "EquilibriumCrystalStructure__TD_457028483760_002",
+                "path": "td/EquilibriumCrystalStructure__TD_457028483760_002",
+                "approved": true,
+                "_id": "EquilibriumCrystalStructure__TD_457028483760_002",
+                "makeable": true,
+                "driver": true,
+                "contributor-id": "4ad03136-ed7f-4316-b586-1e94ccceb311",
+                "description": "Computes the equilibrium crystal structure and energy for an arbitrary crystal at zero temperature and applied stress by performing symmetry-constrained relaxation. The crystal structure is specified using the AFLOW prototype designation. Multiple sets of free parameters corresponding to the crystal prototype may be specified as initial guesses for structure optimization. No guarantee is made regarding the stability of computed equilibria, nor that any are the ground state.",
+                "developer": [
+                    "4ad03136-ed7f-4316-b586-1e94ccceb311",
+                    "360c0aed-48ce-45f6-ba13-337f12a531e8"
+                ],
+                "doi": "10.25950/2f2c4ad3",
+                "domain": "openkim.org",
+                "executables": [
+                    "runner",
+                    "scripts/get_species_combos.py",
+                    "scripts/get_taken_rd_kimnums.py",
+                    "test_template/runner"
+                ],
+                "funding": [
+                    {
+                        "award-number": "NSF DMR-1834251",
+                        "award-title": "Collaborative Research: Reliable Materials Simulation based on the Knowledgebase of Interatomic Models (KIM)",
+                        "funder-identifier": "https://doi.org/10.13039/100000001",
+                        "funder-identifier-type": "Crossref Funder ID",
+                        "funder-name": "National Science Foundation",
+                        "scheme-uri": "http://doi.org/"
+                    }
+                ],
+                "kim-api-version": "2.3",
+                "maintainer-id": "4ad03136-ed7f-4316-b586-1e94ccceb311",
+                "properties": [
+                    "tag:staff@noreply.openkim.org,2023-02-21:property/binding-energy-crystal",
+                    "tag:staff@noreply.openkim.org,2023-02-21:property/crystal-structure-npt"
+                ],
+                "publication-year": "2024",
+                "simulator-name": "ase",
+                "source-citations": [
+                    {
+                        "abstract": "Empirical databases of crystal structures and thermodynamic properties are fundamental tools for materials research. Recent rapid proliferation of computational data on materials properties presents the possibility to complement and extend the databases where the experimental data is lacking or difficult to obtain. Enhanced repositories that integrate both computational and empirical approaches open novel opportunities for structure discovery and optimization, including uncovering of unsuspected compounds, metastable structures and correlations between various characteristics. The practical realization of these opportunities depends on a systematic compilation and classification of the generated data in addition to an accessible interface for the materials science community. In this paper we present an extensive repository, aflowlib.org, comprising phase-diagrams, electronic structure and magnetic properties, generated by the high-throughput framework AFLOW. This continuously updated compilation currently contains over 150,000 thermodynamic entries for alloys, covering the entire composition range of more than 650 binary systems, 13,000 electronic structure analyses of inorganic compounds, and 50,000 entries for novel potential magnetic and spintronics systems. The repository is available for the scientific community on the website of the materials research consortium, aflowlib.org.",
+                        "author": "Curtarolo, Stefano and Setyawan, Wahyu and Wang, Shidong and Xue, Junkai and Yang, Kesong and Taylor, Richard H. and Nelson, Lance J. and Hart, Gus L.W. and Sanvito, Stefano and Buongiorno-Nardelli, Marco and Mingo, Natalio and Levy, Ohad",
+                        "doi": "https://doi.org/10.1016/j.commatsci.2012.02.002",
+                        "issn": "0927-0256",
+                        "journal": "Computational Materials Science",
+                        "keywords": "High-throughput, Combinatorial materials science, Ab initio, AFLOW, Materials genome initiative",
+                        "pages": "227-235",
+                        "recordkey": "TD_457028483760_002a",
+                        "recordtype": "article",
+                        "title": "{AFLOWLIB.ORG}: A distributed materials properties repository from high-throughput ab initio calculations",
+                        "url": "https://www.sciencedirect.com/science/article/pii/S0927025612000687",
+                        "volume": "58",
+                        "year": "2012"
+                    },
+                    {
+                        "abstract": "To enable materials databases supporting computational and experimental research, it is critical to develop platforms that both facilitate access to the data and provide the tools used to generate/analyze it \\u2014 all while considering the diversity of users\\u2019 experience levels and usage needs. The recently formulated FAIR\\u00a0principles (Findable, Accessible, Interoperable, and Reusable) establish a common framework to aid these efforts. This article describes aflow.org, a web ecosystem developed to provide FAIR-compliant access to the AFLOW\\u00a0databases. Graphical and programmatic retrieval methods are offered, ensuring accessibility for all experience levels and data needs. aflow.org\\u00a0goes beyond data-access by providing applications to important features of the AFLOW\\u00a0software\\u00a0[1], assisting users in their own calculations without the need to install the entire high-throughput framework. Outreach commitments to provide AFLOW\\u00a0tutorials and materials science education to a global and diverse audiences will also be presented.",
+                        "author": "Esters, Marco and Oses, Corey and Divilov, Simon and Eckert, Hagen and Friedrich, Rico and Hicks, David and Mehl, Michael J. and Rose, Frisco and Smolyanyuk, Andriy and Calzolari, Arrigo and Campilongo, Xiomara and Toher, Cormac and Curtarolo, Stefano",
+                        "doi": "https://doi.org/10.1016/j.commatsci.2022.111808",
+                        "issn": "0927-0256",
+                        "journal": "Computational Materials Science",
+                        "keywords": "Autonomous materials science, Materials genome initiative, aflow, Computational ecosystems, Online tools, Database, Ab initio",
+                        "pages": "111808",
+                        "recordkey": "TD_457028483760_002b",
+                        "recordtype": "article",
+                        "title": "aflow.org: A web ecosystem of databases, software and tools",
+                        "url": "https://www.sciencedirect.com/science/article/pii/S0927025622005195",
+                        "volume": "216",
+                        "year": "2023"
+                    },
+                    {
+                        "abstract": "The realization of novel technological opportunities given by computational and autonomous materials design requires efficient and effective frameworks. For more than two decades, aflow++ (Automatic-Flow Framework for Materials Discovery) has provided an interconnected collection of algorithms and workflows to address this challenge. This article contains an overview of the software and some of its most heavily-used functionalities, including algorithmic details, standards, and examples. Key thrusts are highlighted: the calculation of structural, electronic, thermodynamic, and thermomechanical properties in addition to the modeling of complex materials, such as high-entropy ceramics and bulk metallic glasses. The aflow++ software prioritizes interoperability, minimizing the number of independent parameters and tolerances. It ensures consistency of results across property sets \\u2014 facilitating machine learning studies. The software also features various validation schemes, offering real-time quality assurance for data generated in a high-throughput fashion. Altogether, these considerations contribute to the development of large and reliable materials databases that can ultimately deliver future materials systems.",
+                        "author": "Oses, Corey and Esters, Marco and Hicks, David and Divilov, Simon and Eckert, Hagen and Friedrich, Rico and Mehl, Michael J. and Smolyanyuk, Andriy and Campilongo, Xiomara and {van de Walle}, Axel and Schroers, Jan and Kusne, A. Gilad and Takeuchi, Ichiro and Zurek, Eva and Nardelli, Marco Buongiorno and Fornari, Marco and Lederer, Yoav and Levy, Ohad and Toher, Cormac and Curtarolo, Stefano",
+                        "doi": "https://doi.org/10.1016/j.commatsci.2022.111889",
+                        "issn": "0927-0256",
+                        "journal": "Computational Materials Science",
+                        "keywords": "AFLOW, Autonomous computation, Machine learning, Workflows",
+                        "pages": "111889",
+                        "recordkey": "TD_457028483760_002c",
+                        "recordtype": "article",
+                        "title": "aflow++: A {C}++ framework for autonomous materials design",
+                        "url": "https://www.sciencedirect.com/science/article/pii/S0927025622006000",
+                        "volume": "217",
+                        "year": "2023"
+                    }
+                ],
+                "title": "Equilibrium structure and energy for a crystal structure at zero temperature and pressure v002",
+                "created_on": "2024-03-25 04:36:07.290832"
+            },
+            "dependencies": [],
+            "contributor-id": "4ad03136-ed7f-4316-b586-1e94ccceb311",
+            "description": "Computes the equilibrium crystal structure and energy for CuSi in AFLOW crystal prototype A15B4_cI76_220_ae_c at zero temperature and applied stress by performing symmetry-constrained relaxation. The parameters (representing cell and internal degrees of freedom) allowed to vary during the relaxation are: a, x2, x3, y3, z3. The initial guess for these parameters is:\n9.7137, 0.20577948, 0.16193009, 0.9609475, 0.11301793, obtained from http://aflowlib.duke.edu/AFLOWDATA/ICSD_WEB/BCC/Cu15Si4_ICSD_36254/CONTCAR.relax.vasp, the relaxed structure corresponding to Aflowlib Unique IDentifier aflow:4599629f5a0b7f23\n",
+            "developer": [
+                "4ad03136-ed7f-4316-b586-1e94ccceb311",
+                "360c0aed-48ce-45f6-ba13-337f12a531e8",
+                "4d62befd-21c4-42b8-a472-86132e6591f3",
+                "c4d2afd1-647e-4347-ae94-5e4772c16883"
+            ],
+            "disclaimer": "Computer generated",
+            "domain": "openkim.org",
+            "executables": [
+                "runner"
+            ],
+            "kim-api-version": "2.3",
+            "maintainer-id": "4ad03136-ed7f-4316-b586-1e94ccceb311",
+            "matching-models": [
+                "standard-models"
+            ],
+            "publication-year": "2024",
+            "source-citations": [
+                {
+                    "abstract": "Empirical databases of crystal structures and thermodynamic properties are fundamental tools for materials research. Recent rapid proliferation of computational data on materials properties presents the possibility to complement and extend the databases where the experimental data is lacking or difficult to obtain. Enhanced repositories that integrate both computational and empirical approaches open novel opportunities for structure discovery and optimization, including uncovering of unsuspected compounds, metastable structures and correlations between various characteristics. The practical realization of these opportunities depends on a systematic compilation and classification of the generated data in addition to an accessible interface for the materials science community. In this paper we present an extensive repository, aflowlib.org, comprising phase-diagrams, electronic structure and magnetic properties, generated by the high-throughput framework AFLOW. This continuously updated compilation currently contains over 150,000 thermodynamic entries for alloys, covering the entire composition range of more than 650 binary systems, 13,000 electronic structure analyses of inorganic compounds, and 50,000 entries for novel potential magnetic and spintronics systems. The repository is available for the scientific community on the website of the materials research consortium, aflowlib.org.",
+                    "author": "Stefano Curtarolo and Wahyu Setyawan and Shidong Wang and Junkai Xue and Kesong Yang and Richard H. Taylor and Lance J. Nelson and Gus L.W. Hart and Stefano Sanvito and Marco Buongiorno-Nardelli and Natalio Mingo and Ohad Levy",
+                    "doi": "https://doi.org/10.1016/j.commatsci.2012.02.002",
+                    "issn": "0927-0256",
+                    "journal": "Computational Materials Science",
+                    "keywords": "High-throughput, Combinatorial materials science, Ab initio, AFLOW, Materials genome initiative",
+                    "pages": "227-235",
+                    "recordkey": "TE_684342186166_002a",
+                    "recordtype": "article",
+                    "title": "AFLOWLIB.ORG: A distributed materials properties repository from high-throughput ab initio calculations",
+                    "url": "https://www.sciencedirect.com/science/article/pii/S0927025612000687",
+                    "volume": "58",
+                    "year": "2012"
+                }
+            ],
+            "species": [
+                "Cu",
+                "Si"
+            ],
+            "test-driver": "EquilibriumCrystalStructure__TD_457028483760_002",
+            "title": "Equilibrium crystal structure and energy for CuSi in AFLOW crystal prototype A15B4_cI76_220_ae_c v002",
+            "created_on": "2024-03-25 04:36:10.040824"
+        },
+        "subject": {
+            "extended-id": "MEAM_LAMMPS_JelinekGrohHorstemeyer_2012_AlSiMgCuFe__MO_262519520678_002",
+            "short-id": "MO_262519520678_002",
+            "kimid-prefix": "MEAM_LAMMPS_JelinekGrohHorstemeyer_2012_AlSiMgCuFe",
+            "kimid-typecode": "mo",
+            "kimid-number": "262519520678",
+            "kimid-version": "002",
+            "kimid-version-as-integer": {
+                "$numberInt": "2"
+            },
+            "name": "MEAM_LAMMPS_JelinekGrohHorstemeyer_2012_AlSiMgCuFe",
+            "type": "mo",
+            "kimnum": "262519520678",
+            "version": {
+                "$numberInt": "2"
+            },
+            "shortcode": "MO_262519520678",
+            "kimcode": "MEAM_LAMMPS_JelinekGrohHorstemeyer_2012_AlSiMgCuFe__MO_262519520678_002",
+            "path": "mo/MEAM_LAMMPS_JelinekGrohHorstemeyer_2012_AlSiMgCuFe__MO_262519520678_002",
+            "approved": true,
+            "_id": "MEAM_LAMMPS_JelinekGrohHorstemeyer_2012_AlSiMgCuFe__MO_262519520678_002",
+            "makeable": true,
+            "subject": true,
+            "driver": {
+                "extended-id": "MEAM_LAMMPS__MD_249792265679_002",
+                "short-id": "MD_249792265679_002",
+                "kimid-prefix": "MEAM_LAMMPS",
+                "kimid-typecode": "md",
+                "kimid-number": "249792265679",
+                "kimid-version": "002",
+                "kimid-version-as-integer": {
+                    "$numberInt": "2"
+                },
+                "name": "MEAM_LAMMPS",
+                "type": "md",
+                "kimnum": "249792265679",
+                "version": {
+                    "$numberInt": "2"
+                },
+                "shortcode": "MD_249792265679",
+                "kimcode": "MEAM_LAMMPS__MD_249792265679_002",
+                "path": "md/MEAM_LAMMPS__MD_249792265679_002",
+                "approved": true,
+                "_id": "MEAM_LAMMPS__MD_249792265679_002",
+                "makeable": true,
+                "driver": true,
+                "content-origin": "The model driver is implemented based on the MEAM (`meam`, `meam/spline`, and `meam/sw/spline`) package adapted from the LAMMPS software package and rewritten and updated by Yaser Afshar with performance improvements and extended to include support for an additional cutoff function.\n\nLAMMPS - Large-scale Atomic/Molecular Massively Parallel Simulator https://lammps.org",
+                "contributor-id": "f9afb302-b4eb-4b55-a4e3-676ba64bfb77",
+                "description": "The modified embedded atom method potential (MEAM)[1,2,3,4] model driver. The driver is written in C++ and implements three styles of modified embedded atom method (MEAM) potentials, `meam`, `meam/spline`, and `meam/sw/spline`. The style of the potential is automatically detected based on the input files to the driver. The input files are ASCII text files formatted to be consistent with the other MD codes that implement MEAM potentials, such as LAMMPS, serial DYNAMO code, and Warp. For any of the three styles mentioned above, the driver expects an element file. Depending on the specific potential style, other files may be required/supplied (a library and/or a parameter file for a `meam` style, and a potential file for a `meam/spline`, or `meam/sw/spline` style.)",
+                "developer": [
+                    "553f9aa4-98a2-477b-852f-a65cd9e1ace3",
+                    "05936d64-2312-402a-9873-5b6799e9f6db",
+                    "6ee0e203-4072-42b5-97a0-cf937edf5de8",
+                    "d5c826b2-1048-431c-bab6-0347f1c80c45",
+                    "98b95738-bd12-4464-9ed8-862e8be644e9",
+                    "f15f5ddf-8896-4f23-a4de-d96898caab64",
+                    "c8ad0beb-f4c8-4ddc-8a25-372f5cc4a17e",
+                    "57339548-c8c4-4b8b-a24b-6cecf2787096",
+                    "8ae4480b-2d4b-4f8c-b68d-6f8e2101d5a2",
+                    "d08eaec4-2289-4e6a-9fc7-c28d98c4156f",
+                    "cce68d90-29c8-48fa-a6fd-f806fa6d0f76",
+                    "a00983fc-9660-4769-82b0-5b90133a74be"
+                ],
+                "doi": "10.25950/ee5eba52",
+                "domain": "openkim.org",
+                "executables": [],
+                "implementer": [
+                    "f9afb302-b4eb-4b55-a4e3-676ba64bfb77",
+                    "a8c5e51f-f163-4842-b527-9ac69c3d33e2",
+                    "0f9bf091-9a1c-49e0-b107-a3bcc7d1dfa4",
+                    "27a42ac6-f00e-42a8-a1d3-54851ab2d08d",
+                    "d95e1403-9d6f-4dd4-ba80-1ccbf94dc75b",
+                    "44969c60-361d-4f11-87b8-6a5e35597d34",
+                    "741dc3be-59fb-4e5b-8653-c63be9d4ee5d",
+                    "e632a391-ea42-4bf6-8737-e71c296a067a"
+                ],
+                "kim-api-version": "2.2",
+                "maintainer-id": "f9afb302-b4eb-4b55-a4e3-676ba64bfb77",
+                "publication-year": "2023",
+                "simulator-potential-compatibility": [
+                    {
+                        "compatibility": "full",
+                        "simulator-name": "LAMMPS",
+                        "simulator-potential": "meam"
+                    },
+                    {
+                        "compatibility": "full",
+                        "simulator-name": "LAMMPS",
+                        "simulator-potential": "meam/spline"
+                    },
+                    {
+                        "compatibility": "full",
+                        "simulator-name": "LAMMPS",
+                        "simulator-potential": "meam/sw/spline"
+                    }
+                ],
+                "source-citations": [
+                    {
+                        "author": "Baskes, M.I. and Nelson, J.S. and Wright, A.F.",
+                        "doi": "10.1103/PhysRevB.40.6085",
+                        "journal": "Phys. Rev. B",
+                        "pages": "6085--6100",
+                        "recordkey": "MD_249792265679_002a",
+                        "recordtype": "article",
+                        "title": "Semiempirical modified embedded-atom potentials for silicon and germanium",
+                        "volume": "40",
+                        "year": "1989"
+                    },
+                    {
+                        "author": "Baskes, M.I.",
+                        "doi": "10.1103/PhysRevB.46.2727",
+                        "journal": "Phys. Rev. B",
+                        "pages": "2727--2742",
+                        "recordkey": "MD_249792265679_002b",
+                        "recordprimary": "recordprimary",
+                        "recordtype": "article",
+                        "title": "Modified embedded-atom potentials for cubic materials and impurities",
+                        "volume": "46",
+                        "year": "1992"
+                    },
+                    {
+                        "author": "Lee, B.J. and Baskes, M.I.",
+                        "doi": "10.1103/PhysRevB.62.8564",
+                        "journal": "Phys. Rev. B",
+                        "pages": "8564--8567",
+                        "recordkey": "MD_249792265679_002c",
+                        "recordtype": "article",
+                        "title": "Second nearest-neighbor modified embedded-atom-method potential",
+                        "volume": "62",
+                        "year": "2000"
+                    },
+                    {
+                        "author": "Lenosky, T.J. and Sadigh, B. and Alonso, E. and Bulatov, V.V. and de la Rubia, T.D. and Kim, J. and Voter, A.F. and Kress, J.D.",
+                        "doi": "10.1088/0965-0393/8/6/305",
+                        "journal": "Model. Simul. Mat. Sci. Eng",
+                        "pages": "825--841",
+                        "recordkey": "MD_249792265679_002d",
+                        "recordtype": "article",
+                        "title": "Highly optimized empirical potential model of silicon",
+                        "volume": "8",
+                        "year": "2000"
+                    }
+                ],
+                "title": "The modified embedded atom method (MEAM) potential v002",
+                "created_on": "2024-03-25 04:33:32.122202"
+            },
+            "content-origin": "LAMMPS package 22-Sep-2017",
+            "content-other-locations": "https://openkim.org/id/Sim_LAMMPS_MEAM_JelinekGrohHorstemeyer_2012_AlSiMgCuFe__SM_656517352485_000",
+            "contributor-id": "f9afb302-b4eb-4b55-a4e3-676ba64bfb77",
+            "description": "A set of modified embedded-atom method (MEAM) potentials for the interactions between Al, Si, Mg, Cu, and Fe was developed from a combination of each element's MEAM potential in order to study metal alloying. Previously published MEAM parameters of single elements have been improved for a better agreement to the generalized stacking fault energy (GSFE) curves when compared with ab initio generated GSFE curves. The MEAM parameters for element pairs were constructed based on the structural and elastic properties of element pairs in the NaCl reference structure garnered from ab initio calculations, with adjustment to reproduce the ab initio heat of formation of the most stable binary compounds. The new MEAM potentials were validated by comparing the formation energies of defects, equilibrium volumes, elastic moduli, and heat of formation for several binary compounds with ab initio simulations and experiments. Single elements in their ground-state crystal structure were subjected to heating to test the potentials at elevated temperatures. An Al potential was modified to avoid the formation of an unphysical solid structure at high temperatures. The thermal expansion coefficient of a compound with the composition of AA 6061 alloy was evaluated and compared with experimental values. MEAM potential tests performed in this work, utilizing the universal atomistic simulation environment (ASE), are distributed to facilitate reproducibility of the results.",
+            "developer": [
+                "d347a059-e9f7-4d79-984f-35a0cef59e70",
+                "1d6f38b4-22a9-4ec9-b00d-a164faddb5d1",
+                "f4be9acd-d607-496c-852a-789b0f31a02e",
+                "6f3ea8df-d324-4d28-b691-30ab97b958ee",
+                "fc94aa47-3bf9-4fef-9173-f436a3a30fba",
+                "741dc3be-59fb-4e5b-8653-c63be9d4ee5d",
+                "01651569-b149-47a9-955b-0d8bd346069f",
+                "05936d64-2312-402a-9873-5b6799e9f6db"
+            ],
+            "doi": "10.25950/8d75422b",
+            "domain": "openkim.org",
+            "executables": [],
+            "kim-api-version": "2.2",
+            "maintainer-id": "f9afb302-b4eb-4b55-a4e3-676ba64bfb77",
+            "model-driver": "MEAM_LAMMPS__MD_249792265679_002",
+            "potential-type": "meam",
+            "publication-year": "2023",
+            "source-citations": [
+                {
+                    "author": "Jelinek, B. and Groh, S. and Horstemeyer, M. F. and Houze, J. and Kim, S. G. and Wagner, G. J. and Moitra, A. and Baskes, M. I.",
+                    "doi": "10.1103/PhysRevB.85.245102",
+                    "journal": "Phys. Rev. B",
+                    "month": "Jun",
+                    "note": "",
+                    "number": "",
+                    "pages": "245102",
+                    "recordkey": "MO_262519520678_002a",
+                    "recordprimary": "recordprimary",
+                    "recordtype": "article",
+                    "title": "Modified embedded atom method potential for Al, Si, Mg, Cu, and Fe alloys",
+                    "volume": "85",
+                    "year": "2012"
+                }
+            ],
+            "species": [
+                "Al",
+                "Si",
+                "Mg",
+                "Cu",
+                "Fe"
+            ],
+            "title": "MEAM potential for Al-Si-Mg-Cu-Fe alloys developed by Jelinek et al. (2012) v002",
+            "created_on": "2024-03-25 04:33:34.592153"
+        },
+        "test": "EquilibriumCrystalStructure_A15B4_cI76_220_ae_c_CuSi__TE_684342186166_002",
+        "model": "MEAM_LAMMPS_JelinekGrohHorstemeyer_2012_AlSiMgCuFe__MO_262519520678_002",
+        "domain": "openkim.org",
+        "test-result-id": "TE_684342186166_002-and-MO_262519520678_002-1711342387-tr",
+        "created_on": "2024-03-25 04:54:17.819442"
+    },
+    "created_on": "2024-03-25 04:54:17.819442",
+    "inserted_on": "2024-03-25 04:54:17.958027",
+    "latest": true
+},
+{
+    "_id": {
+        "$oid": "6601037ae6cd456bd11016e0"
+    },
+    "property-id": "tag:staff@noreply.openkim.org,2023-02-21:property/crystal-structure-npt",
+    "instance-id": {
+        "$numberInt": "2"
+    },
+    "prototype-label": {
+        "source-value": "A15B4_cI76_220_ae_c"
+    },
+    "stoichiometric-species": {
+        "source-value": [
+            "Cu",
+            "Si"
+        ]
+    },
+    "a": {
+        "source-value": {
+            "$numberDouble": "10.075"
+        },
+        "source-unit": "angstrom",
+        "si-unit": "m",
+        "si-value": {
+            "$numberDouble": "1.0075e-09"
+        }
+    },
+    "parameter-names": {
+        "source-value": [
+            "x2",
+            "x3",
+            "y3",
+            "z3"
+        ]
+    },
+    "parameter-values": {
+        "source-value": [
+            {
+                "$numberDouble": "0.19170374"
+            },
+            {
+                "$numberDouble": "0.16372401"
+            },
+            {
+                "$numberDouble": "0.95383925"
+            },
+            {
+                "$numberDouble": "0.099694285"
+            }
+        ]
+    },
+    "library-prototype-label": {
+        "source-value": "A15B4_cI76_220_ae_c-001"
+    },
+    "short-name": {
+        "source-value": [
+            "Cu15Si4"
+        ]
+    },
+    "cell-cauchy-stress": {
+        "source-value": [
+            {
+                "$numberDouble": "0.0"
+            },
+            {
+                "$numberDouble": "0.0"
+            },
+            {
+                "$numberDouble": "0.0"
+            },
+            {
+                "$numberDouble": "0.0"
+            },
+            {
+                "$numberDouble": "0.0"
+            },
+            {
+                "$numberDouble": "0.0"
+            }
+        ],
+        "source-unit": "eV/angstrom^3",
+        "si-unit": "kg / m s^2",
+        "si-value": [
+            {
+                "$numberDouble": "0.0"
+            },
+            {
+                "$numberDouble": "0.0"
+            },
+            {
+                "$numberDouble": "0.0"
+            },
+            {
+                "$numberDouble": "0.0"
+            },
+            {
+                "$numberDouble": "0.0"
+            },
+            {
+                "$numberDouble": "0.0"
+            }
+        ]
+    },
+    "temperature": {
+        "source-value": {
+            "$numberDouble": "0.0"
+        },
+        "source-unit": "K",
+        "si-unit": "K",
+        "si-value": {
+            "$numberDouble": "0.0"
+        }
+    },
+    "coordinates-file": {
+        "source-value": "instance-2.poscar"
+    },
+    "meta": {
+        "uuid": "TE_684342186166_002-and-MO_262519520678_002-1711342387-tr",
+        "path": "tr/TE_684342186166_002-and-MO_262519520678_002-1711342387-tr",
+        "type": "tr",
+        "_id": "TE_684342186166_002-and-MO_262519520678_002-1711342387-tr",
+        "runner": {
+            "extended-id": "EquilibriumCrystalStructure_A15B4_cI76_220_ae_c_CuSi__TE_684342186166_002",
+            "short-id": "TE_684342186166_002",
+            "kimid-prefix": "EquilibriumCrystalStructure_A15B4_cI76_220_ae_c_CuSi",
+            "kimid-typecode": "te",
+            "kimid-number": "684342186166",
+            "kimid-version": "002",
+            "kimid-version-as-integer": {
+                "$numberInt": "2"
+            },
+            "name": "EquilibriumCrystalStructure_A15B4_cI76_220_ae_c_CuSi",
+            "type": "te",
+            "kimnum": "684342186166",
+            "version": {
+                "$numberInt": "2"
+            },
+            "shortcode": "TE_684342186166",
+            "kimcode": "EquilibriumCrystalStructure_A15B4_cI76_220_ae_c_CuSi__TE_684342186166_002",
+            "path": "te/EquilibriumCrystalStructure_A15B4_cI76_220_ae_c_CuSi__TE_684342186166_002",
+            "approved": true,
+            "_id": "EquilibriumCrystalStructure_A15B4_cI76_220_ae_c_CuSi__TE_684342186166_002",
+            "makeable": true,
+            "runner": true,
+            "driver": {
+                "extended-id": "EquilibriumCrystalStructure__TD_457028483760_002",
+                "short-id": "TD_457028483760_002",
+                "kimid-prefix": "EquilibriumCrystalStructure",
+                "kimid-typecode": "td",
+                "kimid-number": "457028483760",
+                "kimid-version": "002",
+                "kimid-version-as-integer": {
+                    "$numberInt": "2"
+                },
+                "name": "EquilibriumCrystalStructure",
+                "type": "td",
+                "kimnum": "457028483760",
+                "version": {
+                    "$numberInt": "2"
+                },
+                "shortcode": "TD_457028483760",
+                "kimcode": "EquilibriumCrystalStructure__TD_457028483760_002",
+                "path": "td/EquilibriumCrystalStructure__TD_457028483760_002",
+                "approved": true,
+                "_id": "EquilibriumCrystalStructure__TD_457028483760_002",
+                "makeable": true,
+                "driver": true,
+                "contributor-id": "4ad03136-ed7f-4316-b586-1e94ccceb311",
+                "description": "Computes the equilibrium crystal structure and energy for an arbitrary crystal at zero temperature and applied stress by performing symmetry-constrained relaxation. The crystal structure is specified using the AFLOW prototype designation. Multiple sets of free parameters corresponding to the crystal prototype may be specified as initial guesses for structure optimization. No guarantee is made regarding the stability of computed equilibria, nor that any are the ground state.",
+                "developer": [
+                    "4ad03136-ed7f-4316-b586-1e94ccceb311",
+                    "360c0aed-48ce-45f6-ba13-337f12a531e8"
+                ],
+                "doi": "10.25950/2f2c4ad3",
+                "domain": "openkim.org",
+                "executables": [
+                    "runner",
+                    "scripts/get_species_combos.py",
+                    "scripts/get_taken_rd_kimnums.py",
+                    "test_template/runner"
+                ],
+                "funding": [
+                    {
+                        "award-number": "NSF DMR-1834251",
+                        "award-title": "Collaborative Research: Reliable Materials Simulation based on the Knowledgebase of Interatomic Models (KIM)",
+                        "funder-identifier": "https://doi.org/10.13039/100000001",
+                        "funder-identifier-type": "Crossref Funder ID",
+                        "funder-name": "National Science Foundation",
+                        "scheme-uri": "http://doi.org/"
+                    }
+                ],
+                "kim-api-version": "2.3",
+                "maintainer-id": "4ad03136-ed7f-4316-b586-1e94ccceb311",
+                "properties": [
+                    "tag:staff@noreply.openkim.org,2023-02-21:property/binding-energy-crystal",
+                    "tag:staff@noreply.openkim.org,2023-02-21:property/crystal-structure-npt"
+                ],
+                "publication-year": "2024",
+                "simulator-name": "ase",
+                "source-citations": [
+                    {
+                        "abstract": "Empirical databases of crystal structures and thermodynamic properties are fundamental tools for materials research. Recent rapid proliferation of computational data on materials properties presents the possibility to complement and extend the databases where the experimental data is lacking or difficult to obtain. Enhanced repositories that integrate both computational and empirical approaches open novel opportunities for structure discovery and optimization, including uncovering of unsuspected compounds, metastable structures and correlations between various characteristics. The practical realization of these opportunities depends on a systematic compilation and classification of the generated data in addition to an accessible interface for the materials science community. In this paper we present an extensive repository, aflowlib.org, comprising phase-diagrams, electronic structure and magnetic properties, generated by the high-throughput framework AFLOW. This continuously updated compilation currently contains over 150,000 thermodynamic entries for alloys, covering the entire composition range of more than 650 binary systems, 13,000 electronic structure analyses of inorganic compounds, and 50,000 entries for novel potential magnetic and spintronics systems. The repository is available for the scientific community on the website of the materials research consortium, aflowlib.org.",
+                        "author": "Curtarolo, Stefano and Setyawan, Wahyu and Wang, Shidong and Xue, Junkai and Yang, Kesong and Taylor, Richard H. and Nelson, Lance J. and Hart, Gus L.W. and Sanvito, Stefano and Buongiorno-Nardelli, Marco and Mingo, Natalio and Levy, Ohad",
+                        "doi": "https://doi.org/10.1016/j.commatsci.2012.02.002",
+                        "issn": "0927-0256",
+                        "journal": "Computational Materials Science",
+                        "keywords": "High-throughput, Combinatorial materials science, Ab initio, AFLOW, Materials genome initiative",
+                        "pages": "227-235",
+                        "recordkey": "TD_457028483760_002a",
+                        "recordtype": "article",
+                        "title": "{AFLOWLIB.ORG}: A distributed materials properties repository from high-throughput ab initio calculations",
+                        "url": "https://www.sciencedirect.com/science/article/pii/S0927025612000687",
+                        "volume": "58",
+                        "year": "2012"
+                    },
+                    {
+                        "abstract": "To enable materials databases supporting computational and experimental research, it is critical to develop platforms that both facilitate access to the data and provide the tools used to generate/analyze it \\u2014 all while considering the diversity of users\\u2019 experience levels and usage needs. The recently formulated FAIR\\u00a0principles (Findable, Accessible, Interoperable, and Reusable) establish a common framework to aid these efforts. This article describes aflow.org, a web ecosystem developed to provide FAIR-compliant access to the AFLOW\\u00a0databases. Graphical and programmatic retrieval methods are offered, ensuring accessibility for all experience levels and data needs. aflow.org\\u00a0goes beyond data-access by providing applications to important features of the AFLOW\\u00a0software\\u00a0[1], assisting users in their own calculations without the need to install the entire high-throughput framework. Outreach commitments to provide AFLOW\\u00a0tutorials and materials science education to a global and diverse audiences will also be presented.",
+                        "author": "Esters, Marco and Oses, Corey and Divilov, Simon and Eckert, Hagen and Friedrich, Rico and Hicks, David and Mehl, Michael J. and Rose, Frisco and Smolyanyuk, Andriy and Calzolari, Arrigo and Campilongo, Xiomara and Toher, Cormac and Curtarolo, Stefano",
+                        "doi": "https://doi.org/10.1016/j.commatsci.2022.111808",
+                        "issn": "0927-0256",
+                        "journal": "Computational Materials Science",
+                        "keywords": "Autonomous materials science, Materials genome initiative, aflow, Computational ecosystems, Online tools, Database, Ab initio",
+                        "pages": "111808",
+                        "recordkey": "TD_457028483760_002b",
+                        "recordtype": "article",
+                        "title": "aflow.org: A web ecosystem of databases, software and tools",
+                        "url": "https://www.sciencedirect.com/science/article/pii/S0927025622005195",
+                        "volume": "216",
+                        "year": "2023"
+                    },
+                    {
+                        "abstract": "The realization of novel technological opportunities given by computational and autonomous materials design requires efficient and effective frameworks. For more than two decades, aflow++ (Automatic-Flow Framework for Materials Discovery) has provided an interconnected collection of algorithms and workflows to address this challenge. This article contains an overview of the software and some of its most heavily-used functionalities, including algorithmic details, standards, and examples. Key thrusts are highlighted: the calculation of structural, electronic, thermodynamic, and thermomechanical properties in addition to the modeling of complex materials, such as high-entropy ceramics and bulk metallic glasses. The aflow++ software prioritizes interoperability, minimizing the number of independent parameters and tolerances. It ensures consistency of results across property sets \\u2014 facilitating machine learning studies. The software also features various validation schemes, offering real-time quality assurance for data generated in a high-throughput fashion. Altogether, these considerations contribute to the development of large and reliable materials databases that can ultimately deliver future materials systems.",
+                        "author": "Oses, Corey and Esters, Marco and Hicks, David and Divilov, Simon and Eckert, Hagen and Friedrich, Rico and Mehl, Michael J. and Smolyanyuk, Andriy and Campilongo, Xiomara and {van de Walle}, Axel and Schroers, Jan and Kusne, A. Gilad and Takeuchi, Ichiro and Zurek, Eva and Nardelli, Marco Buongiorno and Fornari, Marco and Lederer, Yoav and Levy, Ohad and Toher, Cormac and Curtarolo, Stefano",
+                        "doi": "https://doi.org/10.1016/j.commatsci.2022.111889",
+                        "issn": "0927-0256",
+                        "journal": "Computational Materials Science",
+                        "keywords": "AFLOW, Autonomous computation, Machine learning, Workflows",
+                        "pages": "111889",
+                        "recordkey": "TD_457028483760_002c",
+                        "recordtype": "article",
+                        "title": "aflow++: A {C}++ framework for autonomous materials design",
+                        "url": "https://www.sciencedirect.com/science/article/pii/S0927025622006000",
+                        "volume": "217",
+                        "year": "2023"
+                    }
+                ],
+                "title": "Equilibrium structure and energy for a crystal structure at zero temperature and pressure v002",
+                "created_on": "2024-03-25 04:36:07.290832"
+            },
+            "dependencies": [],
+            "contributor-id": "4ad03136-ed7f-4316-b586-1e94ccceb311",
+            "description": "Computes the equilibrium crystal structure and energy for CuSi in AFLOW crystal prototype A15B4_cI76_220_ae_c at zero temperature and applied stress by performing symmetry-constrained relaxation. The parameters (representing cell and internal degrees of freedom) allowed to vary during the relaxation are: a, x2, x3, y3, z3. The initial guess for these parameters is:\n9.7137, 0.20577948, 0.16193009, 0.9609475, 0.11301793, obtained from http://aflowlib.duke.edu/AFLOWDATA/ICSD_WEB/BCC/Cu15Si4_ICSD_36254/CONTCAR.relax.vasp, the relaxed structure corresponding to Aflowlib Unique IDentifier aflow:4599629f5a0b7f23\n",
+            "developer": [
+                "4ad03136-ed7f-4316-b586-1e94ccceb311",
+                "360c0aed-48ce-45f6-ba13-337f12a531e8",
+                "4d62befd-21c4-42b8-a472-86132e6591f3",
+                "c4d2afd1-647e-4347-ae94-5e4772c16883"
+            ],
+            "disclaimer": "Computer generated",
+            "domain": "openkim.org",
+            "executables": [
+                "runner"
+            ],
+            "kim-api-version": "2.3",
+            "maintainer-id": "4ad03136-ed7f-4316-b586-1e94ccceb311",
+            "matching-models": [
+                "standard-models"
+            ],
+            "publication-year": "2024",
+            "source-citations": [
+                {
+                    "abstract": "Empirical databases of crystal structures and thermodynamic properties are fundamental tools for materials research. Recent rapid proliferation of computational data on materials properties presents the possibility to complement and extend the databases where the experimental data is lacking or difficult to obtain. Enhanced repositories that integrate both computational and empirical approaches open novel opportunities for structure discovery and optimization, including uncovering of unsuspected compounds, metastable structures and correlations between various characteristics. The practical realization of these opportunities depends on a systematic compilation and classification of the generated data in addition to an accessible interface for the materials science community. In this paper we present an extensive repository, aflowlib.org, comprising phase-diagrams, electronic structure and magnetic properties, generated by the high-throughput framework AFLOW. This continuously updated compilation currently contains over 150,000 thermodynamic entries for alloys, covering the entire composition range of more than 650 binary systems, 13,000 electronic structure analyses of inorganic compounds, and 50,000 entries for novel potential magnetic and spintronics systems. The repository is available for the scientific community on the website of the materials research consortium, aflowlib.org.",
+                    "author": "Stefano Curtarolo and Wahyu Setyawan and Shidong Wang and Junkai Xue and Kesong Yang and Richard H. Taylor and Lance J. Nelson and Gus L.W. Hart and Stefano Sanvito and Marco Buongiorno-Nardelli and Natalio Mingo and Ohad Levy",
+                    "doi": "https://doi.org/10.1016/j.commatsci.2012.02.002",
+                    "issn": "0927-0256",
+                    "journal": "Computational Materials Science",
+                    "keywords": "High-throughput, Combinatorial materials science, Ab initio, AFLOW, Materials genome initiative",
+                    "pages": "227-235",
+                    "recordkey": "TE_684342186166_002a",
+                    "recordtype": "article",
+                    "title": "AFLOWLIB.ORG: A distributed materials properties repository from high-throughput ab initio calculations",
+                    "url": "https://www.sciencedirect.com/science/article/pii/S0927025612000687",
+                    "volume": "58",
+                    "year": "2012"
+                }
+            ],
+            "species": [
+                "Cu",
+                "Si"
+            ],
+            "test-driver": "EquilibriumCrystalStructure__TD_457028483760_002",
+            "title": "Equilibrium crystal structure and energy for CuSi in AFLOW crystal prototype A15B4_cI76_220_ae_c v002",
+            "created_on": "2024-03-25 04:36:10.040824"
+        },
+        "subject": {
+            "extended-id": "MEAM_LAMMPS_JelinekGrohHorstemeyer_2012_AlSiMgCuFe__MO_262519520678_002",
+            "short-id": "MO_262519520678_002",
+            "kimid-prefix": "MEAM_LAMMPS_JelinekGrohHorstemeyer_2012_AlSiMgCuFe",
+            "kimid-typecode": "mo",
+            "kimid-number": "262519520678",
+            "kimid-version": "002",
+            "kimid-version-as-integer": {
+                "$numberInt": "2"
+            },
+            "name": "MEAM_LAMMPS_JelinekGrohHorstemeyer_2012_AlSiMgCuFe",
+            "type": "mo",
+            "kimnum": "262519520678",
+            "version": {
+                "$numberInt": "2"
+            },
+            "shortcode": "MO_262519520678",
+            "kimcode": "MEAM_LAMMPS_JelinekGrohHorstemeyer_2012_AlSiMgCuFe__MO_262519520678_002",
+            "path": "mo/MEAM_LAMMPS_JelinekGrohHorstemeyer_2012_AlSiMgCuFe__MO_262519520678_002",
+            "approved": true,
+            "_id": "MEAM_LAMMPS_JelinekGrohHorstemeyer_2012_AlSiMgCuFe__MO_262519520678_002",
+            "makeable": true,
+            "subject": true,
+            "driver": {
+                "extended-id": "MEAM_LAMMPS__MD_249792265679_002",
+                "short-id": "MD_249792265679_002",
+                "kimid-prefix": "MEAM_LAMMPS",
+                "kimid-typecode": "md",
+                "kimid-number": "249792265679",
+                "kimid-version": "002",
+                "kimid-version-as-integer": {
+                    "$numberInt": "2"
+                },
+                "name": "MEAM_LAMMPS",
+                "type": "md",
+                "kimnum": "249792265679",
+                "version": {
+                    "$numberInt": "2"
+                },
+                "shortcode": "MD_249792265679",
+                "kimcode": "MEAM_LAMMPS__MD_249792265679_002",
+                "path": "md/MEAM_LAMMPS__MD_249792265679_002",
+                "approved": true,
+                "_id": "MEAM_LAMMPS__MD_249792265679_002",
+                "makeable": true,
+                "driver": true,
+                "content-origin": "The model driver is implemented based on the MEAM (`meam`, `meam/spline`, and `meam/sw/spline`) package adapted from the LAMMPS software package and rewritten and updated by Yaser Afshar with performance improvements and extended to include support for an additional cutoff function.\n\nLAMMPS - Large-scale Atomic/Molecular Massively Parallel Simulator https://lammps.org",
+                "contributor-id": "f9afb302-b4eb-4b55-a4e3-676ba64bfb77",
+                "description": "The modified embedded atom method potential (MEAM)[1,2,3,4] model driver. The driver is written in C++ and implements three styles of modified embedded atom method (MEAM) potentials, `meam`, `meam/spline`, and `meam/sw/spline`. The style of the potential is automatically detected based on the input files to the driver. The input files are ASCII text files formatted to be consistent with the other MD codes that implement MEAM potentials, such as LAMMPS, serial DYNAMO code, and Warp. For any of the three styles mentioned above, the driver expects an element file. Depending on the specific potential style, other files may be required/supplied (a library and/or a parameter file for a `meam` style, and a potential file for a `meam/spline`, or `meam/sw/spline` style.)",
+                "developer": [
+                    "553f9aa4-98a2-477b-852f-a65cd9e1ace3",
+                    "05936d64-2312-402a-9873-5b6799e9f6db",
+                    "6ee0e203-4072-42b5-97a0-cf937edf5de8",
+                    "d5c826b2-1048-431c-bab6-0347f1c80c45",
+                    "98b95738-bd12-4464-9ed8-862e8be644e9",
+                    "f15f5ddf-8896-4f23-a4de-d96898caab64",
+                    "c8ad0beb-f4c8-4ddc-8a25-372f5cc4a17e",
+                    "57339548-c8c4-4b8b-a24b-6cecf2787096",
+                    "8ae4480b-2d4b-4f8c-b68d-6f8e2101d5a2",
+                    "d08eaec4-2289-4e6a-9fc7-c28d98c4156f",
+                    "cce68d90-29c8-48fa-a6fd-f806fa6d0f76",
+                    "a00983fc-9660-4769-82b0-5b90133a74be"
+                ],
+                "doi": "10.25950/ee5eba52",
+                "domain": "openkim.org",
+                "executables": [],
+                "implementer": [
+                    "f9afb302-b4eb-4b55-a4e3-676ba64bfb77",
+                    "a8c5e51f-f163-4842-b527-9ac69c3d33e2",
+                    "0f9bf091-9a1c-49e0-b107-a3bcc7d1dfa4",
+                    "27a42ac6-f00e-42a8-a1d3-54851ab2d08d",
+                    "d95e1403-9d6f-4dd4-ba80-1ccbf94dc75b",
+                    "44969c60-361d-4f11-87b8-6a5e35597d34",
+                    "741dc3be-59fb-4e5b-8653-c63be9d4ee5d",
+                    "e632a391-ea42-4bf6-8737-e71c296a067a"
+                ],
+                "kim-api-version": "2.2",
+                "maintainer-id": "f9afb302-b4eb-4b55-a4e3-676ba64bfb77",
+                "publication-year": "2023",
+                "simulator-potential-compatibility": [
+                    {
+                        "compatibility": "full",
+                        "simulator-name": "LAMMPS",
+                        "simulator-potential": "meam"
+                    },
+                    {
+                        "compatibility": "full",
+                        "simulator-name": "LAMMPS",
+                        "simulator-potential": "meam/spline"
+                    },
+                    {
+                        "compatibility": "full",
+                        "simulator-name": "LAMMPS",
+                        "simulator-potential": "meam/sw/spline"
+                    }
+                ],
+                "source-citations": [
+                    {
+                        "author": "Baskes, M.I. and Nelson, J.S. and Wright, A.F.",
+                        "doi": "10.1103/PhysRevB.40.6085",
+                        "journal": "Phys. Rev. B",
+                        "pages": "6085--6100",
+                        "recordkey": "MD_249792265679_002a",
+                        "recordtype": "article",
+                        "title": "Semiempirical modified embedded-atom potentials for silicon and germanium",
+                        "volume": "40",
+                        "year": "1989"
+                    },
+                    {
+                        "author": "Baskes, M.I.",
+                        "doi": "10.1103/PhysRevB.46.2727",
+                        "journal": "Phys. Rev. B",
+                        "pages": "2727--2742",
+                        "recordkey": "MD_249792265679_002b",
+                        "recordprimary": "recordprimary",
+                        "recordtype": "article",
+                        "title": "Modified embedded-atom potentials for cubic materials and impurities",
+                        "volume": "46",
+                        "year": "1992"
+                    },
+                    {
+                        "author": "Lee, B.J. and Baskes, M.I.",
+                        "doi": "10.1103/PhysRevB.62.8564",
+                        "journal": "Phys. Rev. B",
+                        "pages": "8564--8567",
+                        "recordkey": "MD_249792265679_002c",
+                        "recordtype": "article",
+                        "title": "Second nearest-neighbor modified embedded-atom-method potential",
+                        "volume": "62",
+                        "year": "2000"
+                    },
+                    {
+                        "author": "Lenosky, T.J. and Sadigh, B. and Alonso, E. and Bulatov, V.V. and de la Rubia, T.D. and Kim, J. and Voter, A.F. and Kress, J.D.",
+                        "doi": "10.1088/0965-0393/8/6/305",
+                        "journal": "Model. Simul. Mat. Sci. Eng",
+                        "pages": "825--841",
+                        "recordkey": "MD_249792265679_002d",
+                        "recordtype": "article",
+                        "title": "Highly optimized empirical potential model of silicon",
+                        "volume": "8",
+                        "year": "2000"
+                    }
+                ],
+                "title": "The modified embedded atom method (MEAM) potential v002",
+                "created_on": "2024-03-25 04:33:32.122202"
+            },
+            "content-origin": "LAMMPS package 22-Sep-2017",
+            "content-other-locations": "https://openkim.org/id/Sim_LAMMPS_MEAM_JelinekGrohHorstemeyer_2012_AlSiMgCuFe__SM_656517352485_000",
+            "contributor-id": "f9afb302-b4eb-4b55-a4e3-676ba64bfb77",
+            "description": "A set of modified embedded-atom method (MEAM) potentials for the interactions between Al, Si, Mg, Cu, and Fe was developed from a combination of each element's MEAM potential in order to study metal alloying. Previously published MEAM parameters of single elements have been improved for a better agreement to the generalized stacking fault energy (GSFE) curves when compared with ab initio generated GSFE curves. The MEAM parameters for element pairs were constructed based on the structural and elastic properties of element pairs in the NaCl reference structure garnered from ab initio calculations, with adjustment to reproduce the ab initio heat of formation of the most stable binary compounds. The new MEAM potentials were validated by comparing the formation energies of defects, equilibrium volumes, elastic moduli, and heat of formation for several binary compounds with ab initio simulations and experiments. Single elements in their ground-state crystal structure were subjected to heating to test the potentials at elevated temperatures. An Al potential was modified to avoid the formation of an unphysical solid structure at high temperatures. The thermal expansion coefficient of a compound with the composition of AA 6061 alloy was evaluated and compared with experimental values. MEAM potential tests performed in this work, utilizing the universal atomistic simulation environment (ASE), are distributed to facilitate reproducibility of the results.",
+            "developer": [
+                "d347a059-e9f7-4d79-984f-35a0cef59e70",
+                "1d6f38b4-22a9-4ec9-b00d-a164faddb5d1",
+                "f4be9acd-d607-496c-852a-789b0f31a02e",
+                "6f3ea8df-d324-4d28-b691-30ab97b958ee",
+                "fc94aa47-3bf9-4fef-9173-f436a3a30fba",
+                "741dc3be-59fb-4e5b-8653-c63be9d4ee5d",
+                "01651569-b149-47a9-955b-0d8bd346069f",
+                "05936d64-2312-402a-9873-5b6799e9f6db"
+            ],
+            "doi": "10.25950/8d75422b",
+            "domain": "openkim.org",
+            "executables": [],
+            "kim-api-version": "2.2",
+            "maintainer-id": "f9afb302-b4eb-4b55-a4e3-676ba64bfb77",
+            "model-driver": "MEAM_LAMMPS__MD_249792265679_002",
+            "potential-type": "meam",
+            "publication-year": "2023",
+            "source-citations": [
+                {
+                    "author": "Jelinek, B. and Groh, S. and Horstemeyer, M. F. and Houze, J. and Kim, S. G. and Wagner, G. J. and Moitra, A. and Baskes, M. I.",
+                    "doi": "10.1103/PhysRevB.85.245102",
+                    "journal": "Phys. Rev. B",
+                    "month": "Jun",
+                    "note": "",
+                    "number": "",
+                    "pages": "245102",
+                    "recordkey": "MO_262519520678_002a",
+                    "recordprimary": "recordprimary",
+                    "recordtype": "article",
+                    "title": "Modified embedded atom method potential for Al, Si, Mg, Cu, and Fe alloys",
+                    "volume": "85",
+                    "year": "2012"
+                }
+            ],
+            "species": [
+                "Al",
+                "Si",
+                "Mg",
+                "Cu",
+                "Fe"
+            ],
+            "title": "MEAM potential for Al-Si-Mg-Cu-Fe alloys developed by Jelinek et al. (2012) v002",
+            "created_on": "2024-03-25 04:33:34.592153"
+        },
+        "test": "EquilibriumCrystalStructure_A15B4_cI76_220_ae_c_CuSi__TE_684342186166_002",
+        "model": "MEAM_LAMMPS_JelinekGrohHorstemeyer_2012_AlSiMgCuFe__MO_262519520678_002",
+        "domain": "openkim.org",
+        "test-result-id": "TE_684342186166_002-and-MO_262519520678_002-1711342387-tr",
+        "created_on": "2024-03-25 04:54:17.819442"
+    },
+    "created_on": "2024-03-25 04:54:17.819442",
+    "inserted_on": "2024-03-25 04:54:18.347113",
+    "latest": true
+}
+]

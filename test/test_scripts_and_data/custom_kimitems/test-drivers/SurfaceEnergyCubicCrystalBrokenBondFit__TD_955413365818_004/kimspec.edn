@@ -1,0 +1,24 @@
+{
+    "contributor-id" "8f8225b4-8b9c-439d-879d-45ee35db5757" 
+    "description" "Calculates the surface energy of several high symmetry surfaces and produces a broken-bond model fit. In latex form, the fit equations are given by:\n\nE_{FCC} (\\vec{n}) = p_1 (4 \\left( |x+y| + |x-y| + |x+z| + |x-z| + |z+y| +|z-y|\\right)) + p_2 (8 \\left( |x| + |y| + |z|\\right))  + p_3 (2 ( |x+ 2y + z| + |x+2y-z| + |x-2y + z| + |x-2y-z| + |2x+y+z| + |2x+y-z| +|2x-y+z| +|2x-y-z| +|x+y+2z| +|x+y-2z| +|x-y+2z| +|x-y-2z| ) + c\n\nE_{BCC} (\\vec{n}) = p_1 (6 \\left( | x+y+z| + |x+y-z| + |-x+y-z| + |x-y+z| \\right)) + p_2 (8 \\left( |x| + |y| + |z|\\right)) + p_3 (4 \\left( |x+y| + |x-y| + |x+z| + |x-z| + |z+y| +|z-y|\\right)) +c.\n\nIn Python, these two fits take the following form:\n\ndef BrokenBondFCC(params, index):\n\n    import numpy\n    x, y, z = index\n    x = x / numpy.sqrt(x**2.+y**2.+z**2.)\n    y = y / numpy.sqrt(x**2.+y**2.+z**2.)\n    z = z / numpy.sqrt(x**2.+y**2.+z**2.)\n\n    return params[0]*4* (abs(x+y) + abs(x-y) + abs(x+z) + abs(x-z) + abs(z+y) + abs(z-y)) + params[1]*8*(abs(x) + abs(y) + abs(z)) + params[2]*(abs(x+2*y+z) + abs(x+2*y-z) +abs(x-2*y+z) +abs(x-2*y-z) + abs(2*x+y+z) +abs(2*x+y-z) +abs(2*x-y+z) +abs(2*x-y-z) + abs(x+y+2*z) +abs(x+y-2*z) +abs(x-y+2*z) +abs(x-y-2*z))+params[3]\n\ndef BrokenBondBCC(params, x, y, z):\n\n\n    import numpy\n    x, y, z = index\n    x = x / numpy.sqrt(x**2.+y**2.+z**2.)\n    y = y / numpy.sqrt(x**2.+y**2.+z**2.)\n    z = z / numpy.sqrt(x**2.+y**2.+z**2.)\n\n    return params[0]*6*(abs(x+y+z) + abs(x-y-z) + abs(x-y+z) + abs(x+y-z)) + params[1]*8*(abs(x) + abs(y) + abs(z)) + params[2]*4* (abs(x+y) + abs(x-y) + abs(x+z) + abs(x-z) + abs(z+y) + abs(z-y)) + params[3]" 
+    "developer" [
+        "8f8225b4-8b9c-439d-879d-45ee35db5757"
+    ] 
+    "doi" "10.25950/6c43a4e6" 
+    "domain" "openkim.org" 
+    "executables" [
+        "runner" 
+        "test_template/runner"
+    ] 
+    "extended-id" "SurfaceEnergyCubicCrystalBrokenBondFit__TD_955413365818_004" 
+    "kim-api-version" "2.0" 
+    "maintainer-id" "8f8225b4-8b9c-439d-879d-45ee35db5757" 
+    "properties" [
+        "tag:staff@noreply.openkim.org,2014-05-21:property/surface-energy-broken-bond-fit-cubic-bravais-crystal-npt" 
+        "tag:staff@noreply.openkim.org,2014-05-21:property/surface-energy-cubic-crystal-npt" 
+        "tag:staff@noreply.openkim.org,2014-05-21:property/surface-energy-ideal-cubic-crystal"
+    ] 
+    "publication-year" "2019" 
+    "simulator-name" "ase" 
+    "title" "High-symmetry surface energies in cubic lattices and broken bond model v004"
+}
