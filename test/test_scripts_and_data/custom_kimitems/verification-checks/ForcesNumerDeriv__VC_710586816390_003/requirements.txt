@@ -1,6 +1,0 @@
-ase > 3.19.0b1
-kimpy >= 0.3.2
-kim_python_utils >= 1.0.0
-numdifftools >= 0.9.20
-numpy >= 1.13.1
-scipy >= 0.13.3
