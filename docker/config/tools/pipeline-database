@@ -18,7 +18,8 @@ from bson.errors import InvalidBSON
 
 import excerpts.config as cf
 
-PIPELINE_LOCAL_DB_PATH = "/pipeline/db/"
+PIPELINE_LOCAL_DB_PATH = cf.LOCAL_DATABASE_PATH
+PIPELINE_ENV_PATH = cf.PIPELINE_ENV_PATH
 
 PIPELINE_ENV_HEADER = """#!/bin/bash
 #==============================================
@@ -37,12 +38,12 @@ def action_set(args):
     if database == "remote":
         # Set PIPELINE_LOCAL_DEV to False in pipeline-env file
         cf.update_environment_file(
-            {"PIPELINE_LOCAL_DEV": False}, "/pipeline/pipeline-env"
+            {"PIPELINE_LOCAL_DEV": False}, PIPELINE_ENV_PATH
         )
 
     elif database == "local":
         cf.update_environment_file(
-            {"PIPELINE_LOCAL_DEV": True}, "/pipeline/pipeline-env"
+            {"PIPELINE_LOCAL_DEV": True}, PIPELINE_ENV_PATH
         )
 
     else:

@@ -79,6 +79,8 @@ def read_environment_file(filename):
         NEW_VARIABLE=/path/to/$FILENAME
     """
     conf = {}
+    for environment_variable in os.environ:
+        conf[environment_variable] = os.environ[environment_variable]
     lines = open(filename, encoding="utf-8").readlines()
     for line in lines:
         if not re.match(r"^[A-Za-z0-9\_]+\=.", line):

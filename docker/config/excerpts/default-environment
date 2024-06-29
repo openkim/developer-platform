@@ -17,14 +17,18 @@ PIPELINE_LOCAL_DEV=False
 PIPELINE_VM_MODE=True
 
 LOG_DIR=/pipeline/logs
-LOCAL_REPOSITORY_PATH=/home/openkim/
+LOCAL_REPOSITORY_PATH=/home/$USER/
 USE_FULL_ITEM_NAMES_IN_REPO=True
+
+LOCAL_DATABASE_PATH=/home/$USER/db/
+
+PIPELINE_ENV_PATH=/home/$USER/pipeline-env
 
 # parent directory where things are run by default
 WORKER_RUNNING_PATH=/tmp
 
 # We install MD/MO/SM to the KIM API user collection
-KIM_API_USER_COLLECTION=/home/openkim/.kim-api/
+KIM_API_USER_COLLECTION=/home/$USER/.kim-api/
 
 # types of files that are expected at any one time, should be global
 OUTPUT_DIR=output

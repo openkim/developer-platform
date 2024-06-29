@@ -15,8 +15,9 @@ from . import util
 from . import kimobjects
 from .kimcodes import parse_kim_code, isextendedkimid, isuuid
 
+PATH_DATABASE = cf.LOCAL_DATABASE_PATH
 
-client = MontyClient("/pipeline/db", cache_modified=0)
+client = MontyClient(PATH_DATABASE, cache_modified=0)
 db = client.db
 
 PATH_RESULT = cf.LOCAL_REPOSITORY_PATH
