@@ -136,5 +136,12 @@ RUN chmod 4755 /usr/bin/sudo
 RUN chown -R openkim:openkim /home/openkim/
 RUN chown -R openkim:openkim /pipeline/
 
+
+# TODO: Maybe a better way to do this? I want kim-property to be editable
+RUN pip3 uninstall -y kim-property
+
 USER openkim
+
+RUN pip3 --no-cache-dir install kim-property==2.6.2
+
 WORKDIR /home/openkim/
