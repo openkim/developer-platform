@@ -158,9 +158,9 @@ RUN cd ${PACKAGE_DIR}/crystal-genome-util \
  && ${PIP} install .
 
 #########################################
-## kim-test-utils
+## kim-tools
 #########################################
-RUN cd ${PACKAGE_DIR}/kim-test-utils \
+RUN cd ${PACKAGE_DIR}/kim-tools \
  && ${PIP} install .
 
 #########################################
