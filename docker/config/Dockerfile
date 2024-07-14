@@ -142,6 +142,6 @@ RUN pip3 uninstall -y kim-property
 
 USER openkim
 
-RUN pip3 --no-cache-dir install kim-property==2.6.2
+RUN pip3 --no-cache-dir install kim-property==2.6.3
 
 WORKDIR /home/openkim/
