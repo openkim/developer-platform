@@ -542,8 +542,8 @@ def item_is_latest(kimcode):
     version than the one given.
     """
     # Discard human-readable prefix, if any
-    name, leader, num, ver = parse_kim_code(kimcode)
-    short_id = ("_").join((leader, num, ver))
+    _, leader, num, ver = parse_kim_code(kimcode)
+    shortcode = ("_").join((leader, num))
     leader = leader.lower()
 
     if leader in ["te", "vc"]:
@@ -558,9 +558,9 @@ def item_is_latest(kimcode):
     # Don't need to turn on 'history' since we're interested in the latest
     query = {
         "database": "data",
-        "query": {"meta." + item_type + ".short-id": short_id},
-        "project": ["meta." + item_type + ".version"],
-        "sort": [["meta." + item_type + ".version", -1]],
+        "query": {"meta." + item_type + ".shortcode": shortcode},
+        "project": ["meta." + item_type + ".kimid-version"],
+        "sort": [["meta." + item_type + ".kimid-version", -1]],
         "limit": 1,
     }
 

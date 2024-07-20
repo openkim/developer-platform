@@ -20,14 +20,14 @@ RUN git clone -q https://github.com/openkim/kim-python-utils -b master ${PACKAGE
   && git checkout e4e21b202264373a9f33dfc47b6e05c0af625950
 RUN git clone -q https://github.com/openkim/crystal-genome-util -b main ${PACKAGE_DIR}/crystal-genome-util \
   && cd ${PACKAGE_DIR}/crystal-genome-util \
-  && git checkout 92e0b4c54ed4ca4e7ef1630499df2c8651bc2333 
-RUN git clone -q https://github.com/openkim/kim-property.git -b spoof-version ${PACKAGE_DIR}/kim-property \
-  && cd ${PACKAGE_DIR}/kim-property \
-  && git checkout 61f230c616c9636ea649ad67c26fd6a0a2115e0c
+  && git checkout e18a2d62fc3e391acbf9c98a28efaebca914b007
 RUN git clone -q https://github.com/lammps/lammps -b stable_2Aug2023_update1 ${PACKAGE_DIR}/lammps
 RUN git clone -q https://gitlab.com/openkim/ase -b user-species ${PACKAGE_DIR}/ase \
   && cd ${PACKAGE_DIR}/ase \
-  && git checkout e00c8da0f84fb3a726c411f7ef2792241434c9a3
+  && git checkout abe2d6c6e265f7ba6e79cc9b437ef1940731eccc
 RUN git clone -q https://gitlab.com/micronano_public/MDpp -b release ${PACKAGE_DIR}/MD++ \
   && cd ${PACKAGE_DIR}/MD++ \
   && git checkout f7d64a7720a4bc1602371a128c8db7779fcf8dcb
+RUN git clone -q https://github.com/openkim/kim-tools -b main ${PACKAGE_DIR}/kim-tools \
+  && cd ${PACKAGE_DIR}/kim-tools \
+  && git checkout 003b84fdab9f955c607816fbbe3827c3ae3a4bc7

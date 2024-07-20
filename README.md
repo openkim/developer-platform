@@ -81,6 +81,8 @@ Alternatively, if you want the full image, do this:
 docker pull ghcr.io/openkim/developer-platform
 docker run -it --name kim_dev ghcr.io/openkim/developer-platform bash
 ```
+*NOTE:* If you wish to install and use JupyterLab to work in your container (see section regarding IDEs at the bottom of the page), you must expose a port by e.g. adding the argument `-p 8888:8888` to your `docker run` command.
+
 The container will automatically stop when you close the original bash session
 that was opened by doing `docker run` above; this can be verified by doing
 `docker ps`, which will reveal no running containers.  This will *not* cause
@@ -160,6 +162,38 @@ swap space, and disk you want to reserve for Docker to use.  Options for control
 resource allocation on a container-by-container basis can be found at
 https://docs.docker.com/config/containers/resource_constraints/.  In linux, resource
 control must be done on a container-by-container basis.
+
+## IDEs (VSCode and Jupyter Lab)
+
+To work inside the container using VSCode, you can use the "Dev Containers"
+extension which should be installed by default. Select "Remote Explorer" in
+the left sidebar, then choose "Dev Containers" in the drop down menu. Your
+container should be under "Other Containers", and you can attach VSCode to it
+using one of the icons on the right. See image below with relevant UI elements:
+
+![VSCode screenshot](doc_img/vscode.png)
+
+Once you have attached VSCode to your container once, it will appear under 
+"Dev Containers" rather than "Other Containers".
+
+To use Jupyter Lab to access the container, you must have issued your `docker run` command
+with the option to expose a port (e.g. `-p 8888:8888`). Then, you can install Jupyter Lab using
+```
+sudo pip install jupyterlab
+```
+It is a large installation, so we do not include it as not all users will need it. Then you can use JupyterLab by running
+
+```
+jupyter lab --ip 0.0.0.0
+```
+inside the container, or from your host terminal by running 
+```
+docker exec kim_dev jupyter lab --ip 0.0.0.0
+```
+where `kim_dev` should be replaced if you named your container something different.
+You should now be able to access the Jupyter Lab IDE inside your container by
+pointing your browser at one of the displayed URLs (typically the one starting with `http://127.0.0.1:8888/lab?token=`).
+
 
 ## References
 
