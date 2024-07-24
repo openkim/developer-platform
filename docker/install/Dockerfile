@@ -49,6 +49,7 @@ RUN ${PIP} install pymongo==3.11.3
 RUN ${PIP} install montydb==2.1.1
 RUN ${PIP} install pybind11==2.6.2
 RUN ${PIP} install spglib==2.1.0
+RUN ${PIP} install numdifftools==0.9.41
 
 #########################################
 ## MD++
@@ -85,12 +86,6 @@ RUN cd ${PACKAGE_DIR} \
  && cp ${KIM_API_PACKAGE}/build/install_manifest.txt kim_api_install_manifest.txt \
  && rm -r ${KIM_API_PACKAGE} \
  && ldconfig
-
-#########################################
-## numdifftools
-#########################################
-RUN cd ${PACKAGE_DIR}/numdifftools \
- && ${PIP} install . 
 
 #########################################
 ## kimpy

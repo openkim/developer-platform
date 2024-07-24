@@ -11,10 +11,6 @@ RUN mkdir -p ${PACKAGE_DIR}
 RUN apt-get -qq update
 RUN apt-get install --no-install-recommends -qqy ca-certificates
 RUN apt-get install --no-install-recommends -qqy git
-RUN git clone -q https://github.com/openkim/numdifftools -b master ${PACKAGE_DIR}/numdifftools \
-  && cd ${PACKAGE_DIR}/numdifftools \
-  && git checkout a53debb144ed02c5c6eb74d5c18d53058259f27c \
-  && cd ${PACKAGE_DIR}
 RUN git clone -q https://github.com/openkim/kim-python-utils -b master ${PACKAGE_DIR}/kim-python-utils \
   && cd ${PACKAGE_DIR}/kim-python-utils \
   && git checkout e4e21b202264373a9f33dfc47b6e05c0af625950
