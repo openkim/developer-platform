@@ -26,4 +26,4 @@ RUN git clone -q https://gitlab.com/micronano_public/MDpp -b release ${PACKAGE_D
   && git checkout f7d64a7720a4bc1602371a128c8db7779fcf8dcb
 RUN git clone -q https://github.com/openkim/kim-tools -b main ${PACKAGE_DIR}/kim-tools \
   && cd ${PACKAGE_DIR}/kim-tools \
-  && git checkout 003b84fdab9f955c607816fbbe3827c3ae3a4bc7
+  && git checkout d9592451f98907c25725526f8a543d508c688e5d
