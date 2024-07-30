@@ -18,6 +18,7 @@ PIPELINE_VM_MODE=True
 
 LOG_DIR=/pipeline/logs
 LOCAL_REPOSITORY_PATH=/home/openkim/
+LOCAL_DATABASE_PATH=/pipeline/db
 USE_FULL_ITEM_NAMES_IN_REPO=True
 
 # parent directory where things are run by default

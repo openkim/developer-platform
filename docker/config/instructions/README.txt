@@ -258,9 +258,9 @@ Section IV. Running your content
     Whereas by default all of the queries in the pipeline.stdin.tpl files of
     the Tests are directed to query.openkim.org, if you issue
     `pipeline-database set local`, they will all be directed to a local
-    database that is stored on disk at /pipeline/db/.  Assuming this has been
-    done (the selection persists between starts/stops of the container), you
-    can then proceed to run all of the Tests in a dependency hierarchy in
+    database that is stored on disk at /pipeline/db/ by default. Assuming this 
+    has been done (the selection persists between starts/stops of the container), 
+    you can then proceed to run all of the Tests in a dependency hierarchy in
     order.  In the example above, you would use `pipeline-run-pair` to run your
     Model or Simulator Model against the fcc Al lattice constant Test and then
     use it to run against the fcc Al elastic constants Test.^
@@ -575,7 +575,7 @@ Section VI. Command-line utilities
      (2) import/export a local database using the mongdo db extended json format
      (3) restore/dump a local database using the bson (binary json) format
 
-    The local mongo database is stored at /pipeline/db/
+    The local mongo database is stored at /pipeline/db/ by default
 
     NOTE: The `kimitems` and `kimgenie` utilities will always perform their queries
           to the remote OpenKIM database, even if you are using a local database.
@@ -599,7 +599,7 @@ Section VI. Command-line utilities
 
         pipeline-database delete [-f]
 
-      Deletes the local mongo database, which is stored at /pipeline/db/
+      Deletes the local mongo database, which is stored at /pipeline/db/ by default
 
       Options
       -------
