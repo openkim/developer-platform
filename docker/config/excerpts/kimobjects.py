@@ -488,8 +488,11 @@ class Runner(KIMObject):
         """
         Specifies what types of subjects the runner can match with, as a list of strings.  Required to be present.
         """
-        if not self.kimspec:
-            return None
+        if not self.kimspec.get("matching-models"):
+            raise cf.MetadataKeyMissing(
+                "Required key 'matching-models' not found in "
+                "kimspec.edn file of {}".format(self.kim_code)
+            )
         else:
             return self.kimspec["matching-models"]
 
@@ -630,8 +633,11 @@ class SimulatorModel(Subject):
         against portable models) as opposed to Tests that are specifically
         constructed to run against a particular subclass of SMs.
         """
-        if not self.kimspec:
-            return None
+        if not self.kimspec.get("run-compatibility"):
+            raise cf.MetadataKeyMissing(
+                "Required key 'run-compatibility' not found in "
+                "kimspec.edn file of {}".format(self.kim_code)
+            )
         else:
             return self.kimspec["run-compatibility"]
 
