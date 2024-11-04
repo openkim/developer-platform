@@ -77,9 +77,11 @@ def action_delete(args):
 
 
 def action_import(args):
+    # To set up the directory and monty.storage.cfg if it does not exist
+    import excerpts.mongodb
     try:
         with open_repo(PIPELINE_LOCAL_DB_PATH):
-            montyimport("db", "data", args["database-file"])
+            montyimport("db", "data", args["database-file"], use_bson=True)
     except (UnicodeDecodeError, JSONDecodeError):
         print(
             "Database file {} is not valid JSON. Exiting...".format(
@@ -90,10 +92,12 @@ def action_import(args):
 
 def action_export(args):
     with open_repo(PIPELINE_LOCAL_DB_PATH):
-        montyexport("db", "data", args["database-file"])
+        montyexport("db", "data", args["database-file"], use_bson=True)
 
 
 def action_restore(args):
+    # To set up the directory and monty.storage.cfg if it does not exist
+    import excerpts.mongodb
     try:
         with open_repo(PIPELINE_LOCAL_DB_PATH):
             montyrestore("db", "data", args["database-file"])
