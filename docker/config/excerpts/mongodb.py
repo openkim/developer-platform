@@ -8,7 +8,7 @@ import os
 import re
 import datetime
 
-from montydb import MontyClient
+from montydb import MontyClient,set_storage
 
 from . import config as cf
 from . import util
@@ -17,7 +17,8 @@ from .kimcodes import parse_kim_code, isextendedkimid, isuuid
 
 PIPELINE_LOCAL_DB_PATH = cf.LOCAL_DATABASE_PATH
 
-client = MontyClient(PIPELINE_LOCAL_DB_PATH, cache_modified=0)
+set_storage(repository=PIPELINE_LOCAL_DB_PATH, use_bson=True, cache_modified="0")
+client = MontyClient(PIPELINE_LOCAL_DB_PATH)
 db = client.db
 
 PATH_RESULT = cf.LOCAL_REPOSITORY_PATH

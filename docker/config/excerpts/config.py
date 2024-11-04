@@ -388,5 +388,3 @@ os.environ["KIM_HOME"] = conf.get("KIM_HOME")
 # os.environ['ASAP_KIM_INC'] = conf.get('ASAP_KIM_INC')
 # os.environ['ASAP_KIM_LIB'] = conf.get('ASAP_KIM_LIB')
 
-# For montydb. Required because our `pipeline-database` tool uses pymongo
-os.environ["MONTY_ENABLE_BSON"] = "1"

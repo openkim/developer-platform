@@ -64,3 +64,13 @@ pipeline-run-matches Sim_LAMMPS_IFF_PCFF_HeinzMishraLinEmami_2015Ver1v5_Fccmetal
 #   ForcesNumerDeriv__VC_710586816390_003 Slow
 #   MemoryLeak__VC_561022993723_004 Slow, not very informative
 #   DimerContinuityC1__VC_303890932454_005 Slow
+
+# Test database commands
+pipeline-database dump tmp.bson
+pipeline-database delete -f
+pipeline-database restore tmp.bson
+pipeline-database export tmp.json
+pipeline-database delete -f
+pipeline-database import tmp.json
+rm tmp.bson
+rm tmp.json
