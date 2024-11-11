@@ -388,3 +388,5 @@ os.environ["KIM_HOME"] = conf.get("KIM_HOME")
 # os.environ['ASAP_KIM_INC'] = conf.get('ASAP_KIM_INC')
 # os.environ['ASAP_KIM_LIB'] = conf.get('ASAP_KIM_LIB')
 
+# For kim-tools
+os.environ["KIM_PROPERTY_PATH"] = conf.get("KIM_PROPERTY_PATH")
