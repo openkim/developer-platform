@@ -50,3 +50,5 @@ KIM_HOME=/usr/local/
 ASE_LAMMPSRUN_COMMAND=/usr/local/bin/lammps
 
 CMAKE_BUILD_TYPE=Release
+
+KIM_PROPERTY_PATH=$LOCAL_REPOSITORY_PATH/test-drivers/*/local-props/**/:$LOCAL_REPOSITORY_PATH/test-drivers/*/local_props/**/
