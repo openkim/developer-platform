@@ -81,7 +81,7 @@ RUN cd ${PACKAGE_DIR} \
  && cd ${KIM_API_PACKAGE} \
  && mkdir build && cd build \
  && cmake .. -DCMAKE_BUILD_TYPE=Release \
- && make -j2 && make install \
+ && make -j4 && make install \
  && cd ${PACKAGE_DIR} \
  && cp ${KIM_API_PACKAGE}/build/install_manifest.txt kim_api_install_manifest.txt \
  && rm -r ${KIM_API_PACKAGE} \
@@ -122,7 +122,7 @@ RUN cd ${PACKAGE_DIR}/lammps/ \
       -D PKG_CORESHELL=yes \
       -D PKG_EXTRA-FIX=yes \
       ../cmake \
- && make -j2 \
+ && make -j4 \
  && make install \
  && apt-get update -qq \
  && apt-get install --no-install-recommends -qqy python3-venv \
@@ -179,7 +179,7 @@ RUN cd ${PACKAGE_DIR} \
  && tar xJf ${AFLOW_ARCHIVE_TXZ} \
  && rm ${AFLOW_ARCHIVE_TXZ} \
  && cd ${AFLOW_PACKAGE} \
- && make -j2 aflow \
+ && make -j4 aflow \
  && cp aflow /usr/local/bin \
  && touch /usr/local/bin/aflow_data \
  && chmod +x /usr/local/bin/aflow_data \
