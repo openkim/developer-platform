@@ -40,7 +40,7 @@ RUN ${PIP} install Jinja2==2.11.3
 RUN ${PIP} install edn_format==0.7.5
 RUN ${PIP} install kim-edn==1.4.1
 RUN ${PIP} install kim-property==2.6.4
-RUN ${PIP} install kim-query==3.0.0
+RUN ${PIP} install kim-query==4.0.0
 RUN ${PIP} install simplejson==3.17.2
 RUN ${PIP} install numpy==1.19.5
 RUN ${PIP} install scipy==1.5.4
