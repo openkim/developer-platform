@@ -3512,20 +3512,19 @@ def get_test_result(db, test, model, prop, keys, units):
     for result in final_TestResult:
         inner_output=[]
         for ind, key in enumerate(keys):
-            # First, check to make sure the key is actually in the property definition
-            # TODO: This function is incompatible with optional keys. Fix this.
             if (key not in result) and (
                 key + ".source-value" not in result
             ):
-                raise ValueError(
-                    "Key '{}' specified as input to function get_test_result() is "
-                    "not a valid part of the property definition specified or other metadata "
-                    "associated with a Test Result".format(key)
+                # Because the KDP may be using in-development properties, here the KDP
+                # differs from the production pipeline in that the KDP does not do
+                # any checking against property definitions, just returns None
+                # for missing keys.
+                inner_output.append(None)
+            else:
+                key_value_in_desired_units = helpers.extract_key_from_result(
+                    result, key, units[ind]
                 )
-            key_value_in_desired_units = helpers.extract_key_from_result(
-                result, key, units[ind]
-            )
-            inner_output.append(key_value_in_desired_units)
+                inner_output.append(key_value_in_desired_units)
         final_output.append(inner_output)    
 
     return final_output

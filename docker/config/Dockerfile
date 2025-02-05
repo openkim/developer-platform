@@ -69,9 +69,6 @@ RUN mkdir -p /home/openkim/.vim/tmp.undo/ \
 
 ENV BASHRC /home/openkim/.bashrc
 RUN echo "" >> ${BASHRC} \
-    && echo "if [[ \":\$LD_LIBRARY_PATH:\" != *\":/usr/local/lib:\"* ]]; then" >> ${BASHRC} \
-    && echo "    export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/lib" >> ${BASHRC} \
-    && echo "fi" >> ${BASHRC} \
     && echo "" >> ${BASHRC} \
     && echo "if [[ \":\$PYTHONPATH:\" != *\":/usr/local/lib:\"* ]]; then" >> ${BASHRC} \
     && echo "    export PYTHONPATH=\$PYTHONPATH:/usr/local/lib/python3/dist-packages/" >> ${BASHRC} \
@@ -135,6 +132,9 @@ RUN chmod 4755 /usr/bin/sudo
 # Assign ownership
 RUN chown -R openkim:openkim /home/openkim/
 RUN chown -R openkim:openkim /pipeline/
+
+# parses /etc/ld.so.conf.d/libc.conf to permanently look for libraries in /usr/local/bin
+RUN ldconfig
 
 USER openkim
 
