@@ -34,12 +34,12 @@ ARG PIP=pip3 --no-cache-dir
 ARG PYTHON=python3
 RUN ${PIP} install wheel==0.36.2
 RUN ${PIP} install setuptools==54.0.0
-RUN ${PIP} install packaging==20.9
+RUN ${PIP} install packaging
 RUN ${PIP} install markupsafe==2.0.1
 RUN ${PIP} install Jinja2==2.11.3
 RUN ${PIP} install edn_format==0.7.5
 RUN ${PIP} install kim-edn==1.4.1
-RUN ${PIP} install kim-property==2.6.5
+RUN ${PIP} install kim-property==2.6.6
 RUN ${PIP} install kim-query==4.0.0
 RUN ${PIP} install simplejson==3.17.2
 RUN ${PIP} install numpy==1.19.5
@@ -71,7 +71,7 @@ RUN cd ${PACKAGE_DIR}/MD++ \
 #########################################
 ## KIM API
 #########################################
-ARG KIM_API_VER=2.3.0
+ARG KIM_API_VER=2.4.0
 ARG KIM_API_PACKAGE=kim-api-${KIM_API_VER}
 ARG KIM_API_ARCHIVE_TXZ=${KIM_API_PACKAGE}.txz
 RUN cd ${PACKAGE_DIR} \
@@ -91,7 +91,7 @@ RUN cd ${PACKAGE_DIR} \
 ## kimpy
 #########################################
 # NOTE: Must be installed after KIM API
-RUN ${PIP} install kimpy==2.1.0
+RUN ${PIP} install kimpy==2.1.2
 
 #########################################
 ## LAMMPS
