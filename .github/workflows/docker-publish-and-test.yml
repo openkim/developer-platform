@@ -50,7 +50,7 @@ jobs:
         uses: docker/setup-buildx-action@v1
 
       - name: Initialize cache for storing docker image
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ env.IMAGE_CACHE_DIR_SYS }}
           key: ${{ runner.os }}-buildx-${{ github.sha }}-sys
@@ -103,7 +103,7 @@ jobs:
         uses: docker/setup-buildx-action@v1
 
       - name: Initialize cache for storing docker image
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ env.IMAGE_CACHE_DIR_GIT }}
           key: ${{ runner.os }}-buildx-${{ github.sha }}-git
@@ -149,7 +149,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Restore sys docker image cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ env.IMAGE_CACHE_DIR_SYS }}
           key: ${{ runner.os }}-buildx-${{ github.sha }}-sys
@@ -157,7 +157,7 @@ jobs:
             ${{ runner.os }}-buildx-sys
 
       - name: Restore git docker image cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ env.IMAGE_CACHE_DIR_GIT }}
           key: ${{ runner.os }}-buildx-${{ github.sha }}-git
