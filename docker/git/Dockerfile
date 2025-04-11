@@ -20,7 +20,7 @@ RUN git clone -q https://github.com/openkim/crystal-genome-util -b main ${PACKAG
 RUN git clone -q https://github.com/lammps/lammps -b stable_2Aug2023_update1 ${PACKAGE_DIR}/lammps
 RUN git clone -q https://gitlab.com/openkim/ase -b user-species ${PACKAGE_DIR}/ase \
   && cd ${PACKAGE_DIR}/ase \
-  && git checkout 77dfbe8830b1656959d4a45a7ebf1ade6c5197d1
+  && git checkout 13fd06ca9d821dd56e21207aa01de25e27282718
 RUN git clone -q https://gitlab.com/micronano_public/MDpp -b release ${PACKAGE_DIR}/MD++ \
   && cd ${PACKAGE_DIR}/MD++ \
   && git checkout f7d64a7720a4bc1602371a128c8db7779fcf8dcb
