@@ -204,7 +204,7 @@ def intercept_query(query, subject_name, local, infofile):
             return tmp_answer
 
 
-def intercept_get_test_result(test, model, species, prop, keys, units, local, infofile):
+def intercept_get_test_result(test, model, prop, keys, units, local, infofile):
     """
     Intercept any calls to get_test_result performed in pipeline.stdin.tpl.  Check if 'meta.uuid' is contained
     in the list of keys specified as input to the function.  If it is not, we add it ourselves as the last
@@ -218,7 +218,7 @@ def intercept_get_test_result(test, model, species, prop, keys, units, local, in
     if "meta.uuid" in keys:
         uuid_index = keys.index("meta.uuid")
         answer = kimquery.get_test_result(
-            test, model, species, prop, keys, units, local, decode=True
+            test, model, prop, keys, units, local, decode=True
         )
         if answer:
             uuid = answer[uuid_index]
@@ -227,7 +227,7 @@ def intercept_get_test_result(test, model, species, prop, keys, units, local, in
         keys.append("meta.uuid")
         units.append(None)
         answer = kimquery.get_test_result(
-            test, model, species, prop, keys, units, local, decode=True
+            test, model, prop, keys, units, local, decode=True
         )
 
         # Revert keys and units to their original values by stripping off the last element
@@ -239,8 +239,8 @@ def intercept_get_test_result(test, model, species, prop, keys, units, local, in
             uuid = answer[-1]
             del answer[-1]
 
-    tmpstr = "get_test_result({}, {}, {}, {}, {}, {})".format(
-        test, model, species, prop, keys, units
+    tmpstr = "get_test_result({}, {}, {}, {}, {})".format(
+        test, model, prop, keys, units
     )
     if answer:
         with open(infofile, "a", encoding="utf-8") as out:

@@ -39,5 +39,6 @@ RUN apt-get update -qq \
  valgrind \
  tree \
  libfreetype6-dev \
+ git \
  && apt-get clean \
  && rm -fr /var/lib/apt/lists/*

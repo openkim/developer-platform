@@ -18,7 +18,7 @@ from bson.errors import InvalidBSON
 
 import excerpts.config as cf
 
-PIPELINE_LOCAL_DB_PATH = "/pipeline/db/"
+PIPELINE_LOCAL_DB_PATH = cf.LOCAL_DATABASE_PATH
 
 PIPELINE_ENV_HEADER = """#!/bin/bash
 #==============================================
@@ -77,9 +77,11 @@ def action_delete(args):
 
 
 def action_import(args):
+    # To set up the directory and monty.storage.cfg if it does not exist
+    import excerpts.mongodb
     try:
         with open_repo(PIPELINE_LOCAL_DB_PATH):
-            montyimport("db", "data", args["database-file"])
+            montyimport("db", "data", args["database-file"], use_bson=True)
     except (UnicodeDecodeError, JSONDecodeError):
         print(
             "Database file {} is not valid JSON. Exiting...".format(
@@ -90,10 +92,12 @@ def action_import(args):
 
 def action_export(args):
     with open_repo(PIPELINE_LOCAL_DB_PATH):
-        montyexport("db", "data", args["database-file"])
+        montyexport("db", "data", args["database-file"], use_bson=True)
 
 
 def action_restore(args):
+    # To set up the directory and monty.storage.cfg if it does not exist
+    import excerpts.mongodb
     try:
         with open_repo(PIPELINE_LOCAL_DB_PATH):
             montyrestore("db", "data", args["database-file"])
@@ -145,7 +149,7 @@ it.  This utility also allows you to:
  (2) import/export a local database using the mongdo db extended json format
  (3) restore/dump a local database using the bson (binary json) format
 
-The local mongo database is stored at /pipeline/db/
+The local mongo database is stored at cf.LOCAL_DATABASE_PATH (/pipeline/db/ by default)
 
 NOTE: The `kimitems` and `kimgenie` utilities will always perform their queries
       to the remote OpenKIM database, even if you are using a local database.""",

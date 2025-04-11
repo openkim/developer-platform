@@ -11,10 +11,6 @@ RUN mkdir -p ${PACKAGE_DIR}
 RUN apt-get -qq update
 RUN apt-get install --no-install-recommends -qqy ca-certificates
 RUN apt-get install --no-install-recommends -qqy git
-RUN git clone -q https://github.com/openkim/numdifftools -b master ${PACKAGE_DIR}/numdifftools \
-  && cd ${PACKAGE_DIR}/numdifftools \
-  && git checkout a53debb144ed02c5c6eb74d5c18d53058259f27c \
-  && cd ${PACKAGE_DIR}
 RUN git clone -q https://github.com/openkim/kim-python-utils -b master ${PACKAGE_DIR}/kim-python-utils \
   && cd ${PACKAGE_DIR}/kim-python-utils \
   && git checkout 2aa7a7ee692fb0ecd895b2da338f5ae99b86ef53
@@ -28,3 +24,6 @@ RUN git clone -q https://gitlab.com/openkim/ase -b user-species ${PACKAGE_DIR}/a
 RUN git clone -q https://gitlab.com/micronano_public/MDpp -b release ${PACKAGE_DIR}/MD++ \
   && cd ${PACKAGE_DIR}/MD++ \
   && git checkout f7d64a7720a4bc1602371a128c8db7779fcf8dcb
+RUN git clone -q https://github.com/openkim/kim-tools -b main ${PACKAGE_DIR}/kim-tools \
+  && cd ${PACKAGE_DIR}/kim-tools \
+  && git checkout 832982a1406b25c3361a3f71ed365ff55dc125b0

@@ -3416,7 +3416,7 @@ def get_surface_energy_relaxed_cubic(
             return [relaxed_surface_energy]
 
 
-def get_test_result(db, test, model, species, prop, keys, units):
+def get_test_result(db, test, model, prop, keys, units):
     """
     This function provides a simplified way of querying the KIM mongo database for Test Results.
     Although only a single property may be queried on at a time with this function, multiple keys
@@ -3436,13 +3436,11 @@ def get_test_result(db, test, model, species, prop, keys, units):
     inputs = {
         "test": test,
         "model": model,
-        "species": species,
         "prop": prop,
         "keys": keys,
         "units": units,
     }
     helpers.check_input_args_are_lists(inputs)
-    helpers.check_types_in_input_arg("species", species, str)
     helpers.check_types_in_input_arg("keys", keys, str)
     helpers.check_types_in_input_arg("units", units, (str, type(None)))
     helpers.check_for_invalid_null(units)
@@ -3474,12 +3472,9 @@ def get_test_result(db, test, model, species, prop, keys, units):
 
     # Determine whether a full property-id with a contributor and date was given, or only the
     # property short name.  If the full property-id was given, query on it exactly.  If not, do a
-    # regex on it and sort the results from the most recent property-id date to the oldest.  Note
-    # that sorting on Test and Model versions takes priority over the sorting on property-id.
-    prop_has_ver = False
+    # regex on it
     if re.match(RE_PROPERTY_ID, prop) is not None:
         query["query"]["property-id"] = prop
-        prop_has_ver = True
     elif re.match(RE_PROPERTY_SHORT_NAME, prop) is not None:
         query["query"]["property-id"] = {}
         query["query"]["property-id"]["$regex"] = (
@@ -3490,9 +3485,9 @@ def get_test_result(db, test, model, species, prop, keys, units):
             "Invalid property name was passed to function get_test_result()"
         )
 
-    Test_has_ver = helpers.modify_query_for_item(query, "runner", test)
-    Model_has_ver = helpers.modify_query_for_item(query, "subject", model)
-    helpers.modify_query_for_species(query, species)
+    # If either item does not have a version, these functions will add 'history': 1 to the query
+    helpers.modify_query_for_item(query, "runner", test)
+    helpers.modify_query_for_item(query, "subject", model)
 
     # Perform the actual query
     for key in query:
@@ -3501,75 +3496,36 @@ def get_test_result(db, test, model, species, prop, keys, units):
 
     if len(results_from_query) == 0:
         return []
-    else:
-        # Determine necessary sorting before taking the final result (which will be at the top of
-        # the list)
-        if (not Test_has_ver) and (not Model_has_ver) and (not prop_has_ver):
-            # sort on property date string
-            final_TestResult = helpers.sort_on_property_date(results_from_query)[0]
-        elif Test_has_ver and (not Model_has_ver) and (not prop_has_ver):
-            # sort on Model version and date string of prop
-            tmp = helpers.sort_on_Model_ver(results_from_query)
-            highest_Model_ver = tmp[0]["meta.subject.version"]
-            tmp = [
-                propinstance
-                for propinstance in tmp
-                if propinstance["meta.subject.version"] == highest_Model_ver
-            ]
-            final_TestResult = helpers.sort_on_property_date(tmp)[0]
-        elif (not Test_has_ver) and Model_has_ver and (not prop_has_ver):
-            # sort on Test version and date string of prop
-            tmp = helpers.sort_on_Test_ver(results_from_query)
-            highest_Test_ver = tmp[0]["meta.runner.version"]
-            tmp = [
-                propinstance
-                for propinstance in tmp
-                if propinstance["meta.runner.version"] == highest_Test_ver
-            ]
-            final_TestResult = helpers.sort_on_property_date(tmp)[0]
-        elif (not Test_has_ver) and (not Model_has_ver) and prop_has_ver:
-            # No sorting necessary. The pipeline will automatically only return the highest
-            # Test-Model version combination if 'history' is not turned on, and we already have a
-            # specific property version here.  Therefore, only a single Test Result should have been
-            # returned.
-            final_TestResult = results_from_query[0]
-        elif Test_has_ver and Model_has_ver and (not prop_has_ver):
-            # sort on date string of prop
-            final_TestResult = helpers.sort_on_property_date(results_from_query)[0]
-        elif (not Test_has_ver) and Model_has_ver and prop_has_ver:
-            # sort on Test version
-            final_TestResult = helpers.sort_on_Test_ver(results_from_query)[0]
-        elif Test_has_ver and (not Model_has_ver) and prop_has_ver:
-            # sort on Model version
-            final_TestResult = helpers.sort_on_Model_ver(results_from_query)[0]
-        elif Test_has_ver and Model_has_ver and prop_has_ver:
-            # No sorting necessary, but make sure to only take one result since there could be
-            # duplicates lurking in the database for old versions
-            # FIXME: Should we take the one that has the most recent timestamp here (might
-            # still not be marked 'latest')?
-            # FIXME: What if the test-model pair has multiple property instances
-            # reported for it?
-            final_TestResult = results_from_query[0]
 
-    # If only an error was returned, return nothing
-    if final_TestResult["meta.uuid"] == "er":
+    # If we searched with 'history': 1, we may have ended up collecting results from multiple
+    # runs. This function picks out the single most up-to-date run from all results.
+    # It also ensures only Test Results are included (not errors)
+    # This is a redundant safety mechanism, as the query already should not have returned
+    # any errors (errors cannot have 'property-id' and property keys)
+    final_TestResult = helpers.filter_on_item_versions_and_timestamp(results_from_query)
+
+    # Just in case the removal of errors reduced our list to zero
+    if len(final_TestResult)==0:
         return []
 
     final_output = []
-    for ind, key in enumerate(keys):
-        # First, check to make sure the key is actually in the property definition
-        if (key not in final_TestResult) and (
-            key + ".source-value" not in final_TestResult
-        ):
-            raise ValueError(
-                "Key '{}' specified as input to function get_test_result() is "
-                "not a valid part of the property definition specified or other metadata "
-                "associated with a Test Result".format(key)
-            )
-        key_value_in_desired_units = helpers.extract_key_from_result(
-            final_TestResult, key, units[ind]
-        )
-        final_output.append(key_value_in_desired_units)
+    for result in final_TestResult:
+        inner_output=[]
+        for ind, key in enumerate(keys):
+            if (key not in result) and (
+                key + ".source-value" not in result
+            ):
+                # Because the KDP may be using in-development properties, here the KDP
+                # differs from the production pipeline in that the KDP does not do
+                # any checking against property definitions, just returns None
+                # for missing keys.
+                inner_output.append(None)
+            else:
+                key_value_in_desired_units = helpers.extract_key_from_result(
+                    result, key, units[ind]
+                )
+                inner_output.append(key_value_in_desired_units)
+        final_output.append(inner_output)    
 
     return final_output
 

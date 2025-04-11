@@ -191,7 +191,7 @@ class Computation:
         subject=None,
         result_code="",
         verbose=False,
-        verify=True,
+        verify=False,
     ):
         """
         A pipeline computation object that utilizes all of the pipeline
