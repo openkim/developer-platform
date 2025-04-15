@@ -34,21 +34,22 @@ ARG PIP=pip3 --no-cache-dir
 ARG PYTHON=python3
 RUN ${PIP} install wheel==0.36.2
 RUN ${PIP} install setuptools==54.0.0
-RUN ${PIP} install packaging==20.9
+RUN ${PIP} install packaging
 RUN ${PIP} install markupsafe==2.0.1
 RUN ${PIP} install Jinja2==2.11.3
 RUN ${PIP} install edn_format==0.7.5
 RUN ${PIP} install kim-edn==1.4.1
-RUN ${PIP} install kim-property==2.6.3
-RUN ${PIP} install kim-query==3.0.0
+RUN ${PIP} install kim-property==2.6.7
+RUN ${PIP} install kim-query==4.0.0
 RUN ${PIP} install simplejson==3.17.2
 RUN ${PIP} install numpy==1.26.4
 RUN ${PIP} install scipy==1.12.0
 RUN ${PIP} install matplotlib==3.8.3
 RUN ${PIP} install pymongo==3.11.3
-RUN ${PIP} install montydb==2.1.1
+RUN ${PIP} install montydb==2.5.3
 RUN ${PIP} install pybind11==2.6.2
 RUN ${PIP} install spglib==2.3.1
+RUN ${PIP} install numdifftools==0.9.41
 
 #########################################
 ## MD++
@@ -70,7 +71,7 @@ RUN cd ${PACKAGE_DIR}/MD++ \
 #########################################
 ## KIM API
 #########################################
-ARG KIM_API_VER=2.3.0
+ARG KIM_API_VER=2.4.0
 ARG KIM_API_PACKAGE=kim-api-${KIM_API_VER}
 ARG KIM_API_ARCHIVE_TXZ=${KIM_API_PACKAGE}.txz
 RUN cd ${PACKAGE_DIR} \
@@ -80,23 +81,17 @@ RUN cd ${PACKAGE_DIR} \
  && cd ${KIM_API_PACKAGE} \
  && mkdir build && cd build \
  && cmake .. -DCMAKE_BUILD_TYPE=Release \
- && make -j2 && make install \
+ && make -j4 && make install \
  && cd ${PACKAGE_DIR} \
  && cp ${KIM_API_PACKAGE}/build/install_manifest.txt kim_api_install_manifest.txt \
  && rm -r ${KIM_API_PACKAGE} \
  && ldconfig
 
 #########################################
-## numdifftools
-#########################################
-RUN cd ${PACKAGE_DIR}/numdifftools \
- && ${PIP} install . 
-
-#########################################
 ## kimpy
 #########################################
 # NOTE: Must be installed after KIM API
-RUN ${PIP} install kimpy==2.1.0
+RUN ${PIP} install kimpy==2.1.2
 
 #########################################
 ## LAMMPS
@@ -127,7 +122,7 @@ RUN cd ${PACKAGE_DIR}/lammps/ \
       -D PKG_CORESHELL=yes \
       -D PKG_EXTRA-FIX=yes \
       ../cmake \
- && make -j2 \
+ && make -j4 \
  && make install \
  && apt-get update -qq \
  && apt-get install --no-install-recommends -qqy python3-venv \
@@ -184,7 +179,7 @@ RUN cd ${PACKAGE_DIR} \
  && tar xJf ${AFLOW_ARCHIVE_TXZ} \
  && rm ${AFLOW_ARCHIVE_TXZ} \
  && cd ${AFLOW_PACKAGE} \
- && make -j2 aflow \
+ && make -j4 aflow \
  && cp aflow /usr/local/bin \
  && touch /usr/local/bin/aflow_data \
  && chmod +x /usr/local/bin/aflow_data \

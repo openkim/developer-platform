@@ -71,7 +71,7 @@ def query_mongo(query, local=False, decode=False):
     return answer
 
 
-def get_test_result(test, model, species, prop, keys, units, local=False, decode=False):
+def get_test_result(test, model, prop, keys, units, local=False, decode=False):
 
     url = cf.PIPELINE_REMOTE_QUERY_ADDRESS + "/get_test_result"
     use_SSL = True
@@ -81,7 +81,6 @@ def get_test_result(test, model, species, prop, keys, units, local=False, decode
     d = {}
     d["test"] = test
     d["model"] = model
-    d["species"] = json.dumps(species)
     d["prop"] = prop
     d["keys"] = json.dumps(keys)
     d["units"] = json.dumps(units)

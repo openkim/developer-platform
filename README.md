@@ -166,7 +166,7 @@ control must be done on a container-by-container basis.
 ## IDEs (VSCode and Jupyter Lab)
 
 To work inside the container using VSCode, you can use the "Dev Containers"
-extension which should be installed by default. Select "Remote Explorer" in
+extension. Select "Remote Explorer" in
 the left sidebar, then choose "Dev Containers" in the drop down menu. Your
 container should be under "Other Containers", and you can attach VSCode to it
 using one of the icons on the right. See image below with relevant UI elements:

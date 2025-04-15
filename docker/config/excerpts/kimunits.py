@@ -60,11 +60,19 @@ def convert_units(from_value, from_unit, wanted_unit=None, suppress_unit=False):
     from_value = str(abs(from_value))
     from_unit = str(from_unit)
 
+    TEMPERATURE_FUNCTION_UNITS=["degC","tempC","degF","tempF"]
+
+    if from_unit in TEMPERATURE_FUNCTION_UNITS :
+        args = ['units','-o', '%1.15e', '-qt1', ''.join((from_unit,'(',from_value,')'))]
+
+    else :
+        args = ['units','-o', '%1.15e', '-qt1', ' '.join((from_value, from_unit))]
+
+    if wanted_unit:
+        args.append(wanted_unit)
+
     try:
-        args = ["units", "-o", "%1.15e", "-qt1", " ".join((from_value, from_unit))]
-        if wanted_unit:
-            args.append(wanted_unit)
-        output = subprocess.check_output(args).decode("utf-8")
+        output = subprocess.check_output(args).decode('utf-8')
     except subprocess.CalledProcessError:
         tag = wanted_unit if wanted_unit else "SI"
         raise UnitConversion(
