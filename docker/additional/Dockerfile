@@ -17,7 +17,7 @@ RUN apt-get update -qq \
 ## OVITO
 #########################################
 ARG PIP=pip3 --no-cache-dir
-RUN ${PIP} install PySide2==5.15.2
+RUN ${PIP} install PySide2==5.15.2.1
 
 # Disable dependencies to avoid upgrading numpy unnecessarily
 RUN ${PIP} install --no-dependencies ovito==3.4.3
