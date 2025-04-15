@@ -4,7 +4,7 @@
 #
 # This software may be distributed as-is, without modification.
 #
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 # This is the common base layer used for all user-facing kim environments,
 # and includes all of the apt-get installs

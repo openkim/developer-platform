@@ -9,7 +9,7 @@ ARG IMAGE_INSTALL
 FROM ${IMAGE_INSTALL} AS install
 
 # Import all sys-level libs/utils
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 # Grab only system directories from 'install' image
 COPY --from=install /usr /usr
