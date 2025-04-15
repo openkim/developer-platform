@@ -20,7 +20,7 @@ ARG PIP=pip3 --no-cache-dir
 RUN ${PIP} install PySide2==5.15.2.1
 
 # Disable dependencies to avoid upgrading numpy unnecessarily
-RUN ${PIP} install --no-dependencies ovito==3.4.3
+RUN ${PIP} install --no-dependencies ovito==3.6.0
 
 # Revert to user 'openkim'
 USER openkim
