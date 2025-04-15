@@ -32,8 +32,8 @@ RUN if [ ! -f "/usr/bin/pip" ]; then \
 
 ARG PIP=pip3 --no-cache-dir
 ARG PYTHON=python3
-RUN ${PIP} install wheel==0.36.2
-RUN ${PIP} install setuptools==54.0.0
+RUN ${PIP} install wheel
+RUN ${PIP} install setuptools
 RUN ${PIP} install packaging
 RUN ${PIP} install markupsafe==2.0.1
 RUN ${PIP} install Jinja2==2.11.3
