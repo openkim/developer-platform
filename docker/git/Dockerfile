@@ -24,6 +24,6 @@ RUN git clone -q https://gitlab.com/openkim/ase -b user-species ${PACKAGE_DIR}/a
 RUN git clone -q https://gitlab.com/micronano_public/MDpp -b release ${PACKAGE_DIR}/MD++ \
   && cd ${PACKAGE_DIR}/MD++ \
   && git checkout f7d64a7720a4bc1602371a128c8db7779fcf8dcb
-RUN git clone -q https://github.com/openkim/kim-tools -b devel ${PACKAGE_DIR}/kim-tools \
+RUN git clone -q https://github.com/openkim/kim-tools -b main ${PACKAGE_DIR}/kim-tools \
   && cd ${PACKAGE_DIR}/kim-tools \
-  && git checkout 38e952bbc6d77ad397612762b67ad1ef8471d82a
+  && git checkout 06e0bc746d249e9e302de0c1b4bd7c5b95f50552
