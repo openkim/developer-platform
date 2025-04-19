@@ -32,8 +32,13 @@ RUN if [ ! -f "/usr/bin/pip" ]; then \
 
 ARG PIP=pip3 --no-cache-dir
 ARG PYTHON=python3
-RUN ${PIP} install wheel
-RUN ${PIP} install setuptools
+
+# Required for newer pyproject.toml-based builds like ASE 3.25
+RUN ${PIP} install --upgrade pip
+# Breaking changes in setuptools and packaging 
+# are exceedingly rare, I am comfortable setting
+# them to latest.
+RUN ${PIP} install --upgrade setuptools
 RUN ${PIP} install packaging
 RUN ${PIP} install markupsafe==2.0.1
 RUN ${PIP} install Jinja2==2.11.3

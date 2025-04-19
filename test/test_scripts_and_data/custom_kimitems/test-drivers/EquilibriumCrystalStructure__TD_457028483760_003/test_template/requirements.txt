@@ -1,0 +1,2 @@
+kim-tools>=0.2.0b
+numpy

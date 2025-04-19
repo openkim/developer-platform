@@ -1,0 +1,4 @@
+alloy_refdata_generators export-ignore
+alloy_test_generators export-ignore
+Refdata export-ignore
+README.rst -export-ignore
