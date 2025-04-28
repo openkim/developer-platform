@@ -38,6 +38,7 @@ TEMP_INPUT_INFO_FILE=pipeline.stdin.info
 STDOUT_FILE=pipeline.stdout
 STDERR_FILE=pipeline.stderr
 KIMLOG_FILE=kim.log
+KIM_TOOLS_LOG_FILE=kim-tools.log
 RESULT_FILE=results.edn
 EXCEPTION_FILE=pipeline.exception
 PIPELINESPEC_FILE=pipelinespec.edn

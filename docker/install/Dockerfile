@@ -55,6 +55,7 @@ RUN ${PIP} install montydb==2.5.3
 RUN ${PIP} install pybind11==2.6.2
 RUN ${PIP} install spglib==2.3.1
 RUN ${PIP} install numdifftools==0.9.41
+RUN ${PIP} install kim-tools==0.2.0b0
 
 #########################################
 ## MD++
@@ -156,12 +157,6 @@ RUN cd ${PACKAGE_DIR}/kim-python-utils \
 ## crystal-genome-util
 #########################################
 RUN cd ${PACKAGE_DIR}/crystal-genome-util \
- && ${PIP} install .
-
-#########################################
-## kim-tools
-#########################################
-RUN cd ${PACKAGE_DIR}/kim-tools \
  && ${PIP} install .
 
 #########################################

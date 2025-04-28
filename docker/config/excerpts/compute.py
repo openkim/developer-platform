@@ -305,6 +305,9 @@ class Computation:
         _kimlog_file = os.path.join(
             cf.OUTPUT_DIR, cf.KIMLOG_FILE  # pylint: disable=E1101
         )
+        _kim_tools_log_file = os.path.join(
+            cf.OUTPUT_DIR, cf.KIM_TOOLS_LOG_FILE  # pylint: disable=E1101
+        )
 
         # run the runner in its own directory
         with self.runner_temp.in_dir():
@@ -330,6 +333,10 @@ class Computation:
                     with self.runner_temp.in_dir():
                         if os.path.exists("./kim.log"):
                             shutil.copy2("./kim.log", _kimlog_file)
+                    # Attempt to copy kim-tools.log over to output dir
+                    with self.runner_temp.in_dir():
+                        if os.path.exists("./kim-tools.log"):
+                            shutil.copy2("./kim-tools.log", _kim_tools_log_file)
                     process.terminate()
 
                 end_time = time.time()
@@ -340,6 +347,10 @@ class Computation:
         with self.runner_temp.in_dir():
             if os.path.exists("./kim.log"):
                 shutil.copy2("./kim.log", _kimlog_file)
+        # Attempt to copy kim-tools.log over to output dir, even if we errored out
+        with self.runner_temp.in_dir():
+            if os.path.exists("./kim-tools.log"):
+                shutil.copy2("./kim-tools.log", _kim_tools_log_file)
 
         if self.retcode != 0:
             raise cf.KIMRuntimeError(
@@ -555,8 +566,16 @@ class Computation:
         _kimlog_file_path = os.path.join(
             cf.OUTPUT_DIR, cf.KIMLOG_FILE  # pylint: disable=E1101
         )
+        _kim_tools_log_file_path = os.path.join(
+            cf.OUTPUT_DIR, cf.KIM_TOOLS_LOG_FILE  # pylint: disable=E1101
+        )
 
-        file_paths = [_stdout_file_path, _stderr_file_path, _kimlog_file_path]
+        file_paths = [
+            _stdout_file_path,
+            _stderr_file_path,
+            _kimlog_file_path,
+            _kim_tools_log_file_path
+            ]
         tails = last_output_lines(self.runner_temp, file_paths)
 
         outs = trace + "\n"
