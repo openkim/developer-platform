@@ -372,8 +372,8 @@ class KIMObject:
                             stderr=stderr,
                         )
 
-            except:
-                raise cf.KIMBuildError("Could not build {}".format(self.kim_code))
+            except Exception as e:
+                raise cf.KIMBuildError(f"Could not build {self.kim_code} due to the following exception:\n{e}")
 
         self.built = True
 
