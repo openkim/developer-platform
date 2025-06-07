@@ -55,7 +55,7 @@ RUN ${PIP} install montydb==2.5.3
 RUN ${PIP} install pybind11==2.6.2
 RUN ${PIP} install spglib==2.3.1
 RUN ${PIP} install numdifftools==0.9.41
-RUN ${PIP} install kim-tools==0.2.4
+RUN ${PIP} install kim-tools==0.2.5
 
 #########################################
 ## MD++
@@ -127,6 +127,7 @@ RUN cd ${PACKAGE_DIR}/lammps/ \
       -D PKG_EXTRA-PAIR=yes \
       -D PKG_CORESHELL=yes \
       -D PKG_EXTRA-FIX=yes \
+      -D PKG_ML-PACE=yes \
       ../cmake \
  && make -j4 \
  && make install \
