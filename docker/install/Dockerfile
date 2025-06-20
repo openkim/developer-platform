@@ -55,7 +55,7 @@ RUN ${PIP} install montydb==2.5.3
 RUN ${PIP} install pybind11==2.6.2
 RUN ${PIP} install spglib==2.3.1
 RUN ${PIP} install numdifftools==0.9.41
-RUN ${PIP} install kim-tools==0.2.5
+RUN ${PIP} install kim-tools==0.3.0
 
 #########################################
 ## MD++
@@ -146,19 +146,25 @@ RUN cd ${PACKAGE_DIR}/lammps/ \
 ## OpenKIM ASE fork
 #########################################
 RUN cd ${PACKAGE_DIR}/ase/ \
- && ${PIP} install .
+ && ${PIP} install . \
+ && cd ${PACKAGE_DIR} \
+ && rm -r ${PACKAGE_DIR}/ase
 
 #########################################
 ## kim-python-utils
 #########################################
 RUN cd ${PACKAGE_DIR}/kim-python-utils \
- && ${PIP} install .
+ && ${PIP} install . \
+ && cd ${PACKAGE_DIR} \
+ && rm -r ${PACKAGE_DIR}/kim-python-utils
  
 #########################################
 ## crystal-genome-util
 #########################################
 RUN cd ${PACKAGE_DIR}/crystal-genome-util \
- && ${PIP} install .
+ && ${PIP} install . \
+ && cd ${PACKAGE_DIR} \
+ && rm -r ${PACKAGE_DIR}/crystal-genome-util
 
 #########################################
 ## convergence
@@ -167,22 +173,22 @@ RUN cd ${PACKAGE_DIR} \
  && tar xJf convergence.txz \
  && rm convergence.txz \
  && cd convergence \
- && ${PIP} install .
+ && ${PIP} install . \
+ && cd ${PACKAGE_DIR} \
+ && rm -r ${PACKAGE_DIR}/convergence
 
 #########################################
 ## AFLOW
 #########################################
-ARG AFLOW_VER=3.2.14
-ARG AFLOW_PACKAGE=aflow.${AFLOW_VER}
-ARG AFLOW_ARCHIVE_TXZ=${AFLOW_PACKAGE}.tar.xz
+ARG AFLOW_VER=4.0.5
+ARG AFLOW_ARCHIVE=aflow-${AFLOW_VER}-ubuntu22-amd64.tar.gz
+ARG AFLOW_URL=https://github.com/aflow-org/aflow/releases/download/v${AFLOW_VER}/${AFLOW_ARCHIVE}
+ARG AFLOW_DUIR=$aflow-${AFLOW_VER}-Linux
+ARG AFLOW_EXEC=${AFLOW_DIR}/bin/aflow
 RUN cd ${PACKAGE_DIR} \
- && wget -q http://materials.duke.edu/AFLOW/${AFLOW_ARCHIVE_TXZ} \
- && tar xJf ${AFLOW_ARCHIVE_TXZ} \
- && rm ${AFLOW_ARCHIVE_TXZ} \
- && cd ${AFLOW_PACKAGE} \
- && make -j4 aflow \
- && cp aflow /usr/local/bin \
- && touch /usr/local/bin/aflow_data \
- && chmod +x /usr/local/bin/aflow_data \
+ && wget -q ${AFLOW_URL} \
+ && tar xf ${AFLOW_ARCHIVE} \
+ && rm ${AFLOW_ARCHIVE} \
+ && cp ${AFLOW_EXEC} /usr/local/bin \
  && cd ${PACKAGE_DIR} \
- && rm -r ${AFLOW_PACKAGE}
+ && rm -r ${PACKAGE_DIR}/${AFLOW_DIR}
