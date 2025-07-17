@@ -128,10 +128,10 @@ RUN echo "" >> ${BASHRC} \
     && echo "alias pipeline-run-pair='disable_globbing_for_next_command_and_restore;pipeline-run-pair';pipeline-run-pair(){ command pipeline-run-pair \"\$@\";set +f;};" >> ${BASHRC} \
     && echo "alias pipeline-run-tests='disable_globbing_for_next_command_and_restore;pipeline-run-tests';pipeline-run-tests(){ command pipeline-run-tests \"\$@\";set +f;};" >> ${BASHRC} \
     && echo "alias pipeline-run-verification-checks='disable_globbing_for_next_command_and_restore;pipeline-run-verification-checks';pipeline-run-verification-checks(){ command pipeline-run-verification-checks \"\$@\";set +f;};" >> ${BASHRC} \
-    && echo "" >> ${BASHRC}
-    && echo "stty -ixon" >> ${BASHRC} 
-    && echo "" >> ${BASHRC}
-    && echo "source /home/openkim/.git-completion.bash" >> ${BASHRC} 
+    && echo "" >> ${BASHRC} \
+    && echo "stty -ixon" >> ${BASHRC} \
+    && echo "" >> ${BASHRC} \
+    && echo "source /home/openkim/.git-completion.bash" >> ${BASHRC} \
     && echo "" >> ${BASHRC}
 
 RUN chmod 4755 /usr/bin/sudo
