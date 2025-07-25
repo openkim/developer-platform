@@ -44,7 +44,7 @@ RUN ${PIP} install markupsafe==2.0.1
 RUN ${PIP} install Jinja2==2.11.3
 RUN ${PIP} install edn_format==0.7.5
 RUN ${PIP} install kim-edn==1.4.1
-RUN ${PIP} install kim-property==2.6.9
+RUN ${PIP} install kim-property==2.6.10
 RUN ${PIP} install kim-query==4.0.0
 RUN ${PIP} install simplejson==3.17.2
 RUN ${PIP} install numpy==1.26.4
@@ -55,8 +55,25 @@ RUN ${PIP} install montydb==2.5.3
 RUN ${PIP} install pybind11==2.6.2
 RUN ${PIP} install spglib==2.3.1
 RUN ${PIP} install numdifftools==0.9.41
-RUN ${PIP} install kim-tools==0.3.6
-RUN ${PIP} install kimvv==0.1.1
+RUN ${PIP} install kim-tools==0.3.7
+RUN ${PIP} install kimvv==0.1.2
+
+#########################################
+## OpenMPI
+#########################################
+ARG OPENMPI_MINOR_VER=5.0
+ARG OPENMPI_FULL_VER=5.0.8
+ARG OPENMPI_PACKAGE=openmpi-${OPENMPI_FULL_VER}
+ARG OPENMPI_ARCHIVE_TXZ=${OPENMPI_PACKAGE}.tar.gz
+RUN cd ${PACKAGE_DIR} \
+ && wget -q https://download.open-mpi.org/release/open-mpi/v${OPENMPI_MINOR_VER}/${OPENMPI_ARCHIVE_TXZ} \
+ && tar xzf ${OPENMPI_ARCHIVE_TXZ} \
+ && rm ${OPENMPI_ARCHIVE_TXZ} \
+ && cd ${OPENMPI_PACKAGE} \
+ && ./configure \
+ && make -j4 && make install \
+ && cd ${PACKAGE_DIR} \
+ && rm -r ${OPENMPI_PACKAGE}
 
 #########################################
 ## MD++

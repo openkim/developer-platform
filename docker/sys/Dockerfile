@@ -32,8 +32,6 @@ RUN apt-get update -qq \
  make \
  g++ \
  gfortran \
- libopenmpi-dev \
- openmpi-bin \
  units \
  pkg-config \
  valgrind \
