@@ -1,0 +1,65 @@
+# Workflow for automatically upversioning a PyPI package
+# in the KDP. Only works if the name of the package on PyPI is the
+# same as the name of the issuing repo
+
+on: 
+  workflow_call:
+    secrets:
+        DEVELOPER_PLATFORM_PUSH_AND_PR_TOKEN:
+            required: true
+
+name: send-pr-on-release
+
+jobs:
+  send-pull-requests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send pull-request
+        run: |
+          TARGET_REPOSITORY_USER="openkim"
+          TARGET_REPOSITORY="developer-platform"
+
+          # Cut the username off the repository invoking the workflow
+          DEPENDENCY_REPOSITORY=$(cut -d'/' -f 2 <<< "$GITHUB_REPOSITORY")
+          # Cut the "refs/tags/" off the tag that triggered this
+          RELEASE_TAG=$(cut -d'/' -f 3 <<< "$GITHUB_REF")
+          # Strip off the leading "v" from the release tag, if present
+          PYPI_VERSION=$(sed -n 's/^v*\([0-9]\+.[0-9]\+.[0-9]\)/\1/p' <<< "$RELEASE_TAG")
+          # check that the sed pattern matched something
+          [[ "$PYPI_VERSION" != "" ]]
+ 
+          BRANCH_NAME="update-$DEPENDENCY_REPOSITORY-to-$RELEASE_TAG"
+          
+          # Store the PAT in a file that can be accessed by the
+          # GitHub CLI.
+          echo "${{ secrets.DEVELOPER_PLATFORM_PUSH_AND_PR_TOKEN }}" > token.txt
+          gh auth login --with-token < token.txt
+          gh auth setup-git
+
+          # Clone the remote repository and change working directory to the
+          # folder it was cloned to.
+          gh repo clone $TARGET_REPOSITORY_USER/$TARGET_REPOSITORY
+          cd $TARGET_REPOSITORY
+
+          # Setup the committers identity.
+          git config user.email "nikif002@umn.com"
+          git config user.name "ilia's robot"
+
+          # Create a new feature branch for the changes.
+          git checkout -b $BRANCH_NAME
+
+          # Search-replace the package name and version
+          sed -i 's/RUN ${PIP} install '${DEPENDENCY_REPOSITORY}'==[0-9]\+.[0-9]\+.[0-9]\+/RUN ${PIP} install '${DEPENDENCY_REPOSITORY}'=='${PYPI_VERSION}'/g' docker/install/Dockerfile
+
+          # Commit the changes and push the feature branch to origin
+          git add .
+          git commit -m "update $DEPENDENCY_REPOSITORY to $RELEASE_TAG"
+          git push origin $BRANCH_NAME
+
+          # Authorize GitHub CLI for the current repository and
+          # create a pull-requests containing the updates.
+          gh pr create \
+            --body "Automatic PR to upversion $DEPENDENCY_REPOSITORY to $RELEASE_TAG" \
+            --title "update $DEPENDENCY_REPOSITORY to $RELEASE_TAG" \
+            --head "$BRANCH_NAME" \
+            --base "main"
