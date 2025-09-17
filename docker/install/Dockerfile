@@ -56,7 +56,7 @@ RUN ${PIP} install pybind11==2.6.2
 RUN ${PIP} install spglib==2.3.1
 RUN ${PIP} install numdifftools==0.9.41
 RUN ${PIP} install kim-tools==0.3.13
-RUN ${PIP} install kimvv==0.1.5
+RUN ${PIP} install kimvv==0.1.6
 
 #########################################
 ## OpenMPI
