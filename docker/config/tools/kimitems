@@ -38,7 +38,7 @@ description_wrap = TextWrapper(
 RE_KIMID = re.compile(
     r"^(?:([_a-zA-Z][_a-zA-Z0-9]*?)__)?([A-Z]{2})_([0-9]{12})(?:_([0-9]{3}))?$"
 )
-MAX_URLLIB_ATTEMPTS = 10
+MAX_URLLIB_ATTEMPTS = 20
 URLLIB_RETRY_TIMEOUT = 10
 
 
