@@ -7,7 +7,9 @@ This software may be distributed as-is, without modification.
 """
 import sys
 import json
-import urllib.request, urllib.parse, urllib.error
+import urllib.request
+import urllib.error
+import time
 import tarfile
 import re
 import os
@@ -36,6 +38,8 @@ description_wrap = TextWrapper(
 RE_KIMID = re.compile(
     r"^(?:([_a-zA-Z][_a-zA-Z0-9]*?)__)?([A-Z]{2})_([0-9]{12})(?:_([0-9]{3}))?$"
 )
+MAX_URLLIB_ATTEMPTS = 10
+URLLIB_RETRY_TIMEOUT = 10
 
 
 def unique(seq):
@@ -149,7 +153,22 @@ def download(obj, tmp=False, compression="txz"):
     if tmp:
         outname = "tmp" + uuid.uuid1().hex + outname
 
-    urllib.request.urlretrieve(url, outname)
+    for i in range(MAX_URLLIB_ATTEMPTS):
+        try:
+            urllib.request.urlretrieve(url, outname)
+        except urllib.error.HTTPError as e:
+            print(
+                "Failed to download item with the following HTTP error:\n"
+                + repr(e)
+            )
+            print(
+                f"Retrying in {URLLIB_RETRY_TIMEOUT} seconds..."
+            )
+            if i == MAX_URLLIB_ATTEMPTS - 1:
+                print("Max download retries exceeded.")
+                raise e
+            else:
+                time.sleep(URLLIB_RETRY_TIMEOUT)
 
     return os.path.abspath(outname)
 
