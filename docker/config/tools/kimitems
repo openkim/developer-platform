@@ -8,7 +8,6 @@ This software may be distributed as-is, without modification.
 import sys
 import json
 import urllib.request
-import urllib.error
 import time
 import tarfile
 import re
@@ -156,9 +155,9 @@ def download(obj, tmp=False, compression="txz"):
     for i in range(MAX_URLLIB_ATTEMPTS):
         try:
             urllib.request.urlretrieve(url, outname)
-        except urllib.error.HTTPError as e:
+        except Exception as e:
             print(
-                "Failed to download item with the following HTTP error:\n"
+                "Failed to download item with the following exception:\n"
                 + repr(e)
             )
             print(
