@@ -319,7 +319,7 @@ jobs:
           
           # Replace the first line of the Dockerfile with the new version
           echo "FROM ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}-minimal" > Dockerfile_
-          tail -n +2 Dockerfile > Dockerfile_
+          tail -n +2 Dockerfile >> Dockerfile_
           mv Dockerfile_ Dockerfile
           git add Dockerfile
           git commit -m "upversion KDP base image"
