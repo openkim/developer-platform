@@ -3,8 +3,13 @@
 ## ALPHA TORCHML INSTRUCTIONS
 To test, run
 ```
-docker run --rm --gpus all ghcr.io/openkim/developer-platform:v2.0.0-alpha.0-torchml-alpha bash -c "kimitems install TorchML_MACE_GuptaTadmorMartiniani_2024_Si__MO_781946209112_001 && export KIM_MODEL_EXECUTION_DEVICE=cuda && python scratch.py"
+docker run --rm --gpus all -it ghcr.io/openkim/developer-platform:v2.0.0-alpha.0-torchml-alpha
 ```
+This will launch an interactive session in the container. Inside, run
+```
+kimitems install TorchML_MACE_GuptaTadmorMartiniani_2024_Si__MO_781946209112_001 && export KIM_MODEL_EXECUTION_DEVICE=cuda && python scratch.py
+``
+
 Remove the GPU options as needed if you want to run CPU. Note that this will pull a 15GB image, and the model is large, so it will take a long time to download, install, and run everything.
 
 ## Background
