@@ -37,8 +37,10 @@ COPY external_files/vimrc /home/openkim/.vimrc
 # Copy instructions for pipeline utils into home directory
 COPY instructions/README.txt /home/openkim/
 COPY install_torchml_deps.sh /home/openkim/
+COPY scratch.py /home/openkim/
 
 RUN chmod 644 /home/openkim/README.txt
+RUN chmod 644 /home/openkim/scratch.py
 # TODO: Proper permission
 RUN chmod 777 /home/openkim/install_torchml_deps.sh
 
