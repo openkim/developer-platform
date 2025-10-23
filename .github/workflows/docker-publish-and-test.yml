@@ -232,7 +232,7 @@ jobs:
           build-args: |
             "IMAGE_INSTALL=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_INSTALL }}"
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}-torchml-alpha
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}-minimal
           labels: ${{ steps.meta.outputs.labels }}
 
       # List docker images in local repository to confirm exactly what tags were
