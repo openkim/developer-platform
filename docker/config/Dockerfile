@@ -36,7 +36,11 @@ COPY external_files/vimrc /home/openkim/.vimrc
 
 # Copy instructions for pipeline utils into home directory
 COPY instructions/README.txt /home/openkim/
+COPY install_torchml_deps.sh /home/openkim/
+
 RUN chmod 644 /home/openkim/README.txt
+# TODO: Proper permission
+RUN chmod 777 /home/openkim/install_torchml_deps.sh
 
 COPY excerpts /pipeline/excerpts
 COPY tools /pipeline/tools
@@ -140,9 +144,18 @@ RUN chmod 4755 /usr/bin/sudo
 RUN chown -R openkim:openkim /home/openkim/
 RUN chown -R openkim:openkim /pipeline/
 
+# Set up CUDA repo and install CUDA and set paths
+RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.0-1_all.deb
+RUN dpkg -i cuda-keyring_1.0-1_all.deb
+RUN apt update
+RUN apt install cuda-toolkit-11-7 unzip -y --no-install-recommends
+RUN rm cuda-keyring_1.0-1_all.deb
+
 # parses /etc/ld.so.conf.d/libc.conf to permanently look for libraries in /usr/local/bin
 RUN ldconfig
 
 USER openkim
 
 WORKDIR /home/openkim/
+
+RUN ./install_torchml_deps.sh
