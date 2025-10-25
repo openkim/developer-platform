@@ -11,6 +11,8 @@ FROM ubuntu:22.04
 
 ## Install apt packages
 ARG DEBIAN_FRONTEND=noninteractive
+ENV CUDA_MAJOR_VER=11
+ENV CUDA_MINOR_VER=7
 RUN apt-get update -qq \
  && apt-get install --no-install-recommends -qqy apt-utils \
  sudo \
@@ -38,5 +40,12 @@ RUN apt-get update -qq \
  tree \
  libfreetype6-dev \
  git \
+ python3-venv \
+ unzip \
+ && wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.0-1_all.deb \
+ && dpkg -i cuda-keyring_1.0-1_all.deb \
+ && apt-get update -qq \
+ && apt-get install --no-install-recommends -qqy cuda-toolkit-${CUDA_MAJOR_VER}-${CUDA_MINOR_VER} \
  && apt-get clean \
  && rm -fr /var/lib/apt/lists/*
+ENV PATH="$PATH:/usr/local/cuda/bin"

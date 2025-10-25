@@ -108,8 +108,7 @@ RUN cd ${PACKAGE_DIR} \
  && make -j4 && make install \
  && cd ${PACKAGE_DIR} \
  && cp ${KIM_API_PACKAGE}/build/install_manifest.txt kim_api_install_manifest.txt \
- && rm -r ${KIM_API_PACKAGE} \
- && ldconfig
+ && rm -r ${KIM_API_PACKAGE}
 
 #########################################
 ## kimpy
@@ -118,9 +117,62 @@ RUN cd ${PACKAGE_DIR} \
 RUN ${PIP} install kimpy==2.1.3
 
 #########################################
+## cuDNN
+#########################################
+ARG CUDNN_VER=8.9.7.29
+ARG CUDNN_PACKAGE=cudnn-linux-x86_64-${CUDNN_VER}_cuda${CUDA_MAJOR_VER}-archive
+ARG CUDNN_ARCHIVE_TXZ=${CUDNN_PACKAGE}.tar.xz
+RUN cd ${PACKAGE_DIR} \
+ && wget -q https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-x86_64/${CUDNN_ARCHIVE_TXZ} \
+ && tar xJf ${CUDNN_ARCHIVE_TXZ} \
+ && rm ${CUDNN_ARCHIVE_TXZ} \
+ && cp -r ${CUDNN_PACKAGE}/* /usr/local/ \
+ && rm -r ${CUDNN_PACKAGE}
+ 
+#########################################
+## libtorch
+#########################################
+ARG LIBTORCH_VER=1.13.0
+ARG LIBTORCH_ARCHIVE_ZIP=libtorch-cxx11-abi-shared-with-deps-${LIBTORCH_VER}+cu${CUDA_MAJOR_VER}${CUDA_MINOR_VER}.zip
+RUN cd ${PACKAGE_DIR} \
+ && wget -q https://download.pytorch.org/libtorch/cu117/libtorch-cxx11-abi-shared-with-deps-${LIBTORCH_VER}%2Bcu${CUDA_MAJOR_VER}${CUDA_MINOR_VER}.zip \
+ && unzip ${LIBTORCH_ARCHIVE_ZIP} \
+ && rm ${LIBTORCH_ARCHIVE_ZIP} \
+ && rm libtorch/build-* \
+ && cp -r libtorch/* /usr/local/ \
+ && rm -r libtorch
+
+#########################################
+## pytorch_scatter
+#########################################
+RUN cd ${PACKAGE_DIR}/pytorch_scatter/ \
+ && mkdir build && cd build \
+ && cmake \
+      -D CMAKE_BUILD_TYPE=Release \
+      -D CMAKE_INSTALL_PREFIX=/usr/local/ \
+      -DWITH_CUDA=on \
+      -DTORCH_CUDA_ARCH_LIST=Common \
+      .. \
+ && make -j4 install
+
+#########################################
+## pytorch_sparse
+#########################################
+RUN cd ${PACKAGE_DIR}/pytorch_sparse/ \
+ && mkdir build && cd build \
+ && cmake \
+      -D CMAKE_BUILD_TYPE=Release \
+      -D CMAKE_INSTALL_PREFIX=/usr/local/ \
+      -DWITH_CUDA=on \
+      -DTORCH_CUDA_ARCH_LIST=Common \
+      .. \
+ && make -j4 install
+
+RUN ldconfig
+
+#########################################
 ## LAMMPS
 #########################################
-ARG DEBIAN_FRONTEND=noninteractive
 RUN cd ${PACKAGE_DIR}/lammps/ \
  && mkdir build && cd build \
  && cmake \
@@ -149,12 +201,7 @@ RUN cd ${PACKAGE_DIR}/lammps/ \
       ../cmake \
  && make -j4 \
  && make install \
- && apt-get update -qq \
- && apt-get install --no-install-recommends -qqy python3-venv \
  && make install-python \
- && apt-get purge -y python3-venv \
- && apt-get clean \
- && rm -fr /var/lib/apt/lists/* \
  && ln -s /usr/local/bin/lmp /usr/local/bin/lammps \
  && rm -r /usr/local/share/lammps/potentials \
  && cd ${PACKAGE_DIR} \
@@ -210,3 +257,9 @@ RUN cd ${PACKAGE_DIR} \
  && cp ${AFLOW_EXEC} /usr/local/bin \
  && cd ${PACKAGE_DIR} \
  && rm -r ${PACKAGE_DIR}/${AFLOW_DIR}
+
+#########################################
+## Clean up packages that are unneeded after install
+#########################################
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get purge -y python3-venv unzip

@@ -24,3 +24,9 @@ RUN git clone -q https://gitlab.com/openkim/ase -b user-species ${PACKAGE_DIR}/a
 RUN git clone -q https://gitlab.com/micronano_public/MDpp -b release ${PACKAGE_DIR}/MD++ \
   && cd ${PACKAGE_DIR}/MD++ \
   && git checkout f7d64a7720a4bc1602371a128c8db7779fcf8dcb
+RUN git clone -q --recurse-submodules https://github.com/rusty1s/pytorch_scatter -b master ${PACKAGE_DIR}/pytorch_scatter \
+  && cd ${PACKAGE_DIR}/pytorch_scatter \
+  && git checkout fa4f442952955acf8fe9fcfb98b600f6ca6081b6
+RUN git clone -q --recurse-submodules https://github.com/rusty1s/pytorch_sparse -b master ${PACKAGE_DIR}/pytorch_sparse \
+  && cd ${PACKAGE_DIR}/pytorch_sparse \
+  && git checkout e55e8331ef2881b934036054cbcd39f8efcd4725  

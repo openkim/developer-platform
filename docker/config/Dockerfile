@@ -21,9 +21,15 @@ COPY --from=install /etc/sudoers /etc/sudoers
 ENV LANG C.UTF-8
 ENV LC_ALL C.UTF-8
 
+# Add cuda to PATH
+ENV PATH="$PATH:/usr/local/cuda/bin"
+
 ARG PACKAGE_DIR=/pipeline/packages/
 RUN mkdir -p ${PACKAGE_DIR}
 COPY --from=install ${PACKAGE_DIR}/kim_api_install_manifest.txt ${PACKAGE_DIR}
+# These seem to be necessary for include
+COPY --from=install ${PACKAGE_DIR}/pytorch_scatter ${PACKAGE_DIR}/pytorch_scatter
+COPY --from=install ${PACKAGE_DIR}/pytorch_sparse ${PACKAGE_DIR}/pytorch_sparse
 
 # Add user 'openkim' to group 'sudo' with password 'openkim'
 ARG USER=openkim
@@ -36,13 +42,7 @@ COPY external_files/vimrc /home/openkim/.vimrc
 
 # Copy instructions for pipeline utils into home directory
 COPY instructions/README.txt /home/openkim/
-COPY install_torchml_deps.sh /home/openkim/
-COPY scratch.py /home/openkim/
-
 RUN chmod 644 /home/openkim/README.txt
-RUN chmod 644 /home/openkim/scratch.py
-# TODO: Proper permission
-RUN chmod 777 /home/openkim/install_torchml_deps.sh
 
 COPY excerpts /pipeline/excerpts
 COPY tools /pipeline/tools
@@ -139,19 +139,11 @@ RUN echo "" >> ${BASHRC} \
     && echo "" >> ${BASHRC} \
     && echo "source /home/openkim/.git-completion.bash" >> ${BASHRC} \
     && echo "" >> ${BASHRC}
-
 RUN chmod 4755 /usr/bin/sudo
 
 # Assign ownership
 RUN chown -R openkim:openkim /home/openkim/
 RUN chown -R openkim:openkim /pipeline/
-
-# Set up CUDA repo and install CUDA and set paths
-RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.0-1_all.deb
-RUN dpkg -i cuda-keyring_1.0-1_all.deb
-RUN apt update
-RUN apt install cuda-toolkit-11-7 unzip -y --no-install-recommends
-RUN rm cuda-keyring_1.0-1_all.deb
 
 # parses /etc/ld.so.conf.d/libc.conf to permanently look for libraries in /usr/local/bin
 RUN ldconfig
@@ -159,5 +151,3 @@ RUN ldconfig
 USER openkim
 
 WORKDIR /home/openkim/
-
-RUN ./install_torchml_deps.sh
