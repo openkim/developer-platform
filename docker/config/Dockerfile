@@ -24,8 +24,9 @@ ENV LC_ALL C.UTF-8
 # Add cuda to PATH
 ENV PATH="$PATH:/usr/local/cuda/bin"
 
-# Build Torch libraries for common Nvidia configs by defauly
+# Build Torch libraries for common Nvidia configs by default
 ENV TORCH_CUDA_ARCH_LIST=Common
+ENV KIM_MODEL_MPI_AWARE=yes
 
 ARG PACKAGE_DIR=/pipeline/packages/
 RUN mkdir -p ${PACKAGE_DIR}
