@@ -44,7 +44,7 @@ RUN ${PIP} install markupsafe==2.0.1
 RUN ${PIP} install Jinja2==2.11.3
 RUN ${PIP} install edn_format==0.7.5
 RUN ${PIP} install kim-edn==1.4.1
-RUN ${PIP} install kim-property==2.6.12
+RUN ${PIP} install kim-property==2.6.13
 RUN ${PIP} install kim-query==4.0.0
 RUN ${PIP} install simplejson==3.17.2
 RUN ${PIP} install numpy==1.26.4
