@@ -6,6 +6,7 @@ reserved.
 
 This software may be distributed as-is, without modification.
 """
+
 import re
 
 from . import config as cf

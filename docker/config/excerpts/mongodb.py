@@ -4,11 +4,12 @@ reserved.
 
 This software may be distributed as-is, without modification.
 """
+
 import os
 import re
 import datetime
 
-from montydb import MontyClient,set_storage
+from montydb import MontyClient, set_storage
 
 from . import config as cf
 from . import util

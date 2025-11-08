@@ -6,6 +6,7 @@ reserved.
 
 This software may be distributed as-is, without modification.
 """
+
 VERSION = 0.3
 
 import re
@@ -31,11 +32,11 @@ def linear_fit(x, y):
     point as well. This is written this way so as to not add a numpy dependency
     """
     n = len(x)
-    xx = sum([x ** 2 for x in x]) - sum(x) ** 2 / n
+    xx = sum([x**2 for x in x]) - sum(x) ** 2 / n
     xy = sum(map(lambda x, y: x * y, x, y)) - sum(x) * sum(y) / n
     a, b = sum(y) / n - xy / xx * sum(x) / n, xy / xx
     yhat = [a + b * x for x in x]
-    yerr = math.sqrt(sum(map(lambda y, yh: (y - yh) ** 2 / y ** 2, y, yhat)) / n)
+    yerr = math.sqrt(sum(map(lambda y, yh: (y - yh) ** 2 / y**2, y, yhat)) / n)
     return a, b, yerr
 
 
@@ -60,19 +61,25 @@ def convert_units(from_value, from_unit, wanted_unit=None, suppress_unit=False):
     from_value = str(abs(from_value))
     from_unit = str(from_unit)
 
-    TEMPERATURE_FUNCTION_UNITS=["degC","tempC","degF","tempF"]
+    TEMPERATURE_FUNCTION_UNITS = ["degC", "tempC", "degF", "tempF"]
 
-    if from_unit in TEMPERATURE_FUNCTION_UNITS :
-        args = ['units','-o', '%1.15e', '-qt1', ''.join((from_unit,'(',from_value,')'))]
+    if from_unit in TEMPERATURE_FUNCTION_UNITS:
+        args = [
+            "units",
+            "-o",
+            "%1.15e",
+            "-qt1",
+            "".join((from_unit, "(", from_value, ")")),
+        ]
 
-    else :
-        args = ['units','-o', '%1.15e', '-qt1', ' '.join((from_value, from_unit))]
+    else:
+        args = ["units", "-o", "%1.15e", "-qt1", " ".join((from_value, from_unit))]
 
     if wanted_unit:
         args.append(wanted_unit)
 
     try:
-        output = subprocess.check_output(args).decode('utf-8')
+        output = subprocess.check_output(args).decode("utf-8")
     except subprocess.CalledProcessError:
         tag = wanted_unit if wanted_unit else "SI"
         raise UnitConversion(

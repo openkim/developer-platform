@@ -8,6 +8,7 @@ reserved.
 
 This software may be distributed as-is, without modification.
 """
+
 import os
 import sys
 import signal
@@ -204,7 +205,7 @@ class Computation:
                 to the appropriate location
             * verify : If True, the contents of results.edn will be verified to contain
                 valid KIM property instances when the output of the computation is
-                processed. 
+                processed.
         """
         self.runner = runner
         self.subject = subject
@@ -397,7 +398,7 @@ class Computation:
                     "the Test or Verification Check ({}) is not valid "
                     "EDN".format(_result_file_path)
                 )
-            
+
             if self.verify:
                 # Check whether the entries in results file are valid
                 # property instances
@@ -574,8 +575,8 @@ class Computation:
             _stdout_file_path,
             _stderr_file_path,
             _kimlog_file_path,
-            _kim_tools_log_file_path
-            ]
+            _kim_tools_log_file_path,
+        ]
         tails = last_output_lines(self.runner_temp, file_paths)
 
         outs = trace + "\n"
@@ -689,7 +690,9 @@ def test_result_valid(flname):
         https://github.com/openkim/kim-property
     """
     try:
-        kim_property.check_property_instances(fi=flname, fp_path=kim_property.get_properties())
+        kim_property.check_property_instances(
+            fi=flname, fp_path=kim_property.get_properties()
+        )
     except (kim_property.KIMPropertyError, kim_edn.KIMEDNDecodeError):
         valid = False
         msg = traceback.format_exc()
