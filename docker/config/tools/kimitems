@@ -155,6 +155,7 @@ def download(obj, tmp=False, compression="txz"):
     for i in range(MAX_URLLIB_ATTEMPTS):
         try:
             urllib.request.urlretrieve(url, outname)
+            break
         except Exception as e:
             print(
                 "Failed to download item with the following exception:\n"
