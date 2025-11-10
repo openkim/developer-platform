@@ -57,6 +57,7 @@ RUN ${PIP} install spglib==2.3.1
 RUN ${PIP} install numdifftools==0.9.41
 RUN ${PIP} install kim-tools==0.4.0
 RUN ${PIP} install kimvv==0.1.6
+RUN ${PIP} install kim-convergence==0.0.3
 
 #########################################
 ## OpenMPI
@@ -184,9 +185,9 @@ RUN cd ${PACKAGE_DIR}/crystal-genome-util \
  && cd ${PACKAGE_DIR} \
  && rm -r ${PACKAGE_DIR}/crystal-genome-util
 
-#########################################
-## convergence
-#########################################
+###################################################
+## convergence -- legacy version of kim-convergence
+###################################################
 RUN cd ${PACKAGE_DIR} \
  && tar xJf convergence.txz \
  && rm convergence.txz \
