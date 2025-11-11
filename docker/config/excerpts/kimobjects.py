@@ -4,6 +4,7 @@ reserved.
 
 This software may be distributed as-is, without modification.
 """
+
 import shutil
 import subprocess
 import os
@@ -15,6 +16,7 @@ from . import util
 from . import kimcodes
 from . import template
 from . import config as cf
+
 
 # ------------------------------------------------
 # Base KIMObject
@@ -373,7 +375,9 @@ class KIMObject:
                         )
 
             except Exception as e:
-                raise cf.KIMBuildError(f"Could not build {self.kim_code} due to the following exception:\n{e}")
+                raise cf.KIMBuildError(
+                    f"Could not build {self.kim_code} due to the following exception:\n{e}"
+                )
 
         self.built = True
 
@@ -541,6 +545,7 @@ class Subject(KIMObject):
 # Subject Objs
 # ==============================================
 
+
 # --------------------------------------
 # Model
 # -------------------------------------
@@ -625,7 +630,7 @@ class SimulatorModel(Subject):
                 "kimspec.edn file of {}".format(self.kim_code)
             )
         return self.kimspec["simulator-potential"]
-    
+
     @property
     def run_compatibility(self):
         """
@@ -642,10 +647,10 @@ class SimulatorModel(Subject):
             return self.kimspec["run-compatibility"]
 
 
-
 # =============================================
 # Runner Objs
 # =============================================
+
 
 # ---------------------------------------------
 # Test
@@ -796,6 +801,7 @@ class VerificationCheck(Test):
 # ==========================================
 # Drivers
 # ===========================================
+
 
 # ------------------------------------------
 # Test Driver

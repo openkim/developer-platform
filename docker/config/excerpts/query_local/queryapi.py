@@ -3505,16 +3505,14 @@ def get_test_result(db, test, model, prop, keys, units):
     final_TestResult = helpers.filter_on_item_versions_and_timestamp(results_from_query)
 
     # Just in case the removal of errors reduced our list to zero
-    if len(final_TestResult)==0:
+    if len(final_TestResult) == 0:
         return []
 
     final_output = []
     for result in final_TestResult:
-        inner_output=[]
+        inner_output = []
         for ind, key in enumerate(keys):
-            if (key not in result) and (
-                key + ".source-value" not in result
-            ):
+            if (key not in result) and (key + ".source-value" not in result):
                 # Because the KDP may be using in-development properties, here the KDP
                 # differs from the production pipeline in that the KDP does not do
                 # any checking against property definitions, just returns None
@@ -3525,7 +3523,7 @@ def get_test_result(db, test, model, prop, keys, units):
                     result, key, units[ind]
                 )
                 inner_output.append(key_value_in_desired_units)
-        final_output.append(inner_output)    
+        final_output.append(inner_output)
 
     return final_output
 

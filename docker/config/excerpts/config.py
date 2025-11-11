@@ -14,6 +14,7 @@ reserved.
 
 This software may be distributed as-is, without modification.
 """
+
 import os
 import re
 import uuid
@@ -248,6 +249,7 @@ kim_api_collection_subdir_names = {}
 kim_api_collection_subdir_names["md"] = "model-drivers-dir"
 kim_api_collection_subdir_names["mo"] = "portable-models-dir"
 kim_api_collection_subdir_names["sm"] = "simulator-models-dir"
+
 
 # ====================================
 # KIM ERRORS

@@ -10,6 +10,7 @@ reserved.
 
 This software may be distributed as-is, without modification.
 """
+
 import os
 import glob
 import re
