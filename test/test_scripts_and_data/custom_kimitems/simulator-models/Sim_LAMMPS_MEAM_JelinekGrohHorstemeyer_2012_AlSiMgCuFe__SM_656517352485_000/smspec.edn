@@ -1,9 +1,0 @@
-{
-  "kim-api-sm-schema-version" 1
-  "simulator-version" "22 Sep 2017"
-  "simulator-name" "LAMMPS"
-  "model-name" "Sim_LAMMPS_MEAM_JelinekGrohHorstemeyer_2012_AlSiMgCuFe__SM_656517352485_000"
-  "model-defn" [ "pair_style meam" "pair_coeff * * @<parameter-file-1>@ Al Si Mg Cu Fe @<parameter-file-2>@ @<atom-type-sym-list>@" ]
-  "supported-species" "Al Si Mg Cu Fe"
-  "units" "metal"
-}
