@@ -16,7 +16,7 @@ env:
   REGISTRY: ghcr.io
   # Note: github.repository corresponds to <account>/<repo>
   IMAGE_NAME: ${{ github.repository }}
-  DOCKERFILE_NAME: Dockerfile
+  hpccm-recipe-cumulative.py_NAME: Dockerfile
   DOCKER_DIR_SYS: sys
   IMAGE_TAG_SYS: sys
   DOCKER_DIR_GIT: git
@@ -81,7 +81,7 @@ jobs:
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
           context: docker/${{ env.DOCKER_DIR_SYS }}
-          file: docker/${{ env.DOCKER_DIR_SYS }}/${{ env.DOCKERFILE_NAME }}
+          file: docker/${{ env.DOCKER_DIR_SYS }}/${{ env.hpccm-recipe-cumulative.py_NAME }}
           push: false
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_SYS }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -129,7 +129,7 @@ jobs:
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
           context: docker/${{ env.DOCKER_DIR_GIT }}
-          file: docker/${{ env.DOCKER_DIR_GIT }}/${{ env.DOCKERFILE_NAME }}
+          file: docker/${{ env.DOCKER_DIR_GIT }}/${{ env.hpccm-recipe-cumulative.py_NAME }}
           push: false
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_GIT }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -208,7 +208,7 @@ jobs:
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
           context: docker/${{ env.DOCKER_DIR_INSTALL }}
-          file: docker/${{ env.DOCKER_DIR_INSTALL }}/${{ env.DOCKERFILE_NAME }}
+          file: docker/${{ env.DOCKER_DIR_INSTALL }}/${{ env.hpccm-recipe-cumulative.py_NAME }}
           push: false
           build-args: |
             "IMAGE_GIT=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_GIT }}"
@@ -228,7 +228,7 @@ jobs:
         with:
           context: docker/${{ env.DOCKER_DIR_CONFIG }}
           load: true
-          file: docker/${{ env.DOCKER_DIR_CONFIG }}/${{ env.DOCKERFILE_NAME }}
+          file: docker/${{ env.DOCKER_DIR_CONFIG }}/${{ env.hpccm-recipe-cumulative.py_NAME }}
           push: false
           build-args: |
             "IMAGE_INSTALL=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_INSTALL }}"
@@ -249,7 +249,7 @@ jobs:
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
           context: docker/${{ env.DOCKER_DIR_CONFIG }}
-          file: docker/${{ env.DOCKER_DIR_CONFIG }}/${{ env.DOCKERFILE_NAME }}
+          file: docker/${{ env.DOCKER_DIR_CONFIG }}/${{ env.hpccm-recipe-cumulative.py_NAME }}
           push: ${{ github.event_name == 'release' }}
           build-args: |
             "IMAGE_INSTALL=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_INSTALL }}"
@@ -276,7 +276,7 @@ jobs:
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
           context: docker/${{ env.DOCKER_DIR_ADDITIONAL }}
-          file: docker/${{ env.DOCKER_DIR_ADDITIONAL }}/${{ env.DOCKERFILE_NAME }}
+          file: docker/${{ env.DOCKER_DIR_ADDITIONAL }}/${{ env.hpccm-recipe-cumulative.py_NAME }}
           push: ${{ github.event_name == 'release' }}
           build-args: |
             "IMAGE_MINIMAL=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}-minimal"
@@ -318,10 +318,57 @@ jobs:
           git config user.name "OpenKIM Bot"          
           
           # Replace the first line of the Dockerfile with the new version
-          echo "FROM ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}-minimal" > Dockerfile_
-          tail -n +2 Dockerfile >> Dockerfile_
-          mv Dockerfile_ Dockerfile
+          echo "FROM ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}-minimal" > hpccm-recipe-cumulative.py_
+          tail -n +2 Dockerfile >> hpccm-recipe-cumulative.py_
+          mv hpccm-recipe-cumulative.py_ Dockerfile
           git add Dockerfile
           git commit -m "upversion KDP base image"
           git push
 
+      - name: Update openkim-pipeline repo to latest KDP
+        run: |
+          BRANCH_NAME="update-KDP-to-${{ steps.meta.outputs.version }}"
+
+          # Store the PAT in a file that can be accessed by the
+          # GitHub CLI.
+          echo "${{ secrets.KDP_AND_PIPELINE_PUSH_AND_PR_TOKEN }}" > token.txt
+          gh auth login --with-token < token.txt
+          gh auth setup-git
+
+          # Clone the repo
+          gh repo clone openkim/openkim-pipeline
+          cd openkim-pipeline/singularity
+          git checkout devel
+
+          # Setup the committers identity.
+          git config user.email "noreply@openkim.org"
+          git config user.name "OpenKIM Bot"
+
+          # Create a new feature branch for the changes.
+          git checkout -b $BRANCH_NAME
+          
+          echo "\"\"\"Recipe script for the Nvidia HPC Container Maker (hpccm)" > hpccm-recipe-cumulative.py_
+          echo "" >> hpccm-recipe-cumulative.py_
+          echo "    https://github.com/NVIDIA/hpc-container-maker" >> hpccm-recipe-cumulative.py_
+          echo "" >> hpccm-recipe-cumulative.py_
+          echo "Usage:" >> hpccm-recipe-cumulative.py_
+          echo "    $ hpccm --recipe hpccm-recipe-cumulative.py --format docker > Dockerfile" >> hpccm-recipe-cumulative.py_
+          echo "    $ docker build -t=\"singularity-single-node:${{ steps.meta.outputs.version }}\" -f Dockerfile ." >> hpccm-recipe-cumulative.py_
+          echo "    $ docker save singularity-single-node:${{ steps.meta.outputs.version }} -o singularity_single_node_${{ steps.meta.outputs.version }}.tar" >> hpccm-recipe-cumulative.py_
+          echo "    $ singularity build singularity-single-node_${{ steps.meta.outputs.version }}.sif docker-archive://singularity_single_node_${{ steps.meta.outputs.version }}.tar" >> hpccm-recipe-cumulative.py_
+          echo "\"\"\"" >> hpccm-recipe-cumulative.py_
+          echo "# experimental base of the KDP" >> hpccm-recipe-cumulative.py_
+          echo "BASE_IMAGE_NAME = \"ghcr.io/openkim/developer-platform:${{ steps.meta.outputs.version }}\"" >> hpccm-recipe-cumulative.py_
+
+          tail -n +13 hpccm-recipe-cumulative.py >> hpccm-recipe-cumulative.py_
+          mv hpccm-recipe-cumulative.py_ hpccm-recipe-cumulative.py
+          git add hpccm-recipe-cumulative.py
+          git commit -m "upversion KDP base image"
+          git push origin $BRANCH_NAME
+
+          # create a pull-request containing the updates.
+          gh pr create \
+            --body "Automatic PR to upversion KDP to ${{ steps.meta.outputs.version }}" \
+            --title "update KDP to ${{ steps.meta.outputs.version }}" \
+            --head "$BRANCH_NAME" \
+            --base "devel"          
