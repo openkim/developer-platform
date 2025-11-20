@@ -16,7 +16,7 @@ env:
   REGISTRY: ghcr.io
   # Note: github.repository corresponds to <account>/<repo>
   IMAGE_NAME: ${{ github.repository }}
-  hpccm-recipe-cumulative.py_NAME: Dockerfile
+  DOCKERFILE_NAME: Dockerfile
   DOCKER_DIR_SYS: sys
   IMAGE_TAG_SYS: sys
   DOCKER_DIR_GIT: git
@@ -81,7 +81,7 @@ jobs:
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
           context: docker/${{ env.DOCKER_DIR_SYS }}
-          file: docker/${{ env.DOCKER_DIR_SYS }}/${{ env.hpccm-recipe-cumulative.py_NAME }}
+          file: docker/${{ env.DOCKER_DIR_SYS }}/${{ env.DOCKERFILE_NAME }}
           push: false
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_SYS }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -129,7 +129,7 @@ jobs:
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
           context: docker/${{ env.DOCKER_DIR_GIT }}
-          file: docker/${{ env.DOCKER_DIR_GIT }}/${{ env.hpccm-recipe-cumulative.py_NAME }}
+          file: docker/${{ env.DOCKER_DIR_GIT }}/${{ env.DOCKERFILE_NAME }}
           push: false
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_GIT }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -208,7 +208,7 @@ jobs:
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
           context: docker/${{ env.DOCKER_DIR_INSTALL }}
-          file: docker/${{ env.DOCKER_DIR_INSTALL }}/${{ env.hpccm-recipe-cumulative.py_NAME }}
+          file: docker/${{ env.DOCKER_DIR_INSTALL }}/${{ env.DOCKERFILE_NAME }}
           push: false
           build-args: |
             "IMAGE_GIT=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_GIT }}"
@@ -228,7 +228,7 @@ jobs:
         with:
           context: docker/${{ env.DOCKER_DIR_CONFIG }}
           load: true
-          file: docker/${{ env.DOCKER_DIR_CONFIG }}/${{ env.hpccm-recipe-cumulative.py_NAME }}
+          file: docker/${{ env.DOCKER_DIR_CONFIG }}/${{ env.DOCKERFILE_NAME }}
           push: false
           build-args: |
             "IMAGE_INSTALL=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_INSTALL }}"
@@ -249,7 +249,7 @@ jobs:
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
           context: docker/${{ env.DOCKER_DIR_CONFIG }}
-          file: docker/${{ env.DOCKER_DIR_CONFIG }}/${{ env.hpccm-recipe-cumulative.py_NAME }}
+          file: docker/${{ env.DOCKER_DIR_CONFIG }}/${{ env.DOCKERFILE_NAME }}
           push: ${{ github.event_name == 'release' }}
           build-args: |
             "IMAGE_INSTALL=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_INSTALL }}"
@@ -276,7 +276,7 @@ jobs:
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
           context: docker/${{ env.DOCKER_DIR_ADDITIONAL }}
-          file: docker/${{ env.DOCKER_DIR_ADDITIONAL }}/${{ env.hpccm-recipe-cumulative.py_NAME }}
+          file: docker/${{ env.DOCKER_DIR_ADDITIONAL }}/${{ env.DOCKERFILE_NAME }}
           push: ${{ github.event_name == 'release' }}
           build-args: |
             "IMAGE_MINIMAL=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}-minimal"
