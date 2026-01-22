@@ -8,6 +8,7 @@ reserved.
 
 This software may be distributed as-is, without modification.
 """
+
 import os
 import sys
 import signal
@@ -204,7 +205,7 @@ class Computation:
                 to the appropriate location
             * verify : If True, the contents of results.edn will be verified to contain
                 valid KIM property instances when the output of the computation is
-                processed. 
+                processed.
         """
         self.runner = runner
         self.subject = subject
@@ -367,6 +368,9 @@ class Computation:
         _result_file_path = os.path.join(
             cf.OUTPUT_DIR, cf.RESULT_FILE  # pylint: disable=E1101
         )
+        _kim_tools_token_file_path = os.path.join(
+            cf.OUTPUT_DIR, cf.KIM_TOOLS_TOKEN_FILE  # pylint: disable=E1101
+        )
         # Short-circuit if we already have a results.edn
         with self.runner_temp.in_dir():
             if not os.path.isfile(_result_file_path):
@@ -397,7 +401,7 @@ class Computation:
                     "the Test or Verification Check ({}) is not valid "
                     "EDN".format(_result_file_path)
                 )
-            
+
             if self.verify:
                 # Check whether the entries in results file are valid
                 # property instances
@@ -412,6 +416,11 @@ class Computation:
             _result_file_path, "w", encoding="utf-8"
         ) as result_file:
             util.dumpedn(result, result_file)
+
+        # Everything succeeded, clean up the kim-tools token
+        # since it's only useful for non-pipeline operation
+        if os.path.isfile(_kim_tools_token_file_path):
+            os.remove(_kim_tools_token_file_path)
 
     def gather_profiling_info(self, extrainfo=None):
         """
@@ -574,8 +583,8 @@ class Computation:
             _stdout_file_path,
             _stderr_file_path,
             _kimlog_file_path,
-            _kim_tools_log_file_path
-            ]
+            _kim_tools_log_file_path,
+        ]
         tails = last_output_lines(self.runner_temp, file_paths)
 
         outs = trace + "\n"
@@ -689,7 +698,9 @@ def test_result_valid(flname):
         https://github.com/openkim/kim-property
     """
     try:
-        kim_property.check_property_instances(fi=flname, fp_path=kim_property.get_properties())
+        kim_property.check_property_instances(
+            fi=flname, fp_path=kim_property.get_properties()
+        )
     except (kim_property.KIMPropertyError, kim_edn.KIMEDNDecodeError):
         valid = False
         msg = traceback.format_exc()
