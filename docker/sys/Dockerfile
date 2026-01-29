@@ -38,5 +38,7 @@ RUN apt-get update -qq \
  tree \
  libfreetype6-dev \
  git \
+ python3-venv \
+ libopenblas-dev \
  && apt-get clean \
  && rm -fr /var/lib/apt/lists/*
