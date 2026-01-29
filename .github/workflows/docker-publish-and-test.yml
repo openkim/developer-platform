@@ -285,7 +285,7 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           labels: ${{ steps.meta.outputs.labels }}
 
-  update-openkim-demo:
+  update-dependant-repos:
     runs-on: ubuntu-latest
     needs: build-and-push
     if: github.event_name == 'release'
@@ -325,3 +325,50 @@ jobs:
           git commit -m "upversion KDP base image"
           git push
 
+      - name: Update openkim-pipeline repo to latest KDP
+        run: |
+          BRANCH_NAME="update-KDP-to-${{ steps.meta.outputs.version }}"
+
+          # Store the PAT in a file that can be accessed by the
+          # GitHub CLI.
+          echo "${{ secrets.KDP_AND_PIPELINE_PUSH_AND_PR_TOKEN }}" > token.txt
+          gh auth login --with-token < token.txt
+          gh auth setup-git
+
+          # Clone the repo
+          gh repo clone openkim/openkim-pipeline
+          cd openkim-pipeline/singularity
+          git checkout devel
+
+          # Setup the committers identity.
+          git config user.email "noreply@openkim.org"
+          git config user.name "OpenKIM Bot"
+
+          # Create a new feature branch for the changes.
+          git checkout -b $BRANCH_NAME
+          
+          echo "\"\"\"Recipe script for the Nvidia HPC Container Maker (hpccm)" > hpccm-recipe-cumulative.py_
+          echo "" >> hpccm-recipe-cumulative.py_
+          echo "    https://github.com/NVIDIA/hpc-container-maker" >> hpccm-recipe-cumulative.py_
+          echo "" >> hpccm-recipe-cumulative.py_
+          echo "Usage:" >> hpccm-recipe-cumulative.py_
+          echo "    $ hpccm --recipe hpccm-recipe-cumulative.py --format docker > Dockerfile" >> hpccm-recipe-cumulative.py_
+          echo "    $ docker build -t=\"singularity-single-node:${{ steps.meta.outputs.version }}\" -f Dockerfile ." >> hpccm-recipe-cumulative.py_
+          echo "    $ docker save singularity-single-node:${{ steps.meta.outputs.version }} -o singularity_single_node_${{ steps.meta.outputs.version }}.tar" >> hpccm-recipe-cumulative.py_
+          echo "    $ singularity build singularity-single-node_${{ steps.meta.outputs.version }}.sif docker-archive://singularity_single_node_${{ steps.meta.outputs.version }}.tar" >> hpccm-recipe-cumulative.py_
+          echo "\"\"\"" >> hpccm-recipe-cumulative.py_
+          echo "# experimental base of the KDP" >> hpccm-recipe-cumulative.py_
+          echo "BASE_IMAGE_NAME = \"ghcr.io/openkim/developer-platform:${{ steps.meta.outputs.version }}\"" >> hpccm-recipe-cumulative.py_
+
+          tail -n +13 hpccm-recipe-cumulative.py >> hpccm-recipe-cumulative.py_
+          mv hpccm-recipe-cumulative.py_ hpccm-recipe-cumulative.py
+          git add hpccm-recipe-cumulative.py
+          git commit -m "upversion KDP base image"
+          git push origin $BRANCH_NAME
+
+          # create a pull-request containing the updates.
+          gh pr create \
+            --body "Automatic PR to upversion KDP to ${{ steps.meta.outputs.version }}" \
+            --title "update KDP to ${{ steps.meta.outputs.version }}" \
+            --head "$BRANCH_NAME" \
+            --base "devel"          

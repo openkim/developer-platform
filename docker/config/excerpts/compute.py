@@ -368,6 +368,9 @@ class Computation:
         _result_file_path = os.path.join(
             cf.OUTPUT_DIR, cf.RESULT_FILE  # pylint: disable=E1101
         )
+        _kim_tools_token_file_path = os.path.join(
+            cf.OUTPUT_DIR, cf.KIM_TOOLS_TOKEN_FILE  # pylint: disable=E1101
+        )
         # Short-circuit if we already have a results.edn
         with self.runner_temp.in_dir():
             if not os.path.isfile(_result_file_path):
@@ -413,6 +416,11 @@ class Computation:
             _result_file_path, "w", encoding="utf-8"
         ) as result_file:
             util.dumpedn(result, result_file)
+
+        # Everything succeeded, clean up the kim-tools token
+        # since it's only useful for non-pipeline operation
+        if os.path.isfile(_kim_tools_token_file_path):
+            os.remove(_kim_tools_token_file_path)
 
     def gather_profiling_info(self, extrainfo=None):
         """

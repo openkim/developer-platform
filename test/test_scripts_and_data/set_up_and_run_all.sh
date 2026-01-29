@@ -39,6 +39,7 @@ pipeline-run-matches LatticeConstantCubicEnergy_fcc_Cu__TE_387272513402_007 -v
 kimitems remove -f LatticeConstantCubicEnergy_fcc_Cu__TE_387272513402_007
 
 pipeline-run-matches MEAM_LAMMPS_JelinekGrohHorstemeyer_2012_AlSiMgCuFe__MO_262519520678_002 -v 
+kimitems remove -f SurfaceEnergyCubicCrystalBrokenBondFit_fcc_Cu__TE_689904280697_004 # Slow, no reason to test it twice
 pipeline-run-matches Sim_LAMMPS_MEAM_JelinekGrohHorstemeyer_2012_AlSiMgCuFe__SM_656517352485_000 -v
 
 # Should not match with anything

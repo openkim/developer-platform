@@ -44,7 +44,7 @@ RUN ${PIP} install markupsafe==2.0.1
 RUN ${PIP} install Jinja2==2.11.3
 RUN ${PIP} install edn_format==0.7.5
 RUN ${PIP} install kim-edn==1.4.1
-RUN ${PIP} install kim-property==2.6.12
+RUN ${PIP} install kim-property==2.6.13
 RUN ${PIP} install kim-query==4.0.0
 RUN ${PIP} install simplejson==3.17.2
 RUN ${PIP} install numpy==1.26.4
@@ -55,8 +55,9 @@ RUN ${PIP} install montydb==2.5.3
 RUN ${PIP} install pybind11==2.6.2
 RUN ${PIP} install spglib==2.3.1
 RUN ${PIP} install numdifftools==0.9.41
-RUN ${PIP} install kim-tools==0.4.0
-RUN ${PIP} install kimvv==0.1.6
+RUN ${PIP} install kim-tools==0.4.5
+RUN ${PIP} install kimvv==0.1.9
+RUN ${PIP} install kim-convergence==0.0.3
 
 #########################################
 ## OpenMPI
@@ -184,9 +185,9 @@ RUN cd ${PACKAGE_DIR}/crystal-genome-util \
  && cd ${PACKAGE_DIR} \
  && rm -r ${PACKAGE_DIR}/crystal-genome-util
 
-#########################################
-## convergence
-#########################################
+###################################################
+## convergence -- legacy version of kim-convergence
+###################################################
 RUN cd ${PACKAGE_DIR} \
  && tar xJf convergence.txz \
  && rm convergence.txz \
