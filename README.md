@@ -1,7 +1,7 @@
 # KIM Developer Platform
 
 ## Background
-The KIM Developer Platform is a docker container image that provides a
+The KIM Developer Platform (KDP) is a docker container image that provides a
 preconfigured linux environment for interactively compiling and executing
 tests, verification checks, models, and simulator models from
 [OpenKIM](https://openkim.org) against one another just as they would run
@@ -9,8 +9,9 @@ inside of the OpenKIM Processing Pipeline [[1](#references)]. This includes a
 gcc compiler toolchain, molecular simulation software (LAMMPS and ASE), and a
 convenient set of command line utilities that are adapted to the structure of
 OpenKIM content.  The resulting environment is useful for anyone planning on
-developing content to submit to OpenKIM or who simply wants to run KIM
-verification checks to validate the integrity of their own models.
+developing content to submit to OpenKIM, wants to run KIM
+verification checks to validate the integrity of their own models, or simply
+wants a containerized software stack that is pre-configured to run KIM models.
 
 A short tutorial on using the KIM Developer Platform can be found at
 [https://openkim.org/doc/evaluation/kim-developer-platform/](https://openkim.org/doc/evaluation/kim-developer-platform/).
@@ -18,6 +19,24 @@ A short tutorial on using the KIM Developer Platform can be found at
 Feedback and bug reports are welcome and may be posted on the
 [matsci.org/openkim](https://matsci.org/openkim/) forum or submitted to
 [support@openkim.org](mailto:support@openkim.org).
+
+### Using other container systems (Singularity/Apptainer, Podman, etc.)
+
+The detailed instructions below are specifically for Docker. Through the [Open Container Initiative](https://opencontainers.org/), 
+images created for Docker are interoperable with other container systems such as 
+[SingularityCE](https://sylabs.io/singularity/)/[Apptainer](https://apptainer.org/) (two
+forks of the Singularity project) and [Podman](https://podman.io/). Unlike Docker, these systems
+do not require root access, and are therefore more commonly installed on HPCs.
+
+Podman operation is largely analogous to Docker operation, although the mapping of host users
+to users inside the container may create some issues with mounted directories.
+
+Singularity operates significantly differently from Docker, as it inherits the host user. This makes it more difficult
+to use the custom command-line utilities provided with the KDP (`kimitems`, `pipeline-run-pair` etc.) and described
+in the tutorial (documentation coming soon). However, using the KDP as a software environment for your own calculations
+is fairly straightforward using Singularity. For example, suppose you wish to run a LAMMPS simulation with the 
+MACE-MP-0-a model [TorchML_MACE_BatatiaBennerChiang_2023_MP0a_medium__MO_568776921807_000](https://openkim.org/id/TorchML_MACE_BatatiaBennerChiang_2023_MP0a_medium__MO_568776921807_000)
+
 
 ### Installing Docker
 
