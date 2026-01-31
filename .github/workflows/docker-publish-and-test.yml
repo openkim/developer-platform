@@ -89,7 +89,7 @@ jobs:
           push: false
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_SYS }}
           labels: ${{ steps.meta.outputs.labels }}
-          outputs: type=docker,dest=${{ env.IMAGE_CACHE_DIR_SYS }}/${{ env.IMAGE_TAR_FILE_SYS }}
+          outputs: type=tar,dest=${{ env.IMAGE_CACHE_DIR_SYS }}/${{ env.IMAGE_TAR_FILE_SYS }}
 
   build-and-cache-git:
 
@@ -139,7 +139,7 @@ jobs:
           push: false
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_GIT }}
           labels: ${{ steps.meta.outputs.labels }}
-          outputs: type=docker,dest=${{ env.IMAGE_CACHE_DIR_GIT }}/${{ env.IMAGE_TAR_FILE_GIT }}
+          outputs: type=tar,dest=${{ env.IMAGE_CACHE_DIR_GIT }}/${{ env.IMAGE_TAR_FILE_GIT }}
 
   build-and-cache-minimal:
 
