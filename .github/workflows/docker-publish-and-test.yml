@@ -367,8 +367,7 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}-minimal
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-minimal
-          labels: ${{ steps.meta.outputs.labels }}          
-          cache-from: type=local,dest=${{ env.IMAGE_CACHE_DIR_MINIMAL }}
+          labels: ${{ steps.meta.outputs.labels }}
 
       # List docker images in local repository to confirm exactly what tags were
       # created
