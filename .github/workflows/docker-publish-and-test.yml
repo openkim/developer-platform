@@ -43,7 +43,7 @@ env:
   DOCKER_DIR_ADDITIONAL: additional
   IMAGE_TAG_FULL: full
   IMAGE_CACHE_DIR_FULL: /tmp/.buildx-cache-full/
-  IMAGE_TAR_FILE_FULL: image-minimal.tar  
+  IMAGE_TAR_FILE_FULL: image-full.tar  
   DOCKER_DIR_PUBLISH: publish
 
   # torchml
