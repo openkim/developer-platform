@@ -236,7 +236,7 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_MINIMAL }}
           labels: ${{ steps.meta.outputs.labels }}
-          outputs: type=docker,dest=${{ env.IMAGE_CACHE_DIR_MINIMAL }}/${{ env.IMAGE_TAR_FILE_MINIMAL }}
+          outputs: type=tar,dest=${{ env.IMAGE_CACHE_DIR_MINIMAL }}/${{ env.IMAGE_TAR_FILE_MINIMAL }}
 
       - name: Clean local copies of sys & git caches
         run: |
