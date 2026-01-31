@@ -151,45 +151,6 @@ jobs:
       packages: write
 
     steps:
-      - name: Aggressive cleanup
-        run: |
-          # Remove Java (JDKs)
-          sudo rm -rf /usr/lib/jvm
-      
-          # Remove .NET SDKs
-          sudo rm -rf /usr/share/dotnet
-      
-          # Remove Swift toolchain
-          sudo rm -rf /usr/share/swift
-      
-          # Remove Haskell (GHC)
-          sudo rm -rf /usr/local/.ghcup
-      
-          # Remove Julia
-          sudo rm -rf /usr/local/julia*
-      
-          # Remove Android SDKs
-          sudo rm -rf /usr/local/lib/android
-      
-          # Remove Chromium (optional if not using for browser tests)
-          sudo rm -rf /usr/local/share/chromium
-      
-          # Remove Microsoft/Edge and Google Chrome builds
-          sudo rm -rf /opt/microsoft /opt/google
-      
-          # Remove Azure CLI
-          sudo rm -rf /opt/az
-      
-          # Remove PowerShell
-          sudo rm -rf /usr/local/share/powershell
-      
-          # Remove CodeQL and other toolcaches
-          sudo rm -rf /opt/hostedtoolcache
-      
-          docker system prune -af || true
-          docker builder prune -af || true
-          df -h
-        
       - name: Checkout repository
         uses: actions/checkout@v2
 
@@ -268,6 +229,7 @@ jobs:
         with:
           context: docker/${{ env.DOCKER_DIR_CONFIG }}
           file: docker/${{ env.DOCKER_DIR_CONFIG }}/${{ env.DOCKERFILE_NAME }}
+          load: true
           push: false
           build-args: |
             "IMAGE_INSTALL=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_INSTALL }}"
@@ -384,45 +346,6 @@ jobs:
       packages: write
 
     steps:
-      - name: Aggressive cleanup
-        run: |
-          # Remove Java (JDKs)
-          sudo rm -rf /usr/lib/jvm
-      
-          # Remove .NET SDKs
-          sudo rm -rf /usr/share/dotnet
-      
-          # Remove Swift toolchain
-          sudo rm -rf /usr/share/swift
-      
-          # Remove Haskell (GHC)
-          sudo rm -rf /usr/local/.ghcup
-      
-          # Remove Julia
-          sudo rm -rf /usr/local/julia*
-      
-          # Remove Android SDKs
-          sudo rm -rf /usr/local/lib/android
-      
-          # Remove Chromium (optional if not using for browser tests)
-          sudo rm -rf /usr/local/share/chromium
-      
-          # Remove Microsoft/Edge and Google Chrome builds
-          sudo rm -rf /opt/microsoft /opt/google
-      
-          # Remove Azure CLI
-          sudo rm -rf /opt/az
-      
-          # Remove PowerShell
-          sudo rm -rf /usr/local/share/powershell
-      
-          # Remove CodeQL and other toolcaches
-          sudo rm -rf /opt/hostedtoolcache
-      
-          docker system prune -af || true
-          docker builder prune -af || true
-          df -h
-        
       - name: Checkout repository
         uses: actions/checkout@v2
 
