@@ -22,7 +22,11 @@ Feedback and bug reports are welcome and may be posted on the
 
 ### Using other container systems (Singularity/Apptainer, Podman, etc.)
 
-The detailed instructions below are specifically for Docker. Through the [Open Container Initiative](https://opencontainers.org/), 
+The detailed instructions below are specifically for Docker, and we recommend using Docker
+to run this image if possible. Documenting every container system is outside the scope
+of this documenation, but we provide some tips below.
+
+Through the [Open Container Initiative](https://opencontainers.org/), 
 images created for Docker are interoperable with other container systems such as 
 [SingularityCE](https://sylabs.io/singularity/)/[Apptainer](https://apptainer.org/) (two
 forks of the Singularity project) and [Podman](https://podman.io/). Unlike Docker, these systems
@@ -31,11 +35,28 @@ do not require root access, and are therefore more commonly installed on HPCs.
 Podman operation is largely analogous to Docker operation, although the mapping of host users
 to users inside the container may create some issues with mounted directories.
 
-Singularity operates significantly differently from Docker, as it inherits the host user. This makes it more difficult
-to use the custom command-line utilities provided with the KDP (`kimitems`, `pipeline-run-pair` etc.) and described
-in the tutorial (documentation coming soon). However, using the KDP as a software environment for your own calculations
-is fairly straightforward using Singularity. For example, suppose you wish to run a LAMMPS simulation with the 
-MACE-MP-0-a model [TorchML_MACE_BatatiaBennerChiang_2023_MP0a_medium__MO_568776921807_000](https://openkim.org/id/TorchML_MACE_BatatiaBennerChiang_2023_MP0a_medium__MO_568776921807_000)
+Because Singularity inherits the host user, extra setup is needed to use the custom command-line utilities
+provided with the KDP (`kimitems`, `pipeline-run-pair` etc.) and described in the tutorial. The
+script `setup-singularity-work-dir.py` automates this process, simply run it and follow the instructions.
+
+Another use case for the KDP is as a software environment for your own calculations. This is especially relevant
+with the `torchml` releases of the KDP, as they contain the ML dependencies for the [TorchML Model Driver](https://openkim.org/id/TorchML__MD_173118614730_001)
+that are quite complex to install on bare metal. As an example, if you have a LAMMPS script that uses the
+MACE-MP-0-a model [TorchML_MACE_BatatiaBennerChiang_2023_MP0a_medium__MO_568776921807_000](https://openkim.org/id/TorchML_MACE_BatatiaBennerChiang_2023_MP0a_medium__MO_568776921807_000).
+Running it using CUDA may be as simple as:
+
+```
+$ singularity shell -B $PWD --writable-tmpfs --nv --env KIM_MODEL_EXECUTION_DEVICE=cuda docker://ghcr.io/openkim/developer-platform:torchml-latest
+Singularity> kim-api-collections-management install CWD TorchML_MACE_BatatiaBennerChiang_2023_MP0a_medium__MO_568776921807_000
+Singularity> lmp -in in.lammps
+```
+
+This mounts the current working directory in the container, connects the container to the host Nvidia GPU with `--nv`, and
+instructs the TorchML driver to use CUDA with the environment variable `KIM_MODEL_EXECUTION_DEVICE`. In practice, you will
+likely want to [`singularity pull`](https://docs.sylabs.io/guides/latest/user-guide/cli/singularity_pull.html) the image as a 
+separate step due to the size of the image. If submitting to a queue, you will of course not have an interactive shell, and should
+use [`singularity exec`](https://docs.sylabs.io/guides/latest/user-guide/cli/singularity_exec.html) to issue the individual commands
+needed for your simulation.
 
 
 ### Installing Docker
@@ -72,15 +93,25 @@ running).  You can view the size of the containers you have created by doing
 
 ## Images hosted in this repository
 
-There are two images published with each release of the KDP: a "full" image and
-a "minimal" image.  The former image contains all of the packages necessary to
-run all KIM tests and verification checks, while the latter includes a set of
-packages sufficient to run most of them but not all.  In particular, the
+There are three images published with each release of the KDP: a "full" image,
+a "minimal" image, and a "torchml" image.
+The full image contains all of the packages necessary to
+run all KIM tests and verification checks, while the minimal image includes a set of
+packages sufficient to run most of them but not all. In particular, the
 biggest difference at the moment is that the full image contains an
-installation of [OVITO](https://www.ovito.org/), which doubles the uncompressed
-size of the image from roughly 1.04GB ➝ 2.04GB; this package is currently only
-used to run the dislocation tests, so for most users the minimal images will
+installation of [OVITO](https://www.ovito.org/), which significantly increases the
+size of the image; this package is currently only
+used to run the dislocation tests, so for most users the minimal image will
 suffice.
+
+Finally, the "torchml" image builds on the minimal image to include all dependencies
+required to run the [TorchML Model Driver](https://openkim.org/id/TorchML__MD_173118614730_001)
+(also useful if you wish to fit TorchML models with [KLIFF](https://kliff.readthedocs.io/en/latest/index.html),
+not currently packaged in the KDP). This image is *MUCH* larger (>10GB), we are currently working
+on reducing its size. To enable GPU support, pass the `--gpus=all` argument to `docker run`
+when creating your container (or `--nv` for Singularity). Inside the container, use the environment
+variable `KIM_MODEL_EXECUTION_DEVICE=cuda` to instruct the Model Driver to use CUDA, otherwise it will
+run on CPU. See the Model Driver page for more info.
 
 ## Installing the KIM Developer Platform
 
