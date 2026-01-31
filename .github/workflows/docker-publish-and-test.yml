@@ -174,8 +174,8 @@ jobs:
       # repository
       - name: Load cached sys & git docker image tarballs
         run: |
-          docker load -i ${{ env.IMAGE_CACHE_DIR_SYS }}/${{ env.IMAGE_TAR_FILE_SYS }}
-          docker load -i ${{ env.IMAGE_CACHE_DIR_GIT }}/${{ env.IMAGE_TAR_FILE_GIT }}
+          cat ${{ env.IMAGE_CACHE_DIR_SYS }}/${{ env.IMAGE_TAR_FILE_SYS }} | docker import - ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_SYS }}
+          cat ${{ env.IMAGE_CACHE_DIR_GIT }}/${{ env.IMAGE_TAR_FILE_GIT }} | docker import - ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_GIT }}
 
       # Use buildx with 'docker' driver so that it is able to access images stored in the
       # local registry (this precludes the possibility of multi-platform images)
