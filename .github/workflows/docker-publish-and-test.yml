@@ -361,7 +361,7 @@ jobs:
           file: docker/${{ env.DOCKER_DIR_ADDITIONAL }}/${{ env.DOCKERFILE_NAME }}
           push: false
           build-args: |
-            "IMAGE_MINIMAL=${{ env.REGISTRY }}/${{ env.IMAGE_TAG_MINIMAL }}"
+            "IMAGE_MINIMAL=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_MINIMAL }}"
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_FULL }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -434,7 +434,7 @@ jobs:
           file: docker/${{ env.DOCKER_DIR_TORCHML }}/${{ env.DOCKERFILE_NAME }}
           push: false
           build-args: |
-            "IMAGE_MINIMAL=${{ env.REGISTRY }}/${{ env.IMAGE_TAG_MINIMAL }}"
+            "IMAGE_MINIMAL=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_MINIMAL }}"
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_TORCHML }}
           labels: ${{ steps.meta.outputs.labels }}
