@@ -354,7 +354,7 @@ jobs:
       # the minimal image
       #
       # https://github.com/docker/build-push-action
-      - name: Configure andfull image
+      - name: Configure full image
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
           context: docker/${{ env.DOCKER_DIR_ADDITIONAL }}
@@ -427,7 +427,7 @@ jobs:
       # Build TorchML image
       #
       # https://github.com/docker/build-push-action
-      - name: Configure andfull image
+      - name: Configure TorchML image
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
           context: docker/${{ env.DOCKER_DIR_TORCHML }}
