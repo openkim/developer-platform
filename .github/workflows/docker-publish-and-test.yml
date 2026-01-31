@@ -254,7 +254,7 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_MINIMAL }}
           labels: ${{ steps.meta.outputs.labels }}
 
-      # Docker save the image. Needs to be separate from build, as docker builder does not support saving image to tar
+      # Docker save the image. Needs to be separate from build, as docker buildx driver does not support saving image to tar
       - name: Save docker image tarball
         run: |
          docker image save -o ${{ env.IMAGE_CACHE_DIR_MINIMAL }}/${{ env.IMAGE_TAR_FILE_MINIMAL }}  ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_MINIMAL }}
@@ -283,9 +283,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-buildx-minimal
       
-      # Load cached minimal docker-formatted tarballs into local image
+      # Load cached minimal docker-formatted tarball into local image
       # repository
-      - name: Load cached minimal docker image tarballs
+      - name: Load cached minimal docker image tarball
         run: docker load -i ${{ env.IMAGE_CACHE_DIR_MINIMAL }}/${{ env.IMAGE_TAR_FILE_MINIMAL }}
 
       # List docker images in local repository to confirm exactly what tags were
@@ -318,11 +318,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-buildx-minimal
 
-      # Load cached minimal docker-formatted tarballs into local image
+      # Load cached minimal docker-formatted tarball into local image
       # repository
-      - name: Load cached minimal docker image tarballs
-        run: |
-          cat ${{ env.IMAGE_CACHE_DIR_MINIMAL }}/${{ env.IMAGE_TAR_FILE_MINIMAL }} | docker import - ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_MINIMAL }}
+      - name: Load cached minimal docker image tarball
+        run: docker load -i ${{ env.IMAGE_CACHE_DIR_MINIMAL }}/${{ env.IMAGE_TAR_FILE_MINIMAL }}
 
       # Use buildx with 'docker' driver so that it is able to access images stored in the
       # local registry (this precludes the possibility of multi-platform images)
@@ -364,13 +363,18 @@ jobs:
         with:
           context: docker/${{ env.DOCKER_DIR_ADDITIONAL }}
           file: docker/${{ env.DOCKER_DIR_ADDITIONAL }}/${{ env.DOCKERFILE_NAME }}
+          load: true
           push: false
           build-args: |
             "IMAGE_MINIMAL=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_MINIMAL }}"
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_FULL }}
           labels: ${{ steps.meta.outputs.labels }}
-          outputs: type=tar,dest=${{ env.IMAGE_CACHE_DIR_FULL }}/${{ env.IMAGE_TAR_FILE_FULL }}
+
+      # Docker save the image. Needs to be separate from build, as docker buildx driver does not support saving image to tar
+      - name: Save docker image tarball
+        run: |
+         docker image save -o ${{ env.IMAGE_CACHE_DIR_FULL }}/${{ env.IMAGE_TAR_FILE_FULL }}  ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_FULL }}
 
   build-and-cache-torchml:
 
@@ -392,11 +396,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-buildx-minimal
 
-      # Load cached minimal docker-formatted tarballs into local image
+      # Load cached minimal docker-formatted tarball into local image
       # repository
-      - name: Load cached minimal docker image tarballs
-        run: |
-          cat ${{ env.IMAGE_CACHE_DIR_MINIMAL }}/${{ env.IMAGE_TAR_FILE_MINIMAL }} | docker import - ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_MINIMAL }}
+      - name: Load cached minimal docker image tarball
+        run: docker load -i ${{ env.IMAGE_CACHE_DIR_MINIMAL }}/${{ env.IMAGE_TAR_FILE_MINIMAL }}
 
       # Use buildx with 'docker' driver so that it is able to access images stored in the
       # local registry (this precludes the possibility of multi-platform images)
@@ -437,13 +440,18 @@ jobs:
         with:
           context: docker/${{ env.DOCKER_DIR_TORCHML }}
           file: docker/${{ env.DOCKER_DIR_TORCHML }}/${{ env.DOCKERFILE_NAME }}
+          load: true
           push: false
           build-args: |
             "IMAGE_MINIMAL=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_MINIMAL }}"
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_TORCHML }}
           labels: ${{ steps.meta.outputs.labels }}
-          outputs: type=tar,dest=${{ env.IMAGE_CACHE_DIR_TORCHML }}/${{ env.IMAGE_TAR_FILE_TORCHML }}
+
+      # Docker save the image. Needs to be separate from build, as docker buildx driver does not support saving image to tar
+      - name: Save docker image tarball
+        run: |
+         docker image save -o ${{ env.IMAGE_CACHE_DIR_TORCHML }}/${{ env.IMAGE_TAR_FILE_TORCHML }}  ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_TORCHML }}
 
   load-and-push-minimal:
 
@@ -469,8 +477,7 @@ jobs:
       # Load cached minimal docker-formatted tarball into local image
       # repository
       - name: Load cached minimal docker image tarball
-        run: |
-          cat ${{ env.IMAGE_CACHE_DIR_MINIMAL }}/${{ env.IMAGE_TAR_FILE_MINIMAL }} | docker import - ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_MINIMAL }}
+        run: docker load -i ${{ env.IMAGE_CACHE_DIR_MINIMAL }}/${{ env.IMAGE_TAR_FILE_MINIMAL }}
 
       # Use buildx with 'docker' driver so that it is able to access images stored in the
       # local registry (this precludes the possibility of multi-platform images)
@@ -542,8 +549,7 @@ jobs:
       # Load cached full docker-formatted tarball into local image
       # repository
       - name: Load cached full docker image tarball
-        run: |
-          cat ${{ env.IMAGE_CACHE_DIR_FULL }}/${{ env.IMAGE_TAR_FILE_FULL }} | docker import - ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_FULL }}
+        run: docker load -i ${{ env.IMAGE_CACHE_DIR_FULL }}/${{ env.IMAGE_TAR_FILE_FULL }}
 
       # Use buildx with 'docker' driver so that it is able to access images stored in the
       # local registry (this precludes the possibility of multi-platform images)
@@ -615,8 +621,7 @@ jobs:
       # Load cached torchml docker-formatted tarball into local image
       # repository
       - name: Load cached torchml docker image tarball
-        run: |
-          cat ${{ env.IMAGE_CACHE_DIR_TORCHML }}/${{ env.IMAGE_TAR_FILE_TORCHML }} | docker import - ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_TORCHML }}
+        run: docker load -i ${{ env.IMAGE_CACHE_DIR_TORCHML }}/${{ env.IMAGE_TAR_FILE_TORCHML }}
 
       # Use buildx with 'docker' driver so that it is able to access images stored in the
       # local registry (this precludes the possibility of multi-platform images)
