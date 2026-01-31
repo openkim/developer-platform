@@ -259,6 +259,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-buildx-minimal
 
+      - name: stat cache
+        run: stat ${{ env.IMAGE_CACHE_DIR_MINIMAL }}/${{ env.IMAGE_TAR_FILE_MINIMAL }}
+      
       # Load cached minimal docker-formatted tarballs into local image
       # repository
       - name: Load cached minimal docker image tarballs
