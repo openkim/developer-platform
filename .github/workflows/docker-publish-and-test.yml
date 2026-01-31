@@ -108,7 +108,7 @@ jobs:
           push: false
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_SYS }}
           labels: ${{ steps.meta.outputs.labels }}
-          outputs: type=tar,dest=${{ env.IMAGE_CACHE_DIR_SYS }}/${{ env.IMAGE_TAR_FILE_SYS }}
+          outputs: type=docker,dest=${{ env.IMAGE_CACHE_DIR_SYS }}/${{ env.IMAGE_TAR_FILE_SYS }}
 
   build-and-cache-git:
 
@@ -157,7 +157,7 @@ jobs:
           push: false
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_GIT }}
           labels: ${{ steps.meta.outputs.labels }}
-          outputs: type=tar,dest=${{ env.IMAGE_CACHE_DIR_GIT }}/${{ env.IMAGE_TAR_FILE_GIT }}
+          outputs: type=docker,dest=${{ env.IMAGE_CACHE_DIR_GIT }}/${{ env.IMAGE_TAR_FILE_GIT }}
 
   build-and-cache-minimal:
 
@@ -191,8 +191,8 @@ jobs:
       # repository
       - name: Load cached sys & git docker image tarballs
         run: |
-          cat ${{ env.IMAGE_CACHE_DIR_SYS }}/${{ env.IMAGE_TAR_FILE_SYS }} | docker import - ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_SYS }}
-          cat ${{ env.IMAGE_CACHE_DIR_GIT }}/${{ env.IMAGE_TAR_FILE_GIT }} | docker import - ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_GIT }}
+          docker load -i ${{ env.IMAGE_CACHE_DIR_SYS }}/${{ env.IMAGE_TAR_FILE_SYS }}
+          docker load -i ${{ env.IMAGE_CACHE_DIR_GIT }}/${{ env.IMAGE_TAR_FILE_GIT }}
 
       # Use buildx with 'docker' driver so that it is able to access images stored in the
       # local registry (this precludes the possibility of multi-platform images)
@@ -253,7 +253,11 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_MINIMAL }}
           labels: ${{ steps.meta.outputs.labels }}
-          outputs: type=tar,dest=${{ env.IMAGE_CACHE_DIR_MINIMAL }}/${{ env.IMAGE_TAR_FILE_MINIMAL }}
+
+      # Docker save the image. Needs to be separate from build, as docker builder does not support saving image to tar
+      - name: Save docker image tarball
+        run: |
+         docker image save -o ${{ env.IMAGE_CACHE_DIR_MINIMAL }}/${{ env.IMAGE_TAR_FILE_MINIMAL }}  ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_MINIMAL }}
 
       - name: Clean local copies of sys & git caches
         run: |
@@ -282,8 +286,7 @@ jobs:
       # Load cached minimal docker-formatted tarballs into local image
       # repository
       - name: Load cached minimal docker image tarballs
-        run: |
-          cat ${{ env.IMAGE_CACHE_DIR_MINIMAL }}/${{ env.IMAGE_TAR_FILE_MINIMAL }} | docker import - ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_MINIMAL }}
+        run: docker load -i ${{ env.IMAGE_CACHE_DIR_MINIMAL }}/${{ env.IMAGE_TAR_FILE_MINIMAL }}
 
       # List docker images in local repository to confirm exactly what tags were
       # created
