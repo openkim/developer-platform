@@ -289,9 +289,8 @@ jobs:
         
       - name: Test minimal image
         run: |
-          echo helloworld
-          # bash test/run_cg_example.sh ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_MINIMAL }}        
-          # bash test/run_all.sh ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_MINIMAL }} all
+          bash test/run_cg_example.sh ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_MINIMAL }}        
+          bash test/run_all.sh ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_MINIMAL }} all
 
   build-and-cache-full:
 

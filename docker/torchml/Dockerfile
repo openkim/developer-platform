@@ -85,8 +85,6 @@ RUN ldconfig
 
 # Build Torch libraries for common Nvidia configs by default
 ENV TORCH_CUDA_ARCH_LIST=Common
-# Execute on cuda by default
-ENV KIM_MODEL_EXECUTION_DEVICE=cuda
 
 # Revert to user 'openkim'
 USER openkim
