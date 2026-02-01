@@ -46,7 +46,7 @@ MACE-MP-0-a model [TorchML_MACE_BatatiaBennerChiang_2023_MP0a_medium__MO_5687769
 Running it using CUDA may be as simple as:
 
 ```
-$ singularity shell -B $PWD --writable-tmpfs --nv --env KIM_MODEL_EXECUTION_DEVICE=cuda docker://ghcr.io/openkim/developer-platform:torchml-latest
+$ singularity shell -B $PWD --writable-tmpfs --nv --env KIM_MODEL_EXECUTION_DEVICE=cuda docker://ghcr.io/openkim/developer-platform:latest-torchml
 Singularity> kim-api-collections-management install CWD TorchML_MACE_BatatiaBennerChiang_2023_MP0a_medium__MO_568776921807_000
 Singularity> lmp -in in.lammps
 ```
