@@ -21,6 +21,6 @@ RUN git clone -q https://github.com/lammps/lammps -b stable_22Jul2025_update1 ${
 RUN git clone -q https://gitlab.com/openkim/ase -b user-species ${PACKAGE_DIR}/ase \
   && cd ${PACKAGE_DIR}/ase \
   && git checkout 23b90a5461c21a8530c431629a1423dc1ce84b56
-RUN git clone -q https://gitlab.com/micronano_public/MDpp -b release ${PACKAGE_DIR}/MD++ \
+RUN git clone -q https://github.com/openkim/MDpp.git -b fix_species_added_atoms ${PACKAGE_DIR}/MD++ \
   && cd ${PACKAGE_DIR}/MD++ \
-  && git checkout f7d64a7720a4bc1602371a128c8db7779fcf8dcb
+  && git checkout d2cf99f58aa342c06b73914a89f051761d6153c3
