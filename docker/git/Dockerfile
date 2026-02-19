@@ -23,4 +23,4 @@ RUN git clone -q https://gitlab.com/openkim/ase -b user-species ${PACKAGE_DIR}/a
   && git checkout 23b90a5461c21a8530c431629a1423dc1ce84b56
 RUN git clone -q https://github.com/openkim/MDpp.git -b fix_species_added_atoms ${PACKAGE_DIR}/MD++ \
   && cd ${PACKAGE_DIR}/MD++ \
-  && git checkout d2cf99f58aa342c06b73914a89f051761d6153c3
+  && git checkout 3580250bb1ee41b3132ce509b788fa0b448aa274
