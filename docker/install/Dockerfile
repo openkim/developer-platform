@@ -96,7 +96,7 @@ RUN cd ${PACKAGE_DIR}/MD++ \
 #########################################
 ## KIM API
 #########################################
-ARG KIM_API_VER=2.4.1
+ARG KIM_API_VER=2.4.2
 ARG KIM_API_PACKAGE=kim-api-${KIM_API_VER}
 ARG KIM_API_ARCHIVE_TXZ=${KIM_API_PACKAGE}.txz
 RUN cd ${PACKAGE_DIR} \
