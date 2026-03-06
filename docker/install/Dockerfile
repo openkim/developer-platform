@@ -116,7 +116,7 @@ RUN cd ${PACKAGE_DIR} \
 ## kimpy
 #########################################
 # NOTE: Must be installed after KIM API
-RUN ${PIP} install kimpy==2.1.3
+RUN ${PIP} install kimpy==2.1.4
 
 #########################################
 ## LAMMPS
