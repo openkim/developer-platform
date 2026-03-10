@@ -1,0 +1,24 @@
+{
+    "contributor-id" "4d62befd-21c4-42b8-a472-86132e6591f3" 
+    "description" "This verification check ensures that a model can properly convert units of length and energy. Working in one unit system, a random cluster of atoms is generated based on the smallest cutoff of the model such that the energy and/or forces (depending on what the model actually reports) are sizeable. Next, the model is reinitialized with a different set of registered units. The coordinates of the atoms in the cluster are rescaled to correspond to the new length units and the energy and/or forces are requested from the model once again. The energy and/or force returned by the model are then compared to a manual conversion of those originally returned (in the first set of units).\n\n\nHISTORY:\n\nChanges in version 001:\n* Update for compatibility with kimpy 2.0.0" 
+    "developer" [
+        "4d62befd-21c4-42b8-a472-86132e6591f3"
+    ] 
+    "doi" "10.25950/3efea563" 
+    "domain" "openkim.org" 
+    "executables" [
+        "runner"
+    ] 
+    "extended-id" "UnitConversion__VC_128739598203_001" 
+    "kim-api-version" "2.0" 
+    "maintainer-id" "4d62befd-21c4-42b8-a472-86132e6591f3" 
+    "matching-models" [
+        "standard-models"
+    ] 
+    "properties" [
+        "tag:tadmor@noreply.openkim.org,2017-02-01:property/verification-check"
+    ] 
+    "publication-year" "2021" 
+    "simulator-name" "none" 
+    "title" "Verification check of unit conversion v001"
+}
