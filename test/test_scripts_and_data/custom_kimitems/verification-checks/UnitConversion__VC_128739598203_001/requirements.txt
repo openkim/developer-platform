@@ -1,3 +1,0 @@
-numpy >= 1.13.1
-kimpy >= 2.0.0
-kim_python_utils >= 0.0.0
