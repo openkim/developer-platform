@@ -37,7 +37,7 @@ with open(kdp_env_file_path, 'w') as f:
             + "# the use of $BAZ can be substituted. comments\n"
             + "# start in column 0\n"
             + "#==============================================\n\n"
-            + "PIPELINE_LOCAL_DEV=True\n"
+            + "PIPELINE_LOCAL_DEV=False\n"
             + f"LOCAL_REPOSITORY_PATH={work_path}\n"
             + f"LOCAL_DATABASE_PATH={work_path}/db")
 
