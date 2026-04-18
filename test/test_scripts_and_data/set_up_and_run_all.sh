@@ -19,8 +19,6 @@ kimitems install -D SurfaceEnergyCubicCrystalBrokenBondFit_fcc_Cu__TE_6899042806
 
 # LAMMPS TDs
 kimitems install -D CohesiveEnergyVsLatticeConstant_fcc_Cu__TE_311348891940_004
-kimitems install -D ClusterEnergyAndForces_3atom_Si__TE_002471259796_003
-kimitems install -D TriclinicPBCEnergyAndForces_bcc2atom_Si__TE_006970922000_003
 
 # Should fail to match with anything so far based on special-purpose logic even though species are supported
 kimitems install -D EquilibriumCrystalStructure_Unconstrained_TypeLabels_PCFF_INTERFACE_Aluminum__TE_741008777397_000
@@ -65,6 +63,7 @@ pipeline-run-matches Sim_LAMMPS_IFF_PCFF_HeinzMishraLinEmami_2015Ver1v5_Fccmetal
 #   ForcesNumerDeriv__VC_710586816390_003 Slow
 #   MemoryLeak__VC_561022993723_004 Slow, not very informative
 #   DimerContinuityC1__VC_303890932454_005 Slow
+#   A lot of Crystal Genome tests Slow, but we need to go through and add some nevertheless. Or create custom tests with fast settings
 
 # Test database commands
 pipeline-database dump $HOME/tmp.bson
