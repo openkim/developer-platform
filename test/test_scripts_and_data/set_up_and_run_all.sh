@@ -2,6 +2,13 @@
 
 pipeline-database set local
 
+# This set of calculation tests the ability of Test Drivers to run with
+# both SMs and PMs, and the various pipeline matching utilities.
+# It was written to use a minimal number of models, but it could
+# probably stand to be rewritten to be faster by using
+# calculations that have a lower usertime (which can be figured out
+# by querying the database)
+
 # Need models that support Si and an FCC metal to get max coverage of tests
 kimitems install -D  MEAM_LAMMPS_JelinekGrohHorstemeyer_2012_AlSiMgCuFe__MO_262519520678_002
 kimitems install Sim_LAMMPS_MEAM_JelinekGrohHorstemeyer_2012_AlSiMgCuFe__SM_656517352485_000
@@ -45,10 +52,17 @@ pipeline-run-matches Sim_LAMMPS_IFF_CHARMM_GUI_HeinzLinMishra_2023_Nanomaterials
 
 kimitems install Sim_LAMMPS_IFF_PCFF_HeinzMishraLinEmami_2015Ver1v5_FccmetalsMineralsSolventsPolymers__SM_039297821658_001
 
-# Should match with one test
+# Should match with one test -- CURRENTLY BROKEN, NOT INCLUDED IN THE REFERENCE DATABASE
 pipeline-run-matches Sim_LAMMPS_IFF_PCFF_HeinzMishraLinEmami_2015Ver1v5_FccmetalsMineralsSolventsPolymers__SM_039297821658_001 -v
 
-# Not included TDs and VCs, and why:
+# Additional one-off calculations, not part of the testing of matching logic
+kimitems install -D LatticeConstantCubicEnergy__TD_475411767977_007
+kimitems install -D VacancyFormationMigration_bcc_Mo__TE_307021336684_001
+kimitems install -D EAM_Dynamo_SmirnovaKuskinStarikov_2013_UMoXe__MO_679329885632_006
+pipeline-run-pair LatticeConstantCubicEnergy_bcc_Mo__TE_279386991452_007 EAM_Dynamo_SmirnovaKuskinStarikov_2013_UMoXe__MO_679329885632_006
+pipeline-run-pair VacancyFormationMigration_bcc_Mo__TE_307021336684_001 EAM_Dynamo_SmirnovaKuskinStarikov_2013_UMoXe__MO_679329885632_006
+
+# Not included (non-discontinued) TDs and VCs, and why:
 #	DislocationCoreEnergyCubic__TD_452950666597_002	Slow
 #	ElasticConstantsFirstStrainGradient__TD_361847723785_001	No tests
 #	ElasticConstantsHexagonal__TD_612503193866_004	Broken
@@ -56,9 +70,7 @@ pipeline-run-matches Sim_LAMMPS_IFF_PCFF_HeinzMishraLinEmami_2015Ver1v5_Fccmetal
 #	LammpsExample2__TD_887699523131_002	No tests
 #	LammpsExample__TD_567444853524_004	Outdated
 #	LatticeConstant2DHexagonalEnergy__TD_034540307932_002	Only one test, Carbon-only
-#	LinearThermalExpansionCoeffCubic__TD_522633393614_002	Slow
-#   VacancyFormationMigration__TD_554849987965_001 Slow
-#   VacancyFormationEnergyRelaxationVolume__TD_647413317626_001 Slow
+#	LinearThermalExpansionCoeffCubic__TD_522633393614_002	Runs on 5 CPUs, not available on Github runners
 #	StackingFaultFccCrystal__TD_228501831190_002	Slow and broken
 #   ForcesNumerDeriv__VC_710586816390_003 Slow
 #   MemoryLeak__VC_561022993723_004 Slow, not very informative
