@@ -193,10 +193,11 @@ RUN cd ${PACKAGE_DIR} \
 #########################################
 ## AFLOW
 #########################################
-ARG AFLOW_VER=4.0.5
+ARG AFLOW_VER=4.1
 ARG AFLOW_ARCHIVE=aflow-${AFLOW_VER}-ubuntu22-amd64.tar.gz
 ARG AFLOW_URL=https://github.com/aflow-org/aflow/releases/download/v${AFLOW_VER}/${AFLOW_ARCHIVE}
-ARG AFLOW_DIR=aflow-${AFLOW_VER}-Linux
+ARG AFLOW_DIR_VER=4.1.0
+ARG AFLOW_DIR=aflow-${AFLOW_DIR_VER}-Linux
 ARG AFLOW_EXEC=${AFLOW_DIR}/bin/aflow
 RUN cd ${PACKAGE_DIR} \
  && wget -q ${AFLOW_URL} \
