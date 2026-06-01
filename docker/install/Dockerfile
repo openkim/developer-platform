@@ -166,7 +166,7 @@ RUN cd ${PACKAGE_DIR}/ase/ \
 ## most Python reqs (incl LAMMPS and ASE)
 ## are explicitly satisfied
 #########################################
-RUN ${PIP} install kim-tools==0.4.11
+RUN ${PIP} install kim-tools==0.4.12
 RUN ${PIP} install kimvv==0.1.11
 
 #########################################
