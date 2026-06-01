@@ -48,16 +48,14 @@ RUN ${PIP} install kim-property==2.6.14
 RUN ${PIP} install kim-query==4.0.0
 RUN ${PIP} install simplejson==3.17.2
 RUN ${PIP} install numpy==1.26.4
-RUN ${PIP} install scipy==1.12.0
+RUN ${PIP} install scipy==1.15.3
 RUN ${PIP} install matplotlib==3.8.3
 RUN ${PIP} install pymongo==3.11.3
 RUN ${PIP} install montydb==2.5.3
 RUN ${PIP} install pybind11==2.6.2
-RUN ${PIP} install spglib==2.3.1
 RUN ${PIP} install numdifftools==0.9.41
-RUN ${PIP} install kim-tools==0.4.12
-RUN ${PIP} install kimvv==0.1.10
 RUN ${PIP} install kim-convergence==0.0.3
+RUN ${PIP} install pymatgen==2025.10.7
 
 #########################################
 ## OpenMPI
@@ -164,6 +162,14 @@ RUN cd ${PACKAGE_DIR}/ase/ \
  && rm -r ${PACKAGE_DIR}/ase
 
 #########################################
+## kim-tools, kimvv. Install after
+## most Python reqs (incl LAMMPS and ASE)
+## are explicitly satisfied
+#########################################
+RUN ${PIP} install kim-tools==0.4.12
+RUN ${PIP} install kimvv==0.1.11
+
+#########################################
 ## kim-python-utils
 #########################################
 RUN cd ${PACKAGE_DIR}/kim-python-utils \
@@ -171,14 +177,6 @@ RUN cd ${PACKAGE_DIR}/kim-python-utils \
  && cd ${PACKAGE_DIR} \
  && rm -r ${PACKAGE_DIR}/kim-python-utils
  
-#########################################
-## crystal-genome-util
-#########################################
-RUN cd ${PACKAGE_DIR}/crystal-genome-util \
- && ${PIP} install . \
- && cd ${PACKAGE_DIR} \
- && rm -r ${PACKAGE_DIR}/crystal-genome-util
-
 ###################################################
 ## convergence -- legacy version of kim-convergence
 ###################################################
