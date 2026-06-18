@@ -54,7 +54,7 @@ RUN ${PIP} install pymongo==3.11.3
 RUN ${PIP} install montydb==2.5.3
 RUN ${PIP} install pybind11==2.6.2
 RUN ${PIP} install numdifftools==0.9.41
-RUN ${PIP} install kim-convergence==0.0.3
+RUN ${PIP} install kim-convergence==0.1.0
 RUN ${PIP} install pymatgen==2025.10.7
 
 #########################################
