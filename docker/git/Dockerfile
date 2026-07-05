@@ -14,7 +14,7 @@ RUN apt-get install --no-install-recommends -qqy git
 RUN git clone -q https://github.com/openkim/kim-python-utils -b master ${PACKAGE_DIR}/kim-python-utils \
   && cd ${PACKAGE_DIR}/kim-python-utils \
   && git checkout 2aa7a7ee692fb0ecd895b2da338f5ae99b86ef53
-RUN git clone -q https://github.com/lammps/lammps -b stable_22Jul2025_update1 ${PACKAGE_DIR}/lammps
+RUN git clone -q https://github.com/lammps/lammps -b patch_4Jul2026 ${PACKAGE_DIR}/lammps
 RUN git clone -q https://gitlab.com/openkim/ase -b user-species ${PACKAGE_DIR}/ase \
   && cd ${PACKAGE_DIR}/ase \
   && git checkout 23b90a5461c21a8530c431629a1423dc1ce84b56
