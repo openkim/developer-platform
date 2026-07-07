@@ -21,6 +21,12 @@ COPY --from=install /etc/sudoers /etc/sudoers
 ENV LANG C.UTF-8
 ENV LC_ALL C.UTF-8
 
+# Disable threading which could be automatically enabled in 
+# libraries. Users can re-enable it if they want it.
+ENV OMP_NUM_THREADS 1
+ENV MKL_NUM_THREADS 1
+ENV OPENBLAS_NUM_THREADS 1
+
 ARG PACKAGE_DIR=/pipeline/packages/
 RUN mkdir -p ${PACKAGE_DIR}
 COPY --from=install ${PACKAGE_DIR}/kim_api_install_manifest.txt ${PACKAGE_DIR}
