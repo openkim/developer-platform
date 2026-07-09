@@ -14,7 +14,7 @@ RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86
  && apt-get update -qq \
  && apt-get install --no-install-recommends -qqy cuda-toolkit-${CUDA_MAJOR_VER}-${CUDA_MINOR_VER} unzip \
  && apt-get clean \
- && rm -fr /var/lib/apt/lists/*
+ && rm -fr /var/lib/apt/lists/* cuda-keyring_1.0-1_all.deb
 
 ARG PACKAGE_DIR=/pipeline/packages/
 RUN git clone -q --recurse-submodules https://github.com/rusty1s/pytorch_scatter -b master ${PACKAGE_DIR}/pytorch_scatter \
