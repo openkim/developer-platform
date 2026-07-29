@@ -56,6 +56,7 @@ RUN ${PIP} install pybind11==2.6.2
 RUN ${PIP} install numdifftools==0.9.41
 RUN ${PIP} install kim-convergence==0.1.0
 RUN ${PIP} install pymatgen==2025.10.7
+RUN ${PIP} install findiff==0.12.1
 
 #########################################
 ## OpenMPI
