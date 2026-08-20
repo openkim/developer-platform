@@ -45,6 +45,7 @@ COPY instructions/README.txt /home/openkim/
 RUN chmod 644 /home/openkim/README.txt
 
 COPY excerpts /pipeline/excerpts
+COPY openkim-pipeline-excerpts /pipeline/excerpts
 COPY tools /pipeline/tools
 COPY utils/bashcompletion /pipeline/bashcompletion
 COPY utils/kimitems /usr/local/bin/

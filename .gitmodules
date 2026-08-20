@@ -1,0 +1,3 @@
+[submodule "docker/config/openkim-pipeline-excerpts"]
+	path = docker/config/openkim-pipeline-excerpts
+	url = git@github.com:openkim/openkim-pipeline-excerpts.git
