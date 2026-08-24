@@ -161,6 +161,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+        with:
+          submodules: recursive
 
       - name: Restore sys docker image cache
         uses: actions/cache@v3
