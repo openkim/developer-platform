@@ -64,7 +64,7 @@ from json.decoder import JSONDecodeError
 from bson.code import Code
 from bson.json_util import dumps, loads
 
-from ..kimunits import convert_units, convert_list
+from kim_tools.kimunits import convert_units, convert_list
 from . import helper_functions as helpers
 
 
