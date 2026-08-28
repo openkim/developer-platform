@@ -1,3 +1,0 @@
-[submodule "docker/config/kim-tools"]
-	path = docker/config/kim-tools
-	url = https://github.com/openkim/kim-tools.git
