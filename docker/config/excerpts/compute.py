@@ -27,7 +27,7 @@ import select
 import errno
 
 from . import util
-from . import kimunits
+from kim_tools import kimunits
 from . import kimobjects
 from . import config as cf
 

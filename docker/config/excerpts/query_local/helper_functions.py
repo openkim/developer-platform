@@ -13,7 +13,7 @@ from bson.json_util import loads
 
 from .. import kimquery
 from ..kimcodes import parse_kim_code
-from ..kimunits import convert_units, convert_list, UnitConversion
+from kim_tools.kimunits import convert_units, convert_list, UnitConversion
 
 RE_KIMID = r"^(?:([_a-zA-Z][_a-zA-Z0-9]*?)__)?([A-Z]{2})_([0-9]{12})(?:_([0-9]{3}))?$"
 RE_EXTENDED_ID = r"^[A-Za-z0-9_]+__[A-Z]{2}_[0-9]{12}_[0-9]{3}$"

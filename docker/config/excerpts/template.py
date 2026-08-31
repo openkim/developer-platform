@@ -36,7 +36,7 @@ from . import kimcodes
 from . import kimobjects
 from . import config as cf
 from . import util
-from .kimunits import convert
+from kim_tools.kimunits import convert
 
 
 # -----------------------------------------
