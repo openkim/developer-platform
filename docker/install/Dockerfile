@@ -30,33 +30,31 @@ RUN if [ ! -f "/usr/bin/pip" ]; then \
   ln -fs /usr/bin/pip3 /usr/bin/pip; \
   fi
 
-ARG PIP="pip3 --no-cache-dir"
+ARG PIP_INSTALL="pip3 --no-cache-dir install --break-system-packages"
 ARG PYTHON=python3
 
-# Required for newer pyproject.toml-based builds like ASE 3.25
-RUN ${PIP} install --upgrade pip
 # Breaking changes in setuptools and packaging 
 # are exceedingly rare, I am comfortable setting
 # them to latest.
-RUN ${PIP} install --upgrade setuptools
-RUN ${PIP} install packaging
-RUN ${PIP} install markupsafe==2.0.1
-RUN ${PIP} install Jinja2==2.11.3
-RUN ${PIP} install edn_format==0.7.5
-RUN ${PIP} install kim-edn==1.6.0
-RUN ${PIP} install kim-property==2.7.0
-RUN ${PIP} install kim-query==4.0.0
-RUN ${PIP} install simplejson==3.17.2
-RUN ${PIP} install numpy==1.26.4
-RUN ${PIP} install scipy==1.15.3
-RUN ${PIP} install matplotlib==3.8.3
-RUN ${PIP} install pymongo==3.11.3
-RUN ${PIP} install montydb==2.5.3
-RUN ${PIP} install pybind11==2.6.2
-RUN ${PIP} install numdifftools==0.9.41
-RUN ${PIP} install kim-convergence==0.1.0
-RUN ${PIP} install pymatgen==2025.10.7
-RUN ${PIP} install findiff==0.12.1
+RUN ${PIP_INSTALL} --upgrade setuptools
+RUN ${PIP_INSTALL} packaging
+RUN ${PIP_INSTALL} markupsafe==2.0.1
+RUN ${PIP_INSTALL} Jinja2==2.11.3
+RUN ${PIP_INSTALL} edn_format==0.7.5
+RUN ${PIP_INSTALL} kim-edn==1.6.0
+RUN ${PIP_INSTALL} kim-property==2.7.0
+RUN ${PIP_INSTALL} kim-query==4.0.0
+RUN ${PIP_INSTALL} simplejson==3.17.2
+RUN ${PIP_INSTALL} numpy==1.26.4
+RUN ${PIP_INSTALL} scipy==1.15.3
+RUN ${PIP_INSTALL} matplotlib==3.8.3
+RUN ${PIP_INSTALL} pymongo==3.11.3
+RUN ${PIP_INSTALL} montydb==2.5.3
+RUN ${PIP_INSTALL} pybind11==2.6.2
+RUN ${PIP_INSTALL} numdifftools==0.9.41
+RUN ${PIP_INSTALL} kim-convergence==0.1.0
+RUN ${PIP_INSTALL} pymatgen==2025.10.7
+RUN ${PIP_INSTALL} findiff==0.12.1
 
 #########################################
 ## OpenMPI
@@ -115,7 +113,7 @@ RUN cd ${PACKAGE_DIR} \
 ## kimpy
 #########################################
 # NOTE: Must be installed after KIM API
-RUN ${PIP} install kimpy==2.1.4
+RUN ${PIP_INSTALL} kimpy==2.1.4
 
 #########################################
 ## LAMMPS
@@ -148,17 +146,21 @@ RUN cd ${PACKAGE_DIR}/lammps/ \
       ../cmake \
  && make -j4 \
  && make install \
+ && mkdir -p ~/.config/pip \
+ && echo "[global]" >> ~/.config/pip/pip.conf \
+ && echo "break-system-packages = true" >> ~/.config/pip/pip.conf \
  && make install-python \
  && ln -s /usr/local/bin/lmp /usr/local/bin/lammps \
  && rm -r /usr/local/share/lammps/potentials \
  && cd ${PACKAGE_DIR} \
- && rm -r ${PACKAGE_DIR}/lammps
+ && rm -r ${PACKAGE_DIR}/lammps \
+ && rm -r ~/.config
 
 #########################################
 ## OpenKIM ASE fork
 #########################################
 RUN cd ${PACKAGE_DIR}/ase/ \
- && ${PIP} install . \
+ && ${PIP_INSTALL} . \
  && cd ${PACKAGE_DIR} \
  && rm -r ${PACKAGE_DIR}/ase
 
@@ -167,33 +169,33 @@ RUN cd ${PACKAGE_DIR}/ase/ \
 ## most Python reqs (incl LAMMPS and ASE)
 ## are explicitly satisfied
 #########################################
-RUN ${PIP} install kim-tools==0.4.15
-RUN ${PIP} install kimvv==0.1.13
+RUN ${PIP_INSTALL} kim-tools==0.4.15
+RUN ${PIP_INSTALL} kimvv==0.1.13
 
 #########################################
 ## kim-python-utils
 #########################################
 RUN cd ${PACKAGE_DIR}/kim-python-utils \
- && ${PIP} install . \
+ && ${PIP_INSTALL} . \
  && cd ${PACKAGE_DIR} \
  && rm -r ${PACKAGE_DIR}/kim-python-utils
  
 ###################################################
 ## convergence -- legacy version of kim-convergence
 ###################################################
-RUN cd ${PACKAGE_DIR} \
- && tar xJf convergence.txz \
- && rm convergence.txz \
- && cd convergence \
- && ${PIP} install . \
- && cd ${PACKAGE_DIR} \
- && rm -r ${PACKAGE_DIR}/convergence
+# RUN cd ${PACKAGE_DIR} \
+# && tar xJf convergence.txz \
+# && rm convergence.txz \
+# && cd convergence \
+# && ${PIP_INSTALL} . \
+# && cd ${PACKAGE_DIR} \
+# && rm -r ${PACKAGE_DIR}/convergence
 
 #########################################
 ## AFLOW
 #########################################
 ARG AFLOW_VER=4.1
-ARG AFLOW_ARCHIVE=aflow-${AFLOW_VER}-ubuntu22-amd64.tar.gz
+ARG AFLOW_ARCHIVE=aflow-${AFLOW_VER}-ubuntu24-amd64.tar.gz
 ARG AFLOW_URL=https://github.com/aflow-org/aflow/releases/download/v${AFLOW_VER}/${AFLOW_ARCHIVE}
 ARG AFLOW_DIR_VER=4.1.0
 ARG AFLOW_DIR=aflow-${AFLOW_DIR_VER}-Linux
