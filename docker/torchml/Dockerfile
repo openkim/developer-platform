@@ -7,10 +7,10 @@ USER root
 
 # Install apt packages for CUDA (and unzip -- could theoretically delete it after but who cares, it's 30KB in a 10GB image)
 ARG DEBIAN_FRONTEND=noninteractive
-ENV CUDA_MAJOR_VER=11
-ENV CUDA_MINOR_VER=7
-ENV KEYRING_FILENAME=cuda-keyring_1.0-1_all.deb
-RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/${KEYRING_FILENAME} \
+ENV CUDA_MAJOR_VER=12
+ENV CUDA_MINOR_VER=6
+ENV KEYRING_FILENAME=cuda-keyring_1.1-1_all.deb
+RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/${KEYRING_FILENAME} \
  && dpkg -i ${KEYRING_FILENAME} \
  && apt-get update -qq \
  && apt-get install --no-install-recommends -qqy cuda-toolkit-${CUDA_MAJOR_VER}-${CUDA_MINOR_VER} unzip \
@@ -41,7 +41,7 @@ RUN cd ${PACKAGE_DIR} \
 #########################################
 ## libtorch
 #########################################
-ARG LIBTORCH_VER=1.13.0
+ARG LIBTORCH_VER=2.6.0
 ARG LIBTORCH_ARCHIVE_ZIP=libtorch-cxx11-abi-shared-with-deps-${LIBTORCH_VER}+cu${CUDA_MAJOR_VER}${CUDA_MINOR_VER}.zip
 RUN cd ${PACKAGE_DIR} \
  && wget -q https://download.pytorch.org/libtorch/cu${CUDA_MAJOR_VER}${CUDA_MINOR_VER}/libtorch-cxx11-abi-shared-with-deps-${LIBTORCH_VER}%2Bcu${CUDA_MAJOR_VER}${CUDA_MINOR_VER}.zip \
