@@ -30,7 +30,7 @@ RUN if [ ! -f "/usr/bin/pip" ]; then \
   ln -fs /usr/bin/pip3 /usr/bin/pip; \
   fi
 
-ARG PIP=pip3 --no-cache-dir
+ARG PIP="pip3 --no-cache-dir"
 ARG PYTHON=python3
 
 # Required for newer pyproject.toml-based builds like ASE 3.25

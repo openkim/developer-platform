@@ -9,12 +9,13 @@ USER root
 ARG DEBIAN_FRONTEND=noninteractive
 ENV CUDA_MAJOR_VER=11
 ENV CUDA_MINOR_VER=7
-RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.0-1_all.deb \
- && dpkg -i cuda-keyring_1.0-1_all.deb \
+ENV KEYRING_FILENAME=cuda-keyring_1.0-1_all.deb
+RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/${KEYRING_FILENAME} \
+ && dpkg -i ${KEYRING_FILENAME} \
  && apt-get update -qq \
  && apt-get install --no-install-recommends -qqy cuda-toolkit-${CUDA_MAJOR_VER}-${CUDA_MINOR_VER} unzip \
  && apt-get clean \
- && rm -fr /var/lib/apt/lists/* cuda-keyring_1.0-1_all.deb
+ && rm -fr /var/lib/apt/lists/* ${KEYRING_FILENAME}
 
 ARG PACKAGE_DIR=/pipeline/packages/
 RUN git clone -q --recurse-submodules https://github.com/rusty1s/pytorch_scatter -b master ${PACKAGE_DIR}/pytorch_scatter \
@@ -43,7 +44,7 @@ RUN cd ${PACKAGE_DIR} \
 ARG LIBTORCH_VER=1.13.0
 ARG LIBTORCH_ARCHIVE_ZIP=libtorch-cxx11-abi-shared-with-deps-${LIBTORCH_VER}+cu${CUDA_MAJOR_VER}${CUDA_MINOR_VER}.zip
 RUN cd ${PACKAGE_DIR} \
- && wget -q https://download.pytorch.org/libtorch/cu117/libtorch-cxx11-abi-shared-with-deps-${LIBTORCH_VER}%2Bcu${CUDA_MAJOR_VER}${CUDA_MINOR_VER}.zip \
+ && wget -q https://download.pytorch.org/libtorch/cu${CUDA_MAJOR_VER}${CUDA_MINOR_VER}/libtorch-cxx11-abi-shared-with-deps-${LIBTORCH_VER}%2Bcu${CUDA_MAJOR_VER}${CUDA_MINOR_VER}.zip \
  && unzip ${LIBTORCH_ARCHIVE_ZIP} \
  && rm ${LIBTORCH_ARCHIVE_ZIP} \
  && rm libtorch/build-* \

@@ -18,7 +18,7 @@ RUN apt-get update -qq \
 #########################################
 ## OVITO
 #########################################
-ARG PIP=pip3 --no-cache-dir
+ARG PIP="pip3 --no-cache-dir"
 RUN ${PIP} install PySide6==6.10.0 traits==7.0.2
 
 # Disable dependencies to avoid upgrading numpy unnecessarily
