@@ -439,7 +439,7 @@ def add_random_kimnum(root_dir, template_file_directory_path, generator_file):
         encoding="utf-8",
     ) as f:
         for this_dict in generator_file_dicts:
-            this_dict["kimnum"] = "%012d" % random.randint(0, 1e12 - 1)
+            this_dict["kimnum"] = "%012d" % random.randint(0, int(1e12) - 1)
             f.write(json.dumps(this_dict) + "\n")
 
 
