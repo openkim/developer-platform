@@ -58,9 +58,13 @@ pipeline-run-matches Sim_LAMMPS_IFF_PCFF_HeinzMishraLinEmami_2015Ver1v5_Fccmetal
 # Additional one-off calculations, not part of the testing of matching logic
 kimitems install -D LatticeConstantCubicEnergy_bcc_Mo__TE_279386991452_007
 kimitems install -D VacancyFormationMigration_bcc_Mo__TE_307021336684_001
+kimitems install -D EquilibriumCrystalStructure_A_cI2_229_a_Mo__TE_313831422432_003
+kimitems install -D ElasticConstantsCrystal_A_cI2_229_a_Mo__TE_397765171124_001
 kimitems install -D EAM_Dynamo_SmirnovaKuskinStarikov_2013_UMoXe__MO_679329885632_006
 pipeline-run-pair LatticeConstantCubicEnergy_bcc_Mo__TE_279386991452_007 EAM_Dynamo_SmirnovaKuskinStarikov_2013_UMoXe__MO_679329885632_006
 pipeline-run-pair VacancyFormationMigration_bcc_Mo__TE_307021336684_001 EAM_Dynamo_SmirnovaKuskinStarikov_2013_UMoXe__MO_679329885632_006
+pipeline-run-pair EquilibriumCrystalStructure_A_cI2_229_a_Mo__TE_313831422432_003 EAM_Dynamo_SmirnovaKuskinStarikov_2013_UMoXe__MO_679329885632_006
+pipeline-run-pair ElasticConstantsCrystal_A_cI2_229_a_Mo__TE_397765171124_001 EAM_Dynamo_SmirnovaKuskinStarikov_2013_UMoXe__MO_679329885632_006
 
 # Not included (non-discontinued) TDs and VCs, and why:
 #	DislocationCoreEnergyCubic__TD_452950666597_002	Slow
@@ -76,6 +80,7 @@ pipeline-run-pair VacancyFormationMigration_bcc_Mo__TE_307021336684_001 EAM_Dyna
 #   MemoryLeak__VC_561022993723_004 Slow, not very informative
 #   DimerContinuityC1__VC_303890932454_005 Slow
 #   A lot of Crystal Genome tests Slow, but we need to go through and add some nevertheless. Or create custom tests with fast settings
+#   New VCs need to be added
 
 # Test database commands
 pipeline-database dump $HOME/tmp.bson
