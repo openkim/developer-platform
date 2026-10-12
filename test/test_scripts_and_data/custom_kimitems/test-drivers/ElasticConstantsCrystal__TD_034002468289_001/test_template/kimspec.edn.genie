@@ -1,0 +1,15 @@
+{
+  "title" "Elastic constants for {{stoichiometric_species|join("")}} in AFLOW crystal prototype {{prototype_label}} at zero temperature and pressure v{{version}}"
+  "description" "Given the zero-pressure, zero-temperature structure of {{stoichiometric_species|join("")}} in AFLOW crystal prototype {{prototype_label}}, this Test computes the corresponding elastic constants using numerical differentiation. By default, the Hessian of the energy w.r.t. strain is used, but depending on the computed uncertainty and material symmetry violation, the Jacobian of the stress w.r.t. strain may be used instead."
+  "extended-id" "{{TEST_DRIVER_NAME.split('_')[:-4]|join('_')}}_{{prototype_label}}_{{stoichiometric_species|join("")}}__TE_{{kimnum}}_{{version}}"
+  "test-driver" "{{TEST_DRIVER_NAME}}"
+  "species" ["{{stoichiometric_species|join('" "')}}"]
+  "contributor-id" "4ad03136-ed7f-4316-b586-1e94ccceb311"
+  "maintainer-id" "4ad03136-ed7f-4316-b586-1e94ccceb311"
+  "executables" ["runner"]
+  "domain" "openkim.org"
+  "matching-models" ["standard-models"]
+  "disclaimer" "Computer generated"
+  "kim-api-version" "2.4"
+  "publication-year" "2025"
+}{# FILENAME = kimspec.edn #}

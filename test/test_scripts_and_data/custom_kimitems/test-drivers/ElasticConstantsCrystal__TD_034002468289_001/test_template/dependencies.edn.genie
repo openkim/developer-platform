@@ -1,0 +1,6 @@
+{# FILENAME = dependencies.edn #}[ {{
+query({"project": ["shortcode"],
+       "query": {"kimcode":
+                  {"$options": "",
+                   "$regex": "EquilibriumCrystalStructure_"+prototype_label+"_"+"".join(stoichiometric_species)+"__TE_"}},
+                   "limit": 1, "database": "obj"})}} ]
