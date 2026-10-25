@@ -168,7 +168,7 @@ RUN cd ${PACKAGE_DIR}/ase/ \
 ## are explicitly satisfied
 #########################################
 RUN ${PIP} install kim-tools==0.4.15
-RUN ${PIP} install kimvv==0.1.13
+RUN ${PIP} install kimvv==0.1.14
 
 #########################################
 ## kim-python-utils
