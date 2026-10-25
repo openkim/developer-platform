@@ -18,6 +18,7 @@ kimitems install Sim_LAMMPS_IFF_CHARMM_GUI_HeinzLinMishra_2023_Nanomaterials__SM
 
 # ASE TDs
 kimitems install -D LatticeConstantCubicEnergy_fcc_Cu__TE_387272513402_
+kimitems install -D ElasticConstantsCubic_fcc_Cu__TE_188557531340_
 kimitems install -D EquilibriumCrystalStructure_A15B4_cI76_220_ae_c_CuSi__TE_684342186166_
 kimitems install -D LatticeConstantHexagonalEnergy_hcp_Cu__TE_344176839725_
 kimitems install -D PhononDispersionCurve_fcc_Cu__TE_575177044018_
@@ -68,6 +69,7 @@ pipeline-run-pair ElasticConstantsCrystal_A_cI2_229_a_Mo__TE_397765171124_* EAM_
 # Not included (non-discontinued) TDs and VCs, and why:
 #	DislocationCoreEnergyCubic__TD_452950666597_002	Slow
 #	ElasticConstantsFirstStrainGradient__TD_361847723785_001	No tests
+#	ElasticConstantsHexagonal__TD_612503193866_004	Broken
 #	GrainBoundaryCubicCrystalSymmetricTiltRelaxedEnergyVsAngle__TD_410381120771_003	Slow
 #	LammpsExample2__TD_887699523131_002	No tests
 #	LammpsExample__TD_567444853524_004	Outdated
