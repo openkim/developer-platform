@@ -66,6 +66,14 @@ pipeline-run-pair VacancyFormationMigration_bcc_Mo__TE_307021336684_* EAM_Dynamo
 pipeline-run-pair EquilibriumCrystalStructure_A_cI2_229_a_Mo__TE_313831422432_* EAM_Dynamo_SmirnovaKuskinStarikov_2013_UMoXe__MO_679329885632_*
 pipeline-run-pair ElasticConstantsCrystal_A_cI2_229_a_Mo__TE_397765171124_* EAM_Dynamo_SmirnovaKuskinStarikov_2013_UMoXe__MO_679329885632_*
 
+kimitems install -D ForcesNumerDeriv__VC_710586816390_
+kimitems install -D DimerContinuityC1__VC_303890932454_
+kimitems install -D PartialForces__VC_463936749874_
+pipeline-run-pair ForcesNumerDeriv__VC_710586816390_* EAM_Dynamo_SmirnovaKuskinStarikov_2013_UMoXe__MO_679329885632_* -v
+pipeline-run-pair DimerContinuityC1__VC_303890932454_* EAM_Dynamo_SmirnovaKuskinStarikov_2013_UMoXe__MO_679329885632_* -v
+pipeline-run-pair PartialForces__VC_463936749874_* EAM_Dynamo_SmirnovaKuskinStarikov_2013_UMoXe__MO_679329885632_* -v
+
+
 # Not included (non-discontinued) TDs and VCs, and why:
 #	DislocationCoreEnergyCubic__TD_452950666597_002	Slow
 #	ElasticConstantsFirstStrainGradient__TD_361847723785_001	No tests
@@ -76,9 +84,7 @@ pipeline-run-pair ElasticConstantsCrystal_A_cI2_229_a_Mo__TE_397765171124_* EAM_
 #	LatticeConstant2DHexagonalEnergy__TD_034540307932_002	Only one test, Carbon-only
 #	LinearThermalExpansionCoeffCubic__TD_522633393614_002	Runs on 5 CPUs, not available on Github runners
 #	StackingFaultFccCrystal__TD_228501831190_002	Slow and broken
-#   ForcesNumerDeriv__VC_710586816390_003 Slow
 #   MemoryLeak__VC_561022993723_004 Slow, not very informative
-#   DimerContinuityC1__VC_303890932454_005 Slow
 #   A lot of Crystal Genome tests Slow, but we need to go through and add some nevertheless. Or create custom tests with fast settings
 #   New VCs need to be added
 
