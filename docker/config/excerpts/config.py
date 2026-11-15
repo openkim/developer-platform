@@ -392,3 +392,7 @@ os.environ["KIM_HOME"] = conf.get("KIM_HOME")
 
 # For kim-tools
 os.environ["KIM_PROPERTY_PATH"] = conf.get("KIM_PROPERTY_PATH")
+
+# Adjust PYTHONPATH if setting is present
+if conf.get("PYTHONPATH_ADDTL_PIPELINE") is not None:
+    os.environ["PYTHONPATH"] = f"{conf.get('PYTHONPATH_ADDTL_PIPELINE')}:{os.environ['PYTHONPATH']}"
